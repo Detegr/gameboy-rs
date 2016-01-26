@@ -49,7 +49,8 @@ impl Cpu {
     fn ld_de_nn(&mut self, mmu: &mut Mmu) { ld_n_nn!(self, mmu, d, e); }
     fn ld_hl_nn(&mut self, mmu: &mut Mmu) { ld_n_nn!(self, mmu, h, l); }
     fn ld_sp_nn(&mut self, mmu: &mut Mmu) {
-        self.sp = LittleEndian::read_u16(mmu);
+        self.sp = LittleEndian::read_u16(&mmu[self.pc..]);
+        self.pc += 2;
         self.cycles += 12;
     }
 }
@@ -89,10 +90,12 @@ mod test {
 
     macro_rules! test_ld_n_nn(
         ($reg1:ident, $reg2:ident, $func: expr) => {{
-            let (mut cpu, mut mmu) = init(Some(&[1,2]));
+            let (mut cpu, mut mmu) = init(Some(&[0,0,1,2]));
+            cpu.pc = 2;
             test(&mut cpu, &mut mmu, 12, $func);
-            assert!(cpu.$reg1 == mmu[1], format!("Expected {}, got {}", mmu[1], cpu.$reg1));
-            assert!(cpu.$reg2 == mmu[0], format!("Expected {}, got {}", mmu[0], cpu.$reg2));
+            assert!(cpu.$reg1 == mmu[3], format!("Expected {}, got {}", mmu[1], cpu.$reg1));
+            assert!(cpu.$reg2 == mmu[2], format!("Expected {}, got {}", mmu[0], cpu.$reg2));
+            assert!(cpu.pc == 4, format!("Expected pc=4, got pc={}", cpu.pc));
         }}
     );
 
@@ -102,8 +105,10 @@ mod test {
         test_ld_n_nn!(d, e, OPCODES[11]);
         test_ld_n_nn!(h, l, OPCODES[21]);
 
-        let (mut cpu, mut mmu) = init(Some(&[1,2]));
+        let (mut cpu, mut mmu) = init(Some(&[0,0,1,2]));
+        cpu.pc = 2;
         test(&mut cpu, &mut mmu, 12, OPCODES[31]);
         assert!(cpu.sp == 513);
+        assert!(cpu.pc == 4, format!("Expected pc=4, got pc={}", cpu.pc));
     }
 }
