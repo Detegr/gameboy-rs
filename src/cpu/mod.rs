@@ -87,6 +87,7 @@ impl Cpu {
     fn ld_a_l(&mut self, _mmu: &mut Mmu) { ld_r1_r2!(self, a, l); }
     fn ld_a_hl(&mut self, mmu: &mut Mmu) { ld_r_hl!(self, mmu, a); }
 
+    fn ld_b_a(&mut self, _mmu: &mut Mmu) { ld_r1_r2!(self, b, a); }
     fn ld_b_b(&mut self, _mmu: &mut Mmu) { ld_r1_r2!(self, b, b); }
     fn ld_b_c(&mut self, _mmu: &mut Mmu) { ld_r1_r2!(self, b, c); }
     fn ld_b_d(&mut self, _mmu: &mut Mmu) { ld_r1_r2!(self, b, d); }
@@ -95,6 +96,7 @@ impl Cpu {
     fn ld_b_l(&mut self, _mmu: &mut Mmu) { ld_r1_r2!(self, b, l); }
     fn ld_b_hl(&mut self, mmu: &mut Mmu) { ld_r_hl!(self, mmu, b); }
 
+    fn ld_c_a(&mut self, _mmu: &mut Mmu) { ld_r1_r2!(self, c, a); }
     fn ld_c_b(&mut self, _mmu: &mut Mmu) { ld_r1_r2!(self, c, b); }
     fn ld_c_c(&mut self, _mmu: &mut Mmu) { ld_r1_r2!(self, c, c); }
     fn ld_c_d(&mut self, _mmu: &mut Mmu) { ld_r1_r2!(self, c, d); }
@@ -103,6 +105,7 @@ impl Cpu {
     fn ld_c_l(&mut self, _mmu: &mut Mmu) { ld_r1_r2!(self, c, l); }
     fn ld_c_hl(&mut self, mmu: &mut Mmu) { ld_r_hl!(self, mmu, c); }
 
+    fn ld_d_a(&mut self, _mmu: &mut Mmu) { ld_r1_r2!(self, d, a); }
     fn ld_d_b(&mut self, _mmu: &mut Mmu) { ld_r1_r2!(self, d, b); }
     fn ld_d_c(&mut self, _mmu: &mut Mmu) { ld_r1_r2!(self, d, c); }
     fn ld_d_d(&mut self, _mmu: &mut Mmu) { ld_r1_r2!(self, d, d); }
@@ -111,6 +114,7 @@ impl Cpu {
     fn ld_d_l(&mut self, _mmu: &mut Mmu) { ld_r1_r2!(self, d, l); }
     fn ld_d_hl(&mut self, mmu: &mut Mmu) { ld_r_hl!(self, mmu, d); }
 
+    fn ld_e_a(&mut self, _mmu: &mut Mmu) { ld_r1_r2!(self, e, a); }
     fn ld_e_b(&mut self, _mmu: &mut Mmu) { ld_r1_r2!(self, e, b); }
     fn ld_e_c(&mut self, _mmu: &mut Mmu) { ld_r1_r2!(self, e, c); }
     fn ld_e_d(&mut self, _mmu: &mut Mmu) { ld_r1_r2!(self, e, d); }
@@ -119,6 +123,7 @@ impl Cpu {
     fn ld_e_l(&mut self, _mmu: &mut Mmu) { ld_r1_r2!(self, e, l); }
     fn ld_e_hl(&mut self, mmu: &mut Mmu) { ld_r_hl!(self, mmu, e); }
 
+    fn ld_h_a(&mut self, _mmu: &mut Mmu) { ld_r1_r2!(self, h, a); }
     fn ld_h_b(&mut self, _mmu: &mut Mmu) { ld_r1_r2!(self, h, b); }
     fn ld_h_c(&mut self, _mmu: &mut Mmu) { ld_r1_r2!(self, h, c); }
     fn ld_h_d(&mut self, _mmu: &mut Mmu) { ld_r1_r2!(self, h, d); }
@@ -127,6 +132,7 @@ impl Cpu {
     fn ld_h_l(&mut self, _mmu: &mut Mmu) { ld_r1_r2!(self, h, l); }
     fn ld_h_hl(&mut self, mmu: &mut Mmu) { ld_r_hl!(self, mmu, h); }
 
+    fn ld_l_a(&mut self, _mmu: &mut Mmu) { ld_r1_r2!(self, l, a); }
     fn ld_l_b(&mut self, _mmu: &mut Mmu) { ld_r1_r2!(self, l, b); }
     fn ld_l_c(&mut self, _mmu: &mut Mmu) { ld_r1_r2!(self, l, c); }
     fn ld_l_d(&mut self, _mmu: &mut Mmu) { ld_r1_r2!(self, l, d); }
@@ -234,5 +240,59 @@ mod test {
         test_ld_r1_r2!(a, h, opcode(0x7C));
         test_ld_r1_r2!(a, l, opcode(0x7D));
         test_ld_r_hl!(a, opcode(0x7E));
+
+        test_ld_r1_r2!(b, a, opcode(0x47));
+        test_ld_r1_r2!(b, b, opcode(0x40));
+        test_ld_r1_r2!(b, c, opcode(0x41));
+        test_ld_r1_r2!(b, d, opcode(0x42));
+        test_ld_r1_r2!(b, e, opcode(0x43));
+        test_ld_r1_r2!(b, h, opcode(0x44));
+        test_ld_r1_r2!(b, l, opcode(0x45));
+        test_ld_r_hl!(b, opcode(0x46));
+
+        test_ld_r1_r2!(c, a, opcode(0x4F));
+        test_ld_r1_r2!(c, b, opcode(0x48));
+        test_ld_r1_r2!(c, c, opcode(0x49));
+        test_ld_r1_r2!(c, d, opcode(0x4A));
+        test_ld_r1_r2!(c, e, opcode(0x4B));
+        test_ld_r1_r2!(c, h, opcode(0x4C));
+        test_ld_r1_r2!(c, l, opcode(0x4D));
+        test_ld_r_hl!(c, opcode(0x4E));
+
+        test_ld_r1_r2!(d, a, opcode(0x57));
+        test_ld_r1_r2!(d, b, opcode(0x50));
+        test_ld_r1_r2!(d, c, opcode(0x51));
+        test_ld_r1_r2!(d, d, opcode(0x52));
+        test_ld_r1_r2!(d, e, opcode(0x53));
+        test_ld_r1_r2!(d, h, opcode(0x54));
+        test_ld_r1_r2!(d, l, opcode(0x55));
+        test_ld_r_hl!(d, opcode(0x56));
+
+        test_ld_r1_r2!(e, a, opcode(0x5F));
+        test_ld_r1_r2!(e, b, opcode(0x58));
+        test_ld_r1_r2!(e, c, opcode(0x59));
+        test_ld_r1_r2!(e, d, opcode(0x5A));
+        test_ld_r1_r2!(e, e, opcode(0x5B));
+        test_ld_r1_r2!(e, h, opcode(0x5C));
+        test_ld_r1_r2!(e, l, opcode(0x5D));
+        test_ld_r_hl!(e, opcode(0x5E));
+
+        test_ld_r1_r2!(h, a, opcode(0x67));
+        test_ld_r1_r2!(h, b, opcode(0x60));
+        test_ld_r1_r2!(h, c, opcode(0x61));
+        test_ld_r1_r2!(h, d, opcode(0x62));
+        test_ld_r1_r2!(h, e, opcode(0x63));
+        test_ld_r1_r2!(h, h, opcode(0x64));
+        test_ld_r1_r2!(h, l, opcode(0x65));
+        test_ld_r_hl!(h, opcode(0x66));
+
+        test_ld_r1_r2!(l, a, opcode(0x6F));
+        test_ld_r1_r2!(l, b, opcode(0x68));
+        test_ld_r1_r2!(l, c, opcode(0x69));
+        test_ld_r1_r2!(l, d, opcode(0x6A));
+        test_ld_r1_r2!(l, e, opcode(0x6B));
+        test_ld_r1_r2!(l, h, opcode(0x6C));
+        test_ld_r1_r2!(l, l, opcode(0x6D));
+        test_ld_r_hl!(l, opcode(0x6E));
     }
 }
