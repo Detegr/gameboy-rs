@@ -21,7 +21,7 @@ pub struct Cpu {
 impl Cpu {
     fn hl(&self) -> u16 {
         let mut ret = 0u16;
-        ret |= ((self.h as u16) << 8);
+        ret |= (self.h as u16) << 8;
         ret |= self.l as u16;
         ret
     }
@@ -42,6 +42,12 @@ macro_rules! ld_r1_r2 {
 macro_rules! ld_r_hl {
     ($cpu:expr, $mmu:expr, $r:ident) => {
         $cpu.$r = $mmu[$cpu.hl() as usize];
+        $cpu.cycles += 8;
+    }
+}
+macro_rules! ld_hl_r {
+    ($cpu:expr, $mmu:expr, $r:ident) => {
+        $mmu[$cpu.hl() as usize] = $cpu.$r;
         $cpu.cycles += 8;
     }
 }
@@ -140,6 +146,18 @@ impl Cpu {
     fn ld_l_h(&mut self, _mmu: &mut Mmu) { ld_r1_r2!(self, l, h); }
     fn ld_l_l(&mut self, _mmu: &mut Mmu) { ld_r1_r2!(self, l, l); }
     fn ld_l_hl(&mut self, mmu: &mut Mmu) { ld_r_hl!(self, mmu, l); }
+
+    fn ld_hl_a(&mut self, mmu: &mut Mmu) { ld_hl_r!(self, mmu, a); }
+    fn ld_hl_b(&mut self, mmu: &mut Mmu) { ld_hl_r!(self, mmu, b); }
+    fn ld_hl_c(&mut self, mmu: &mut Mmu) { ld_hl_r!(self, mmu, c); }
+    fn ld_hl_d(&mut self, mmu: &mut Mmu) { ld_hl_r!(self, mmu, d); }
+    fn ld_hl_e(&mut self, mmu: &mut Mmu) { ld_hl_r!(self, mmu, e); }
+    fn ld_hl_h(&mut self, mmu: &mut Mmu) { ld_hl_r!(self, mmu, h); }
+    fn ld_hl_l(&mut self, mmu: &mut Mmu) { ld_hl_r!(self, mmu, l); }
+    fn ld_hl_n(&mut self, mmu: &mut Mmu) {
+        mmu[self.hl() as usize] = self.next_byte(mmu);
+        self.cycles += 12;
+    }
 }
 
 #[cfg(test)]
@@ -179,10 +197,8 @@ mod test {
     fn opcode(opcode: usize) -> opcodes::OpcodeFunction {
         use super::opcodes::OpcodeFunction;
         let func = OPCODES[opcode];
-        unsafe {
-            if func as *const OpcodeFunction as usize == Cpu::nyi as *const OpcodeFunction as usize {
-                panic!(format!("Unimplemented opcode: 0x{:X}", opcode));
-            }
+        if func as *const OpcodeFunction as usize == Cpu::nyi as *const OpcodeFunction as usize {
+            panic!(format!("Unimplemented opcode: 0x{:X}", opcode));
         }
         func
     }
@@ -294,5 +310,44 @@ mod test {
         test_ld_r1_r2!(l, h, opcode(0x6C));
         test_ld_r1_r2!(l, l, opcode(0x6D));
         test_ld_r_hl!(l, opcode(0x6E));
+    }
+
+    #[test]
+    fn test_ld_hl_r() {
+        macro_rules! test_ld_hl_r(
+            ($r:ident, $func: expr) => {{
+                let (mut cpu, mut mmu) = init(None);
+                cpu.$r = 123;
+                cpu.h = 0x11;
+                cpu.l = 0x22;
+                test(&mut cpu, &mut mmu, 8, $func);
+                let value = mmu[cpu.hl() as usize];
+                assert!(value == 123,
+                        format!("ld (hl), {}: Expected {}, got {}", stringify!($r), 123, value));
+            }}
+        );
+        test_ld_hl_r!(a, opcode(0x77));
+        test_ld_hl_r!(b, opcode(0x70));
+        test_ld_hl_r!(c, opcode(0x71));
+        test_ld_hl_r!(d, opcode(0x72));
+        test_ld_hl_r!(e, opcode(0x73));
+
+        // ld_hl_h
+        let (mut cpu, mut mmu) = init(None);
+        cpu.h = 0x11;
+        cpu.l = 0x22;
+        test(&mut cpu, &mut mmu, 8, opcode(0x74));
+        let value = mmu[cpu.hl() as usize];
+        assert!(value == 0x11,
+                format!("ld (hl), h: Expected {}, got {}", 0x11, value));
+
+        // ld_hl_l
+        let (mut cpu, mut mmu) = init(None);
+        cpu.h = 0x11;
+        cpu.l = 0x22;
+        test(&mut cpu, &mut mmu, 8, opcode(0x75));
+        let value = mmu[cpu.hl() as usize];
+        assert!(value == 0x22,
+                format!("ld (hl), h: Expected {}, got {}", 0x22, value));
     }
 }
