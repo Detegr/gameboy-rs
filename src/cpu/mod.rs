@@ -1,6 +1,6 @@
 use byteorder::{ByteOrder, LittleEndian};
 use std::default::Default;
-use mmu::Mmu;
+use ram::Ram;
 
 pub mod opcodes;
 
@@ -42,9 +42,9 @@ impl Cpu {
     }
 }
 macro_rules! ld_n_nn {
-    ($cpu:expr, $mmu:expr, $n1:ident, $n2:ident) => {
-        $cpu.$n2=$cpu.next_byte($mmu);
-        $cpu.$n1=$cpu.next_byte($mmu);
+    ($cpu:expr, $ram:expr, $n1:ident, $n2:ident) => {
+        $cpu.$n2=$cpu.next_byte($ram);
+        $cpu.$n1=$cpu.next_byte($ram);
         $cpu.cycles += 12;
     }
 }
@@ -55,20 +55,20 @@ macro_rules! ld_r1_r2 {
     }
 }
 macro_rules! ld_r_hl {
-    ($cpu:expr, $mmu:expr, $r:ident) => {
-        $cpu.$r = $mmu[$cpu.hl() as usize];
+    ($cpu:expr, $ram:expr, $r:ident) => {
+        $cpu.$r = $ram[$cpu.hl() as usize];
         $cpu.cycles += 8;
     }
 }
 macro_rules! ld_hl_r {
-    ($cpu:expr, $mmu:expr, $r:ident) => {
-        $mmu[$cpu.hl() as usize] = $cpu.$r;
+    ($cpu:expr, $ram:expr, $r:ident) => {
+        $ram[$cpu.hl() as usize] = $cpu.$r;
         $cpu.cycles += 8;
     }
 }
 macro_rules! ld_r_n {
-    ($cpu:expr, $mmu:expr, $r:ident) => {
-        $cpu.$r = $cpu.next_byte($mmu);
+    ($cpu:expr, $ram:expr, $r:ident) => {
+        $cpu.$r = $cpu.next_byte($ram);
         $cpu.cycles += 8;
     }
 }
@@ -81,147 +81,147 @@ impl Cpu {
         self.sp = 0xFFFE;
         self.pc = 0x100;
     }
-    fn next_byte(&mut self, mmu: &mut Mmu) -> u8 {
+    fn next_byte(&mut self, ram: &mut Ram) -> u8 {
         if self.pc > 65536 {
             panic!("Program counter out of bounds")
         }
-        let ret = mmu[self.pc];
+        let ret = ram[self.pc];
         self.pc += 1;
         ret
     }
-    fn nyi(&mut self, _: &mut Mmu) {
+    fn nyi(&mut self, _: &mut Ram) {
         panic!("Instruction not yet implemented")
     }
-    fn nop(&mut self, _: &mut Mmu) {
+    fn nop(&mut self, _: &mut Ram) {
         self.cycles += 8;
     }
 
-    fn ld_bc_nn(&mut self, mmu: &mut Mmu) { ld_n_nn!(self, mmu, b, c); }
-    fn ld_de_nn(&mut self, mmu: &mut Mmu) { ld_n_nn!(self, mmu, d, e); }
-    fn ld_hl_nn(&mut self, mmu: &mut Mmu) { ld_n_nn!(self, mmu, h, l); }
-    fn ld_sp_nn(&mut self, mmu: &mut Mmu) {
-        self.sp = LittleEndian::read_u16(&mmu[self.pc..]);
+    fn ld_bc_nn(&mut self, ram: &mut Ram) { ld_n_nn!(self, ram, b, c); }
+    fn ld_de_nn(&mut self, ram: &mut Ram) { ld_n_nn!(self, ram, d, e); }
+    fn ld_hl_nn(&mut self, ram: &mut Ram) { ld_n_nn!(self, ram, h, l); }
+    fn ld_sp_nn(&mut self, ram: &mut Ram) {
+        self.sp = LittleEndian::read_u16(&ram[self.pc..]);
         self.pc += 2;
         self.cycles += 12;
     }
 
-    fn ld_a_a(&mut self, _mmu: &mut Mmu) { ld_r1_r2!(self, a, a); }
-    fn ld_a_b(&mut self, _mmu: &mut Mmu) { ld_r1_r2!(self, a, b); }
-    fn ld_a_c(&mut self, _mmu: &mut Mmu) { ld_r1_r2!(self, a, c); }
-    fn ld_a_d(&mut self, _mmu: &mut Mmu) { ld_r1_r2!(self, a, d); }
-    fn ld_a_e(&mut self, _mmu: &mut Mmu) { ld_r1_r2!(self, a, e); }
-    fn ld_a_h(&mut self, _mmu: &mut Mmu) { ld_r1_r2!(self, a, h); }
-    fn ld_a_l(&mut self, _mmu: &mut Mmu) { ld_r1_r2!(self, a, l); }
-    fn ld_a_hl(&mut self, mmu: &mut Mmu) { ld_r_hl!(self, mmu, a); }
-    fn ld_a_bc(&mut self, mmu: &mut Mmu) {
-        self.a = mmu[self.bc() as usize];
+    fn ld_a_a(&mut self, _ram: &mut Ram) { ld_r1_r2!(self, a, a); }
+    fn ld_a_b(&mut self, _ram: &mut Ram) { ld_r1_r2!(self, a, b); }
+    fn ld_a_c(&mut self, _ram: &mut Ram) { ld_r1_r2!(self, a, c); }
+    fn ld_a_d(&mut self, _ram: &mut Ram) { ld_r1_r2!(self, a, d); }
+    fn ld_a_e(&mut self, _ram: &mut Ram) { ld_r1_r2!(self, a, e); }
+    fn ld_a_h(&mut self, _ram: &mut Ram) { ld_r1_r2!(self, a, h); }
+    fn ld_a_l(&mut self, _ram: &mut Ram) { ld_r1_r2!(self, a, l); }
+    fn ld_a_hl(&mut self, ram: &mut Ram) { ld_r_hl!(self, ram, a); }
+    fn ld_a_bc(&mut self, ram: &mut Ram) {
+        self.a = ram[self.bc() as usize];
         self.cycles += 8;
     }
-    fn ld_a_de(&mut self, mmu: &mut Mmu) {
-        self.a = mmu[self.de() as usize];
+    fn ld_a_de(&mut self, ram: &mut Ram) {
+        self.a = ram[self.de() as usize];
         self.cycles += 8;
     }
 
-    fn ld_b_a(&mut self, _mmu: &mut Mmu) { ld_r1_r2!(self, b, a); }
-    fn ld_b_b(&mut self, _mmu: &mut Mmu) { ld_r1_r2!(self, b, b); }
-    fn ld_b_c(&mut self, _mmu: &mut Mmu) { ld_r1_r2!(self, b, c); }
-    fn ld_b_d(&mut self, _mmu: &mut Mmu) { ld_r1_r2!(self, b, d); }
-    fn ld_b_e(&mut self, _mmu: &mut Mmu) { ld_r1_r2!(self, b, e); }
-    fn ld_b_h(&mut self, _mmu: &mut Mmu) { ld_r1_r2!(self, b, h); }
-    fn ld_b_l(&mut self, _mmu: &mut Mmu) { ld_r1_r2!(self, b, l); }
-    fn ld_b_hl(&mut self, mmu: &mut Mmu) { ld_r_hl!(self, mmu, b); }
+    fn ld_b_a(&mut self, _ram: &mut Ram) { ld_r1_r2!(self, b, a); }
+    fn ld_b_b(&mut self, _ram: &mut Ram) { ld_r1_r2!(self, b, b); }
+    fn ld_b_c(&mut self, _ram: &mut Ram) { ld_r1_r2!(self, b, c); }
+    fn ld_b_d(&mut self, _ram: &mut Ram) { ld_r1_r2!(self, b, d); }
+    fn ld_b_e(&mut self, _ram: &mut Ram) { ld_r1_r2!(self, b, e); }
+    fn ld_b_h(&mut self, _ram: &mut Ram) { ld_r1_r2!(self, b, h); }
+    fn ld_b_l(&mut self, _ram: &mut Ram) { ld_r1_r2!(self, b, l); }
+    fn ld_b_hl(&mut self, ram: &mut Ram) { ld_r_hl!(self, ram, b); }
 
-    fn ld_c_a(&mut self, _mmu: &mut Mmu) { ld_r1_r2!(self, c, a); }
-    fn ld_c_b(&mut self, _mmu: &mut Mmu) { ld_r1_r2!(self, c, b); }
-    fn ld_c_c(&mut self, _mmu: &mut Mmu) { ld_r1_r2!(self, c, c); }
-    fn ld_c_d(&mut self, _mmu: &mut Mmu) { ld_r1_r2!(self, c, d); }
-    fn ld_c_e(&mut self, _mmu: &mut Mmu) { ld_r1_r2!(self, c, e); }
-    fn ld_c_h(&mut self, _mmu: &mut Mmu) { ld_r1_r2!(self, c, h); }
-    fn ld_c_l(&mut self, _mmu: &mut Mmu) { ld_r1_r2!(self, c, l); }
-    fn ld_c_hl(&mut self, mmu: &mut Mmu) { ld_r_hl!(self, mmu, c); }
+    fn ld_c_a(&mut self, _ram: &mut Ram) { ld_r1_r2!(self, c, a); }
+    fn ld_c_b(&mut self, _ram: &mut Ram) { ld_r1_r2!(self, c, b); }
+    fn ld_c_c(&mut self, _ram: &mut Ram) { ld_r1_r2!(self, c, c); }
+    fn ld_c_d(&mut self, _ram: &mut Ram) { ld_r1_r2!(self, c, d); }
+    fn ld_c_e(&mut self, _ram: &mut Ram) { ld_r1_r2!(self, c, e); }
+    fn ld_c_h(&mut self, _ram: &mut Ram) { ld_r1_r2!(self, c, h); }
+    fn ld_c_l(&mut self, _ram: &mut Ram) { ld_r1_r2!(self, c, l); }
+    fn ld_c_hl(&mut self, ram: &mut Ram) { ld_r_hl!(self, ram, c); }
 
-    fn ld_d_a(&mut self, _mmu: &mut Mmu) { ld_r1_r2!(self, d, a); }
-    fn ld_d_b(&mut self, _mmu: &mut Mmu) { ld_r1_r2!(self, d, b); }
-    fn ld_d_c(&mut self, _mmu: &mut Mmu) { ld_r1_r2!(self, d, c); }
-    fn ld_d_d(&mut self, _mmu: &mut Mmu) { ld_r1_r2!(self, d, d); }
-    fn ld_d_e(&mut self, _mmu: &mut Mmu) { ld_r1_r2!(self, d, e); }
-    fn ld_d_h(&mut self, _mmu: &mut Mmu) { ld_r1_r2!(self, d, h); }
-    fn ld_d_l(&mut self, _mmu: &mut Mmu) { ld_r1_r2!(self, d, l); }
-    fn ld_d_hl(&mut self, mmu: &mut Mmu) { ld_r_hl!(self, mmu, d); }
+    fn ld_d_a(&mut self, _ram: &mut Ram) { ld_r1_r2!(self, d, a); }
+    fn ld_d_b(&mut self, _ram: &mut Ram) { ld_r1_r2!(self, d, b); }
+    fn ld_d_c(&mut self, _ram: &mut Ram) { ld_r1_r2!(self, d, c); }
+    fn ld_d_d(&mut self, _ram: &mut Ram) { ld_r1_r2!(self, d, d); }
+    fn ld_d_e(&mut self, _ram: &mut Ram) { ld_r1_r2!(self, d, e); }
+    fn ld_d_h(&mut self, _ram: &mut Ram) { ld_r1_r2!(self, d, h); }
+    fn ld_d_l(&mut self, _ram: &mut Ram) { ld_r1_r2!(self, d, l); }
+    fn ld_d_hl(&mut self, ram: &mut Ram) { ld_r_hl!(self, ram, d); }
 
-    fn ld_e_a(&mut self, _mmu: &mut Mmu) { ld_r1_r2!(self, e, a); }
-    fn ld_e_b(&mut self, _mmu: &mut Mmu) { ld_r1_r2!(self, e, b); }
-    fn ld_e_c(&mut self, _mmu: &mut Mmu) { ld_r1_r2!(self, e, c); }
-    fn ld_e_d(&mut self, _mmu: &mut Mmu) { ld_r1_r2!(self, e, d); }
-    fn ld_e_e(&mut self, _mmu: &mut Mmu) { ld_r1_r2!(self, e, e); }
-    fn ld_e_h(&mut self, _mmu: &mut Mmu) { ld_r1_r2!(self, e, h); }
-    fn ld_e_l(&mut self, _mmu: &mut Mmu) { ld_r1_r2!(self, e, l); }
-    fn ld_e_hl(&mut self, mmu: &mut Mmu) { ld_r_hl!(self, mmu, e); }
+    fn ld_e_a(&mut self, _ram: &mut Ram) { ld_r1_r2!(self, e, a); }
+    fn ld_e_b(&mut self, _ram: &mut Ram) { ld_r1_r2!(self, e, b); }
+    fn ld_e_c(&mut self, _ram: &mut Ram) { ld_r1_r2!(self, e, c); }
+    fn ld_e_d(&mut self, _ram: &mut Ram) { ld_r1_r2!(self, e, d); }
+    fn ld_e_e(&mut self, _ram: &mut Ram) { ld_r1_r2!(self, e, e); }
+    fn ld_e_h(&mut self, _ram: &mut Ram) { ld_r1_r2!(self, e, h); }
+    fn ld_e_l(&mut self, _ram: &mut Ram) { ld_r1_r2!(self, e, l); }
+    fn ld_e_hl(&mut self, ram: &mut Ram) { ld_r_hl!(self, ram, e); }
 
-    fn ld_h_a(&mut self, _mmu: &mut Mmu) { ld_r1_r2!(self, h, a); }
-    fn ld_h_b(&mut self, _mmu: &mut Mmu) { ld_r1_r2!(self, h, b); }
-    fn ld_h_c(&mut self, _mmu: &mut Mmu) { ld_r1_r2!(self, h, c); }
-    fn ld_h_d(&mut self, _mmu: &mut Mmu) { ld_r1_r2!(self, h, d); }
-    fn ld_h_e(&mut self, _mmu: &mut Mmu) { ld_r1_r2!(self, h, e); }
-    fn ld_h_h(&mut self, _mmu: &mut Mmu) { ld_r1_r2!(self, h, h); }
-    fn ld_h_l(&mut self, _mmu: &mut Mmu) { ld_r1_r2!(self, h, l); }
-    fn ld_h_hl(&mut self, mmu: &mut Mmu) { ld_r_hl!(self, mmu, h); }
+    fn ld_h_a(&mut self, _ram: &mut Ram) { ld_r1_r2!(self, h, a); }
+    fn ld_h_b(&mut self, _ram: &mut Ram) { ld_r1_r2!(self, h, b); }
+    fn ld_h_c(&mut self, _ram: &mut Ram) { ld_r1_r2!(self, h, c); }
+    fn ld_h_d(&mut self, _ram: &mut Ram) { ld_r1_r2!(self, h, d); }
+    fn ld_h_e(&mut self, _ram: &mut Ram) { ld_r1_r2!(self, h, e); }
+    fn ld_h_h(&mut self, _ram: &mut Ram) { ld_r1_r2!(self, h, h); }
+    fn ld_h_l(&mut self, _ram: &mut Ram) { ld_r1_r2!(self, h, l); }
+    fn ld_h_hl(&mut self, ram: &mut Ram) { ld_r_hl!(self, ram, h); }
 
-    fn ld_l_a(&mut self, _mmu: &mut Mmu) { ld_r1_r2!(self, l, a); }
-    fn ld_l_b(&mut self, _mmu: &mut Mmu) { ld_r1_r2!(self, l, b); }
-    fn ld_l_c(&mut self, _mmu: &mut Mmu) { ld_r1_r2!(self, l, c); }
-    fn ld_l_d(&mut self, _mmu: &mut Mmu) { ld_r1_r2!(self, l, d); }
-    fn ld_l_e(&mut self, _mmu: &mut Mmu) { ld_r1_r2!(self, l, e); }
-    fn ld_l_h(&mut self, _mmu: &mut Mmu) { ld_r1_r2!(self, l, h); }
-    fn ld_l_l(&mut self, _mmu: &mut Mmu) { ld_r1_r2!(self, l, l); }
-    fn ld_l_hl(&mut self, mmu: &mut Mmu) { ld_r_hl!(self, mmu, l); }
+    fn ld_l_a(&mut self, _ram: &mut Ram) { ld_r1_r2!(self, l, a); }
+    fn ld_l_b(&mut self, _ram: &mut Ram) { ld_r1_r2!(self, l, b); }
+    fn ld_l_c(&mut self, _ram: &mut Ram) { ld_r1_r2!(self, l, c); }
+    fn ld_l_d(&mut self, _ram: &mut Ram) { ld_r1_r2!(self, l, d); }
+    fn ld_l_e(&mut self, _ram: &mut Ram) { ld_r1_r2!(self, l, e); }
+    fn ld_l_h(&mut self, _ram: &mut Ram) { ld_r1_r2!(self, l, h); }
+    fn ld_l_l(&mut self, _ram: &mut Ram) { ld_r1_r2!(self, l, l); }
+    fn ld_l_hl(&mut self, ram: &mut Ram) { ld_r_hl!(self, ram, l); }
 
-    fn ld_hl_a(&mut self, mmu: &mut Mmu) { ld_hl_r!(self, mmu, a); }
-    fn ld_hl_b(&mut self, mmu: &mut Mmu) { ld_hl_r!(self, mmu, b); }
-    fn ld_hl_c(&mut self, mmu: &mut Mmu) { ld_hl_r!(self, mmu, c); }
-    fn ld_hl_d(&mut self, mmu: &mut Mmu) { ld_hl_r!(self, mmu, d); }
-    fn ld_hl_e(&mut self, mmu: &mut Mmu) { ld_hl_r!(self, mmu, e); }
-    fn ld_hl_h(&mut self, mmu: &mut Mmu) { ld_hl_r!(self, mmu, h); }
-    fn ld_hl_l(&mut self, mmu: &mut Mmu) { ld_hl_r!(self, mmu, l); }
-    fn ld_hl_n(&mut self, mmu: &mut Mmu) {
-        mmu[self.hl() as usize] = self.next_byte(mmu);
+    fn ld_hl_a(&mut self, ram: &mut Ram) { ld_hl_r!(self, ram, a); }
+    fn ld_hl_b(&mut self, ram: &mut Ram) { ld_hl_r!(self, ram, b); }
+    fn ld_hl_c(&mut self, ram: &mut Ram) { ld_hl_r!(self, ram, c); }
+    fn ld_hl_d(&mut self, ram: &mut Ram) { ld_hl_r!(self, ram, d); }
+    fn ld_hl_e(&mut self, ram: &mut Ram) { ld_hl_r!(self, ram, e); }
+    fn ld_hl_h(&mut self, ram: &mut Ram) { ld_hl_r!(self, ram, h); }
+    fn ld_hl_l(&mut self, ram: &mut Ram) { ld_hl_r!(self, ram, l); }
+    fn ld_hl_n(&mut self, ram: &mut Ram) {
+        ram[self.hl() as usize] = self.next_byte(ram);
         self.cycles += 12;
     }
 
-    fn ld_a_n(&mut self, mmu: &mut Mmu) { ld_r_n!(self, mmu, a); }
-    fn ld_b_n(&mut self, mmu: &mut Mmu) { ld_r_n!(self, mmu, b); }
-    fn ld_c_n(&mut self, mmu: &mut Mmu) { ld_r_n!(self, mmu, c); }
-    fn ld_d_n(&mut self, mmu: &mut Mmu) { ld_r_n!(self, mmu, d); }
-    fn ld_e_n(&mut self, mmu: &mut Mmu) { ld_r_n!(self, mmu, e); }
-    fn ld_h_n(&mut self, mmu: &mut Mmu) { ld_r_n!(self, mmu, h); }
-    fn ld_l_n(&mut self, mmu: &mut Mmu) { ld_r_n!(self, mmu, l); }
+    fn ld_a_n(&mut self, ram: &mut Ram) { ld_r_n!(self, ram, a); }
+    fn ld_b_n(&mut self, ram: &mut Ram) { ld_r_n!(self, ram, b); }
+    fn ld_c_n(&mut self, ram: &mut Ram) { ld_r_n!(self, ram, c); }
+    fn ld_d_n(&mut self, ram: &mut Ram) { ld_r_n!(self, ram, d); }
+    fn ld_e_n(&mut self, ram: &mut Ram) { ld_r_n!(self, ram, e); }
+    fn ld_h_n(&mut self, ram: &mut Ram) { ld_r_n!(self, ram, h); }
+    fn ld_l_n(&mut self, ram: &mut Ram) { ld_r_n!(self, ram, l); }
 }
 
 #[cfg(test)]
 mod test {
     use super::*;
-    use ::mmu::Mmu;
+    use ::ram::Ram;
     use super::opcodes::OPCODES;
     
-    fn init(memory: Option<&[u8]>) -> (Cpu, Mmu) {
+    fn init(memory: Option<&[u8]>) -> (Cpu, Ram) {
         let cpu = Cpu::new();
-        let mut mmu = Mmu::new();
+        let mut ram = Ram::new();
         if memory.is_some() {
-            mmu.set_bytes(memory.unwrap());
+            ram.set_bytes(memory.unwrap());
         }
-        (cpu, mmu)
+        (cpu, ram)
     }
     fn cycles<F>(cycles: usize, closure: F)
-        where F: Fn(&mut Cpu, &mut Mmu)
+        where F: Fn(&mut Cpu, &mut Ram)
     {
-        let (mut cpu, mut mmu) = init(None);
-        test(&mut cpu, &mut mmu, cycles, closure);
+        let (mut cpu, mut ram) = init(None);
+        test(&mut cpu, &mut ram, cycles, closure);
     }
-    fn test<F>(cpu: &mut Cpu, mmu: &mut Mmu, cycles: usize, closure: F)
-        where F: Fn(&mut Cpu, &mut Mmu)
+    fn test<F>(cpu: &mut Cpu, ram: &mut Ram, cycles: usize, closure: F)
+        where F: Fn(&mut Cpu, &mut Ram)
     {
         let prev_cycles = cpu.cycles;
-        closure(cpu, mmu);
+        closure(cpu, ram);
         assert!(cpu.cycles == prev_cycles + cycles,
             format!("Expected cpu cycles to be {}, got {}", prev_cycles + cycles, cpu.cycles));
     }
@@ -244,11 +244,11 @@ mod test {
     fn test_ld_n_nn() {
         macro_rules! test_ld_n_nn(
             ($reg1:ident, $reg2:ident, $func: expr) => {{
-                let (mut cpu, mut mmu) = init(Some(&[0,0,1,2]));
+                let (mut cpu, mut ram) = init(Some(&[0,0,1,2]));
                 cpu.pc = 2;
-                test(&mut cpu, &mut mmu, 12, $func);
-                assert!(cpu.$reg1 == mmu[3], format!("Expected {}, got {}", mmu[1], cpu.$reg1));
-                assert!(cpu.$reg2 == mmu[2], format!("Expected {}, got {}", mmu[0], cpu.$reg2));
+                test(&mut cpu, &mut ram, 12, $func);
+                assert!(cpu.$reg1 == ram[3], format!("Expected {}, got {}", ram[1], cpu.$reg1));
+                assert!(cpu.$reg2 == ram[2], format!("Expected {}, got {}", ram[0], cpu.$reg2));
                 assert!(cpu.pc == 4, format!("Expected pc=4, got pc={}", cpu.pc));
             }}
         );
@@ -257,9 +257,9 @@ mod test {
         test_ld_n_nn!(d, e, OPCODES[0x11]);
         test_ld_n_nn!(h, l, OPCODES[0x21]);
 
-        let (mut cpu, mut mmu) = init(Some(&[0,0,1,2]));
+        let (mut cpu, mut ram) = init(Some(&[0,0,1,2]));
         cpu.pc = 2;
-        test(&mut cpu, &mut mmu, 12, OPCODES[0x31]);
+        test(&mut cpu, &mut ram, 12, OPCODES[0x31]);
         assert!(cpu.sp == 513);
         assert!(cpu.pc == 4, format!("Expected pc=4, got pc={}", cpu.pc));
     }
@@ -268,20 +268,20 @@ mod test {
     fn test_ld_r1_r2() {
         macro_rules! test_ld_r1_r2(
             ($r1:ident, $r2:ident, $func:expr) => {{
-                let (mut cpu, mut mmu) = init(None);
+                let (mut cpu, mut ram) = init(None);
                 cpu.$r2 = 123;
-                test(&mut cpu, &mut mmu, 4, $func);
+                test(&mut cpu, &mut ram, 4, $func);
                 assert!(cpu.$r1 == cpu.$r2,
                         format!("ld {}, {}: Expected {}, got {}", stringify!($r1), stringify!($r2), cpu.$r2, cpu.$r1));
             }}
         );
         macro_rules! test_ld_r_hl(
             ($r:ident, $func: expr) => {{
-                let (mut cpu, mut mmu) = init(None);
+                let (mut cpu, mut ram) = init(None);
                 cpu.h = 0x11;
                 cpu.l = 0x22;
-                mmu[0x1122] = 0x33;
-                test(&mut cpu, &mut mmu, 8, $func);
+                ram[0x1122] = 0x33;
+                test(&mut cpu, &mut ram, 8, $func);
                 assert!(cpu.$r == 0x33, format!("ld {}, (hl): Expected {}, got {}", stringify!($r), 0x33, cpu.$r));
             }}
         );
@@ -353,12 +353,12 @@ mod test {
     fn test_ld_hl_r() {
         macro_rules! test_ld_hl_r(
             ($r:ident, $func: expr) => {{
-                let (mut cpu, mut mmu) = init(None);
+                let (mut cpu, mut ram) = init(None);
                 cpu.$r = 123;
                 cpu.h = 0x11;
                 cpu.l = 0x22;
-                test(&mut cpu, &mut mmu, 8, $func);
-                let value = mmu[cpu.hl() as usize];
+                test(&mut cpu, &mut ram, 8, $func);
+                let value = ram[cpu.hl() as usize];
                 assert!(value == 123,
                         format!("ld (hl), {}: Expected {}, got {}", stringify!($r), 123, value));
             }}
@@ -370,29 +370,29 @@ mod test {
         test_ld_hl_r!(e, opcode(0x73));
 
         // ld_hl_h
-        let (mut cpu, mut mmu) = init(None);
+        let (mut cpu, mut ram) = init(None);
         cpu.h = 0x11;
         cpu.l = 0x22;
-        test(&mut cpu, &mut mmu, 8, opcode(0x74));
-        let value = mmu[cpu.hl() as usize];
+        test(&mut cpu, &mut ram, 8, opcode(0x74));
+        let value = ram[cpu.hl() as usize];
         assert!(value == 0x11,
                 format!("ld (hl), h: Expected {}, got {}", 0x11, value));
 
         // ld_hl_l
-        let (mut cpu, mut mmu) = init(None);
+        let (mut cpu, mut ram) = init(None);
         cpu.h = 0x11;
         cpu.l = 0x22;
-        test(&mut cpu, &mut mmu, 8, opcode(0x75));
-        let value = mmu[cpu.hl() as usize];
+        test(&mut cpu, &mut ram, 8, opcode(0x75));
+        let value = ram[cpu.hl() as usize];
         assert!(value == 0x22,
                 format!("ld (hl), l: Expected {}, got {}", 0x22, value));
 
         // ld_hl_n
-        let (mut cpu, mut mmu) = init(Some(&[123]));
+        let (mut cpu, mut ram) = init(Some(&[123]));
         cpu.h = 0x11;
         cpu.l = 0x22;
-        test(&mut cpu, &mut mmu, 12, opcode(0x36));
-        let value = mmu[cpu.hl() as usize];
+        test(&mut cpu, &mut ram, 12, opcode(0x36));
+        let value = ram[cpu.hl() as usize];
         assert!(value == 123,
                 format!("ld (hl), n: Expected {}, got {}", 123, value));
     }
@@ -401,9 +401,9 @@ mod test {
     fn test_ld_r_n() {
         macro_rules! test_ld_r_n {
             ($r:ident, $func:expr) => {{
-                let (mut cpu, mut mmu) = init(Some(&[0,0,123]));
+                let (mut cpu, mut ram) = init(Some(&[0,0,123]));
                 cpu.pc=2;
-                test(&mut cpu, &mut mmu, 8, $func);
+                test(&mut cpu, &mut ram, 8, $func);
                 assert!(cpu.$r == 123,
                     format!("ld {}, n: Expected {}, got {}", stringify!($r), 123, cpu.$r));
             }}
@@ -419,22 +419,22 @@ mod test {
 
     #[test]
     fn test_ld_a_bc() {
-        let (mut cpu, mut mmu) = init(None);
-        mmu[0x1122] = 123;
+        let (mut cpu, mut ram) = init(None);
+        ram[0x1122] = 123;
         cpu.b=0x11;
         cpu.c=0x22;
-        test(&mut cpu, &mut mmu, 8, opcode(0x0A));
+        test(&mut cpu, &mut ram, 8, opcode(0x0A));
         assert!(cpu.a == 123,
             format!("ld a, (bc): Expected {}, got {}", 123, cpu.a));
     }
 
     #[test]
     fn test_ld_a_de() {
-        let (mut cpu, mut mmu) = init(None);
-        mmu[0x1122] = 123;
+        let (mut cpu, mut ram) = init(None);
+        ram[0x1122] = 123;
         cpu.d=0x11;
         cpu.e=0x22;
-        test(&mut cpu, &mut mmu, 8, opcode(0x1A));
+        test(&mut cpu, &mut ram, 8, opcode(0x1A));
         assert!(cpu.a == 123,
             format!("ld a, (bc): Expected {}, got {}", 123, cpu.a));
     }

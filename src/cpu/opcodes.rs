@@ -1,7 +1,7 @@
 use ::cpu::Cpu;
-use ::mmu::Mmu;
+use ::ram::Ram;
 
-pub type OpcodeFunction = fn(&mut Cpu, &mut Mmu);
+pub type OpcodeFunction = fn(&mut Cpu, &mut Ram);
 pub static OPCODES: &'static [OpcodeFunction] = &[
     Cpu::nop, Cpu::ld_bc_nn, Cpu::nyi, Cpu::nyi, Cpu::nyi, Cpu::nyi, Cpu::ld_b_n, Cpu::nyi, Cpu::nyi, Cpu::nyi, Cpu::ld_a_bc, Cpu::nyi, Cpu::nyi, Cpu::nyi, Cpu::ld_c_n, Cpu::nyi,
     Cpu::nyi, Cpu::ld_de_nn, Cpu::nyi, Cpu::nyi, Cpu::nyi, Cpu::nyi, Cpu::ld_d_n, Cpu::nyi, Cpu::nyi, Cpu::nyi, Cpu::ld_a_de, Cpu::nyi, Cpu::nyi, Cpu::nyi, Cpu::ld_e_n, Cpu::nyi,

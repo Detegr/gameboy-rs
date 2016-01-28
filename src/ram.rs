@@ -1,10 +1,10 @@
 use std::ops::{Deref, DerefMut};
-pub struct Mmu {
+pub struct Ram {
     memory: Box<[u8]>
 }
-impl Mmu {
-    pub fn new() -> Mmu {
-        Mmu {
+impl Ram {
+    pub fn new() -> Ram {
+        Ram {
             memory: vec![0; 65536].into_boxed_slice()
         }
     }
@@ -16,13 +16,13 @@ impl Mmu {
         }
     }
 }
-impl Deref for Mmu {
+impl Deref for Ram {
     type Target = [u8];
     fn deref(&self) -> &Self::Target {
         &self.memory
     }
 }
-impl DerefMut for Mmu {
+impl DerefMut for Ram {
     fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.memory
     }

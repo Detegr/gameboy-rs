@@ -1,17 +1,17 @@
 extern crate byteorder;
 
 mod cpu;
-mod mmu;
+mod ram;
 
 use cpu::Cpu;
-use mmu::Mmu;
+use ram::Ram;
 
 fn main() {
     let mut cpu = Cpu::new();
-    let mut mmu = Mmu::new();
-    execute_next(&mut cpu, &mut mmu);
+    let mut ram = Ram::new();
+    execute_next(&mut cpu, &mut ram);
 }
 
-pub fn execute_next(cpu: &mut Cpu, mmu: &mut Mmu) {
-    cpu::opcodes::OPCODES[0](cpu, mmu);
+pub fn execute_next(cpu: &mut Cpu, ram: &mut Ram) {
+    cpu::opcodes::OPCODES[0](cpu, ram);
 }
