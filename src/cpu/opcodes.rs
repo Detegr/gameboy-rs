@@ -3,8 +3,8 @@ use ::ram::Ram;
 
 pub type OpcodeFunction = fn(&mut Cpu, &mut Ram);
 pub static OPCODES: &'static [OpcodeFunction] = &[
-    Cpu::nop, Cpu::ld_bc_nn, Cpu::nyi, Cpu::nyi, Cpu::nyi, Cpu::nyi, Cpu::ld_b_n, Cpu::nyi, Cpu::nyi, Cpu::nyi, Cpu::ld_a_bc, Cpu::nyi, Cpu::nyi, Cpu::nyi, Cpu::ld_c_n, Cpu::nyi,
-    Cpu::nyi, Cpu::ld_de_nn, Cpu::nyi, Cpu::nyi, Cpu::nyi, Cpu::nyi, Cpu::ld_d_n, Cpu::nyi, Cpu::nyi, Cpu::nyi, Cpu::ld_a_de, Cpu::nyi, Cpu::nyi, Cpu::nyi, Cpu::ld_e_n, Cpu::nyi,
+    Cpu::nop, Cpu::ld_bc_nn, Cpu::ld_bc_a, Cpu::nyi, Cpu::nyi, Cpu::nyi, Cpu::ld_b_n, Cpu::nyi, Cpu::nyi, Cpu::nyi, Cpu::ld_a_bc, Cpu::nyi, Cpu::nyi, Cpu::nyi, Cpu::ld_c_n, Cpu::nyi,
+    Cpu::nyi, Cpu::ld_de_nn, Cpu::ld_de_a, Cpu::nyi, Cpu::nyi, Cpu::nyi, Cpu::ld_d_n, Cpu::nyi, Cpu::nyi, Cpu::nyi, Cpu::ld_a_de, Cpu::nyi, Cpu::nyi, Cpu::nyi, Cpu::ld_e_n, Cpu::nyi,
     Cpu::nyi, Cpu::ld_hl_nn, Cpu::nyi, Cpu::nyi, Cpu::nyi, Cpu::nyi, Cpu::ld_h_n, Cpu::nyi, Cpu::nyi, Cpu::nyi, Cpu::nyi, Cpu::nyi, Cpu::nyi, Cpu::nyi, Cpu::ld_l_n, Cpu::nyi,
     Cpu::nyi, Cpu::ld_sp_nn, Cpu::nyi, Cpu::nyi, Cpu::nyi, Cpu::nyi, Cpu::ld_hl_n, Cpu::nyi, Cpu::nyi, Cpu::nyi, Cpu::nyi, Cpu::nyi, Cpu::nyi, Cpu::nyi, Cpu::ld_a_n, Cpu::nyi,
     Cpu::ld_b_b, Cpu::ld_b_c, Cpu::ld_b_d, Cpu::ld_b_e, Cpu::ld_b_h, Cpu::ld_b_l, Cpu::ld_b_hl, Cpu::ld_b_a, Cpu::ld_c_b, Cpu::ld_c_c, Cpu::ld_c_d, Cpu::ld_c_e, Cpu::ld_c_h, Cpu::ld_c_l, Cpu::ld_c_hl, Cpu::ld_c_a,
