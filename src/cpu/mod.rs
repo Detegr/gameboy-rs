@@ -51,6 +51,12 @@ macro_rules! ld_hl_r {
         $cpu.cycles += 8;
     }
 }
+macro_rules! ld_r_n {
+    ($cpu:expr, $mmu:expr, $r:ident) => {
+        $cpu.$r = $cpu.next_byte($mmu);
+        $cpu.cycles += 8;
+    }
+}
 
 impl Cpu {
     pub fn new() -> Cpu {
@@ -158,6 +164,14 @@ impl Cpu {
         mmu[self.hl() as usize] = self.next_byte(mmu);
         self.cycles += 12;
     }
+
+    fn ld_a_n(&mut self, mmu: &mut Mmu) { ld_r_n!(self, mmu, a); }
+    fn ld_b_n(&mut self, mmu: &mut Mmu) { ld_r_n!(self, mmu, b); }
+    fn ld_c_n(&mut self, mmu: &mut Mmu) { ld_r_n!(self, mmu, c); }
+    fn ld_d_n(&mut self, mmu: &mut Mmu) { ld_r_n!(self, mmu, d); }
+    fn ld_e_n(&mut self, mmu: &mut Mmu) { ld_r_n!(self, mmu, e); }
+    fn ld_h_n(&mut self, mmu: &mut Mmu) { ld_r_n!(self, mmu, h); }
+    fn ld_l_n(&mut self, mmu: &mut Mmu) { ld_r_n!(self, mmu, l); }
 }
 
 #[cfg(test)]
@@ -358,5 +372,25 @@ mod test {
         let value = mmu[cpu.hl() as usize];
         assert!(value == 123,
                 format!("ld (hl), n: Expected {}, got {}", 123, value));
+    }
+
+    #[test]
+    fn test_ld_r_n() {
+        macro_rules! test_ld_r_n {
+            ($r:ident, $func:expr) => {{
+                let (mut cpu, mut mmu) = init(Some(&[0,0,123]));
+                cpu.pc=2;
+                test(&mut cpu, &mut mmu, 8, $func);
+                assert!(cpu.$r == 123,
+                    format!("ld {}, n: Expected {}, got {}", stringify!($r), 123, cpu.$r));
+            }}
+        };
+        test_ld_r_n!(a, opcode(0x3E));
+        test_ld_r_n!(b, opcode(0x06));
+        test_ld_r_n!(c, opcode(0x0E));
+        test_ld_r_n!(d, opcode(0x16));
+        test_ld_r_n!(e, opcode(0x1E));
+        test_ld_r_n!(h, opcode(0x26));
+        test_ld_r_n!(l, opcode(0x2E));
     }
 }
