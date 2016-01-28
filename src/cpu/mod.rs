@@ -137,6 +137,14 @@ impl Cpu {
         self.a = ram[addr as usize];
         self.cycles += 16;
     }
+    fn ld_a_addr_c(&mut self, ram: &mut Ram) {
+        self.a = ram[0xFF00 | (self.c as usize)];
+        self.cycles += 8;
+    }
+    fn ld_addr_c_a(&mut self, ram: &mut Ram) {
+        ram[0xFF00 | (self.c as usize)] = self.a;
+        self.cycles += 8;
+    }
 
     fn ld_b_a(&mut self, _ram: &mut Ram) { ld_r1_r2!(self, b, a); }
     fn ld_b_b(&mut self, _ram: &mut Ram) { ld_r1_r2!(self, b, b); }
@@ -474,5 +482,23 @@ mod test {
         test(&mut cpu, &mut ram, 16, opcode(0xFA));
         assert!(cpu.a == 123,
             format!("ld a, (nn): Expected 123, got {}", cpu.a));
+    }
+    #[test]
+    fn test_ld_a_addr_c() {
+        let (mut cpu, mut ram) = init(None);
+        cpu.c = 0x05;
+        ram[0xFF05] = 123;
+        test(&mut cpu, &mut ram, 8, opcode(0xF2));
+        assert!(cpu.a == 123,
+            format!("ld a, (c): Expected 123, got {}", cpu.a));
+    }
+    #[test]
+    fn test_ld_addr_c_a() {
+        let (mut cpu, mut ram) = init(None);
+        cpu.a = 123;
+        cpu.c = 0x05;
+        test(&mut cpu, &mut ram, 8, opcode(0xE2));
+        assert!(ram[0xFF05] == 123,
+            format!("ld (c), a: Expected 123, got {}", ram[0xFF05]));
     }
 }
