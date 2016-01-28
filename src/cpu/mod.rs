@@ -72,6 +72,21 @@ macro_rules! ld_r_n {
         $cpu.cycles += 8;
     }
 }
+macro_rules! dec_nn {
+    ($cpu:expr, $r1:ident, $r2:ident) => {{
+        if $cpu.$r2 == 0x0 {
+            if $cpu.$r1 == 0x0 {
+                $cpu.$r1 = 0xFF;
+            } else {
+                $cpu.$r1 -= 0x1;
+            }
+            $cpu.$r2 = 0xFF;
+        } else {
+            $cpu.$r2 -= 0x1;
+        }
+        $cpu.cycles += 8;
+    }}
+}
 
 impl Cpu {
     pub fn new() -> Cpu {
@@ -89,10 +104,23 @@ impl Cpu {
         self.pc += 1;
         ret
     }
+
     fn nyi(&mut self, _: &mut Ram) {
         panic!("Instruction not yet implemented")
     }
     fn nop(&mut self, _: &mut Ram) {
+        self.cycles += 8;
+    }
+
+    fn dec_bc(&mut self, _ram: &mut Ram) { dec_nn!(self, b, c) }
+    fn dec_de(&mut self, _ram: &mut Ram) { dec_nn!(self, d, e) }
+    fn dec_hl(&mut self, _ram: &mut Ram) { dec_nn!(self, h, l) }
+    fn dec_sp(&mut self, _ram: &mut Ram) {
+        if self.sp == 0 {
+            self.sp = 0xFFFF;
+        } else {
+            self.sp -= 1;
+        }
         self.cycles += 8;
     }
 
@@ -260,6 +288,35 @@ mod test {
     #[test]
     fn test_nop() {
         cycles(8, Cpu::nop);
+    }
+
+    #[test]
+    fn test_dec_nn() {
+        macro_rules! test_dec_nn(
+            ($r1:ident, $r2:ident, $func:expr) => {{
+                let (mut cpu, mut ram) = init(None);
+                cpu.$r1 = 0x0;
+                cpu.$r2 = 0x0;
+                test(&mut cpu, &mut ram, 8, $func);
+                assert!(cpu.$r1 == 0xFF, format!("dec {}{}: Expected {}, got {}", stringify!($r1), stringify!($r2), 0xFF, cpu.$r1));
+                assert!(cpu.$r2 == 0xFF, format!("dec {}{}: Expected {}, got {}", stringify!($r1), stringify!($r2), 0xFF, cpu.$r2));
+
+                cpu.$r1 = 0xFF;
+                cpu.$r2 = 0x1;
+                test(&mut cpu, &mut ram, 8, $func);
+                assert!(cpu.$r1 == 0xFF, format!("dec {}{}: Expected {}, got {}", stringify!($r1), stringify!($r2), 0xFF, cpu.$r1));
+                assert!(cpu.$r2 == 0x0, format!("dec {}{}: Expected {}, got {}", stringify!($r1), stringify!($r2), 0x0, cpu.$r2));
+
+                cpu.$r1 = 0x1;
+                cpu.$r2 = 0x6;
+                test(&mut cpu, &mut ram, 8, $func);
+                assert!(cpu.$r1 == 0x1, format!("dec {}{}: Expected {}, got {}", stringify!($r1), stringify!($r2), 0x1, cpu.$r1));
+                assert!(cpu.$r2 == 0x5, format!("dec {}{}: Expected {}, got {}", stringify!($r1), stringify!($r2), 0x5, cpu.$r2));
+            }}
+        );
+        test_dec_nn!(b, c, opcode(0x0B));
+        test_dec_nn!(d, e, opcode(0x1B));
+        test_dec_nn!(h, l, opcode(0x2B));
     }
 
     #[test]
