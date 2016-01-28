@@ -320,6 +320,18 @@ mod test {
     }
 
     #[test]
+    fn test_dec_sp() {
+        let (mut cpu, mut ram) = init(None);
+        cpu.sp = 1;
+        test(&mut cpu, &mut ram, 8, opcode(0x3B));
+        assert!(cpu.sp == 0x0);
+        test(&mut cpu, &mut ram, 8, opcode(0x3B));
+        assert!(cpu.sp == 0xFFFF);
+        test(&mut cpu, &mut ram, 8, opcode(0x3B));
+        assert!(cpu.sp == 0xFFFE);
+    }
+
+    #[test]
     fn test_ld_n_nn() {
         macro_rules! test_ld_n_nn(
             ($reg1:ident, $reg2:ident, $func: expr) => {{
