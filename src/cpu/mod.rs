@@ -100,6 +100,13 @@ impl Cpu {
     fn ld_bc_nn(&mut self, ram: &mut Ram) { ld_n_nn!(self, ram, b, c); }
     fn ld_de_a(&mut self, ram: &mut Ram) { ld_rr_r!(self, ram, de, a); }
     fn ld_de_nn(&mut self, ram: &mut Ram) { ld_n_nn!(self, ram, d, e); }
+    fn ld_nn_a(&mut self, ram: &mut Ram) {
+        let mut addr = 0u16;
+        addr |= self.next_byte(ram) as u16;
+        addr |= (self.next_byte(ram) as u16) << 8;
+        ram[addr as usize] = self.a;
+        self.cycles += 16;
+    }
     fn ld_hl_nn(&mut self, ram: &mut Ram) { ld_n_nn!(self, ram, h, l); }
     fn ld_sp_nn(&mut self, ram: &mut Ram) {
         self.sp = LittleEndian::read_u16(&ram[self.pc..]);
@@ -429,6 +436,16 @@ mod test {
     }
 
     #[test]
+    fn test_ld_nn_a() {
+        let (mut cpu, mut ram) = init(Some(&[0x0, 0x0, 0x22, 0x11]));
+        cpu.pc = 2;
+        cpu.a = 123;
+        test(&mut cpu, &mut ram, 16, opcode(0xEA));
+        assert!(ram[0x1122] == 123,
+            format!("ld (nn), a: Expected {}, got {}", 123, ram[0x1122]));
+    }
+
+    #[test]
     fn test_ld_a_bc() {
         let (mut cpu, mut ram) = init(None);
         ram[0x1122] = 123;
@@ -447,7 +464,7 @@ mod test {
         cpu.e=0x22;
         test(&mut cpu, &mut ram, 8, opcode(0x1A));
         assert!(cpu.a == 123,
-            format!("ld a, (bc): Expected {}, got {}", 123, cpu.a));
+            format!("ld a, (de): Expected {}, got {}", 123, cpu.a));
     }
     #[test]
     fn test_ld_a_nn() {
