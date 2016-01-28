@@ -18,5 +18,5 @@ pub static OPCODES: &'static [OpcodeFunction] = &[
     Cpu::nyi, Cpu::nyi, Cpu::nyi, Cpu::nyi, Cpu::nyi, Cpu::nyi, Cpu::nyi, Cpu::nyi, Cpu::nyi, Cpu::nyi, Cpu::nyi, Cpu::nyi, Cpu::nyi, Cpu::nyi, Cpu::nyi, Cpu::nyi,
     Cpu::nyi, Cpu::nyi, Cpu::nyi, Cpu::nyi, Cpu::nyi, Cpu::nyi, Cpu::nyi, Cpu::nyi, Cpu::nyi, Cpu::nyi, Cpu::nyi, Cpu::nyi, Cpu::nyi, Cpu::nyi, Cpu::nyi, Cpu::nyi,
     Cpu::nyi, Cpu::nyi, Cpu::nyi, Cpu::nyi, Cpu::nyi, Cpu::nyi, Cpu::nyi, Cpu::nyi, Cpu::nyi, Cpu::nyi, Cpu::nyi, Cpu::nyi, Cpu::nyi, Cpu::nyi, Cpu::nyi, Cpu::nyi,
-    Cpu::nyi, Cpu::nyi, Cpu::nyi, Cpu::nyi, Cpu::nyi, Cpu::nyi, Cpu::nyi, Cpu::nyi, Cpu::nyi, Cpu::nyi, Cpu::nyi, Cpu::nyi, Cpu::nyi, Cpu::nyi, Cpu::nyi, Cpu::nyi,
+    Cpu::nyi, Cpu::nyi, Cpu::nyi, Cpu::nyi, Cpu::nyi, Cpu::nyi, Cpu::nyi, Cpu::nyi, Cpu::nyi, Cpu::nyi, Cpu::ld_a_nn, Cpu::nyi, Cpu::nyi, Cpu::nyi, Cpu::nyi, Cpu::nyi,
 ];

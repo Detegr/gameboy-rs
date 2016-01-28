@@ -121,6 +121,13 @@ impl Cpu {
         self.a = ram[self.de() as usize];
         self.cycles += 8;
     }
+    fn ld_a_nn(&mut self, ram: &mut Ram) {
+        let mut addr = 0u16;
+        addr |= self.next_byte(ram) as u16;
+        addr |= (self.next_byte(ram) as u16) << 8;
+        self.a = ram[addr as usize];
+        self.cycles += 16;
+    }
 
     fn ld_b_a(&mut self, _ram: &mut Ram) { ld_r1_r2!(self, b, a); }
     fn ld_b_b(&mut self, _ram: &mut Ram) { ld_r1_r2!(self, b, b); }
@@ -437,5 +444,14 @@ mod test {
         test(&mut cpu, &mut ram, 8, opcode(0x1A));
         assert!(cpu.a == 123,
             format!("ld a, (bc): Expected {}, got {}", 123, cpu.a));
+    }
+    #[test]
+    fn test_ld_a_nn() {
+        let (mut cpu, mut ram) = init(Some(&[0,0,0x22,0x11]));
+        cpu.pc = 2;
+        ram[0x1122] = 123;
+        test(&mut cpu, &mut ram, 16, opcode(0xFA));
+        assert!(cpu.a == 123,
+            format!("ld a, (nn): Expected 123, got {}", cpu.a));
     }
 }
