@@ -248,25 +248,6 @@ mod test {
     }
 
     #[test]
-    fn test_ld_bc_a() {
-        let (mut cpu, mut ram) = init(None);
-        cpu.a=123;
-        cpu.b=0x11;
-        cpu.c=0x22;
-        test(&mut cpu, &mut ram, 8, opcode(0x02));
-        assert!(ram[0x1122] == 123, format!("ld (bc), a: Expected 123, got {}", ram[0x1122]));
-    }
-    #[test]
-    fn test_ld_de_a() {
-        let (mut cpu, mut ram) = init(None);
-        cpu.a=123;
-        cpu.d=0x11;
-        cpu.e=0x22;
-        test(&mut cpu, &mut ram, 8, opcode(0x12));
-        assert!(ram[0x1122] == 123, format!("ld (de), a: Expected 123, got {}", ram[0x1122]));
-    }
-
-    #[test]
     fn test_ld_n_nn() {
         macro_rules! test_ld_n_nn(
             ($reg1:ident, $reg2:ident, $func: expr) => {{
@@ -376,24 +357,25 @@ mod test {
     }
 
     #[test]
-    fn test_ld_hl_r() {
-        macro_rules! test_ld_hl_r(
-            ($r:ident, $func: expr) => {{
+    fn test_ld_rr_r() {
+        macro_rules! test_ld_rr_r(
+            ($rr_1:ident, $rr_2:ident, $rr:ident, $r:ident, $func: expr) => {{
                 let (mut cpu, mut ram) = init(None);
                 cpu.$r = 123;
-                cpu.h = 0x11;
-                cpu.l = 0x22;
+                cpu.$rr_1 = 0x11;
+                cpu.$rr_2 = 0x22;
                 test(&mut cpu, &mut ram, 8, $func);
-                let value = ram[cpu.hl() as usize];
+                assert!(cpu.$rr() == 0x1122);
+                let value = ram[cpu.$rr() as usize];
                 assert!(value == 123,
-                        format!("ld (hl), {}: Expected {}, got {}", stringify!($r), 123, value));
+                        format!("ld ({}), {}: Expected {}, got {}", stringify!($rr), stringify!($r), 123, value));
             }}
         );
-        test_ld_hl_r!(a, opcode(0x77));
-        test_ld_hl_r!(b, opcode(0x70));
-        test_ld_hl_r!(c, opcode(0x71));
-        test_ld_hl_r!(d, opcode(0x72));
-        test_ld_hl_r!(e, opcode(0x73));
+        test_ld_rr_r!(h, l, hl, a, opcode(0x77));
+        test_ld_rr_r!(h, l, hl, b, opcode(0x70));
+        test_ld_rr_r!(h, l, hl, c, opcode(0x71));
+        test_ld_rr_r!(h, l, hl, d, opcode(0x72));
+        test_ld_rr_r!(h, l, hl, e, opcode(0x73));
 
         // ld_hl_h
         let (mut cpu, mut ram) = init(None);
@@ -421,6 +403,9 @@ mod test {
         let value = ram[cpu.hl() as usize];
         assert!(value == 123,
                 format!("ld (hl), n: Expected {}, got {}", 123, value));
+
+        test_ld_rr_r!(b, c, bc, a, opcode(0x02));
+        test_ld_rr_r!(d, e, de, a, opcode(0x12));
     }
 
     #[test]
