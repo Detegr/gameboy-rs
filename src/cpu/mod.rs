@@ -19,6 +19,21 @@ pub struct Cpu {
     cycles: usize,
 }
 impl Cpu {
+    #[inline]
+    fn bc(&self) -> u16 {
+        let mut ret = 0u16;
+        ret |= (self.b as u16) << 8;
+        ret |= self.c as u16;
+        ret
+    }
+    #[inline]
+    fn de(&self) -> u16 {
+        let mut ret = 0u16;
+        ret |= (self.d as u16) << 8;
+        ret |= self.e as u16;
+        ret
+    }
+    #[inline]
     fn hl(&self) -> u16 {
         let mut ret = 0u16;
         ret |= (self.h as u16) << 8;
@@ -98,6 +113,14 @@ impl Cpu {
     fn ld_a_h(&mut self, _mmu: &mut Mmu) { ld_r1_r2!(self, a, h); }
     fn ld_a_l(&mut self, _mmu: &mut Mmu) { ld_r1_r2!(self, a, l); }
     fn ld_a_hl(&mut self, mmu: &mut Mmu) { ld_r_hl!(self, mmu, a); }
+    fn ld_a_bc(&mut self, mmu: &mut Mmu) {
+        self.a = mmu[self.bc() as usize];
+        self.cycles += 8;
+    }
+    fn ld_a_de(&mut self, mmu: &mut Mmu) {
+        self.a = mmu[self.de() as usize];
+        self.cycles += 8;
+    }
 
     fn ld_b_a(&mut self, _mmu: &mut Mmu) { ld_r1_r2!(self, b, a); }
     fn ld_b_b(&mut self, _mmu: &mut Mmu) { ld_r1_r2!(self, b, b); }
@@ -392,5 +415,27 @@ mod test {
         test_ld_r_n!(e, opcode(0x1E));
         test_ld_r_n!(h, opcode(0x26));
         test_ld_r_n!(l, opcode(0x2E));
+    }
+
+    #[test]
+    fn test_ld_a_bc() {
+        let (mut cpu, mut mmu) = init(None);
+        mmu[0x1122] = 123;
+        cpu.b=0x11;
+        cpu.c=0x22;
+        test(&mut cpu, &mut mmu, 8, opcode(0x0A));
+        assert!(cpu.a == 123,
+            format!("ld a, (bc): Expected {}, got {}", 123, cpu.a));
+    }
+
+    #[test]
+    fn test_ld_a_de() {
+        let (mut cpu, mut mmu) = init(None);
+        mmu[0x1122] = 123;
+        cpu.d=0x11;
+        cpu.e=0x22;
+        test(&mut cpu, &mut mmu, 8, opcode(0x1A));
+        assert!(cpu.a == 123,
+            format!("ld a, (bc): Expected {}, got {}", 123, cpu.a));
     }
 }
