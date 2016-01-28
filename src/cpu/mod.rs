@@ -348,6 +348,15 @@ mod test {
         test(&mut cpu, &mut mmu, 8, opcode(0x75));
         let value = mmu[cpu.hl() as usize];
         assert!(value == 0x22,
-                format!("ld (hl), h: Expected {}, got {}", 0x22, value));
+                format!("ld (hl), l: Expected {}, got {}", 0x22, value));
+
+        // ld_hl_n
+        let (mut cpu, mut mmu) = init(Some(&[123]));
+        cpu.h = 0x11;
+        cpu.l = 0x22;
+        test(&mut cpu, &mut mmu, 12, opcode(0x36));
+        let value = mmu[cpu.hl() as usize];
+        assert!(value == 123,
+                format!("ld (hl), n: Expected {}, got {}", 123, value));
     }
 }
