@@ -75,12 +75,8 @@ macro_rules! ld_r_n {
 macro_rules! dec_nn {
     ($cpu:expr, $r1:ident, $r2:ident) => {{
         if $cpu.$r2 == 0x0 {
-            if $cpu.$r1 == 0x0 {
-                $cpu.$r1 = 0xFF;
-            } else {
-                $cpu.$r1 -= 0x1;
-            }
-            $cpu.$r2 = 0xFF;
+            $cpu.$r1 = $cpu.$r1.wrapping_sub(1);
+            $cpu.$r2 = $cpu.$r2.wrapping_sub(1);
         } else {
             $cpu.$r2 -= 0x1;
         }
@@ -116,11 +112,7 @@ impl Cpu {
     fn dec_de(&mut self, _ram: &mut Ram) { dec_nn!(self, d, e) }
     fn dec_hl(&mut self, _ram: &mut Ram) { dec_nn!(self, h, l) }
     fn dec_sp(&mut self, _ram: &mut Ram) {
-        if self.sp == 0 {
-            self.sp = 0xFFFF;
-        } else {
-            self.sp -= 1;
-        }
+        self.sp = self.sp.wrapping_sub(1);
         self.cycles += 8;
     }
 
@@ -253,7 +245,7 @@ impl Cpu {
 mod test {
     use super::*;
     use ::ram::Ram;
-    
+
     fn init(memory: Option<&[u8]>) -> (Cpu, Ram) {
         let cpu = Cpu::new();
         let mut ram = Ram::new();
