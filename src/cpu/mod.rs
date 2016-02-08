@@ -6,6 +6,7 @@ use std::default::Default;
 use ram::Ram;
 
 pub mod opcodes;
+pub mod cpuflags;
 
 #[derive(Default)]
 pub struct Cpu {
@@ -16,11 +17,12 @@ pub struct Cpu {
     e: u8,
     h: u8,
     l: u8,
-    f: u8,
+    f: cpuflags::CpuFlags,
     pc: usize, // Actually u16 but defined as usize to avoid casting for indexing
     sp: u16,
     cycles: usize,
 }
+
 impl Cpu {
     #[inline]
     fn bc(&self) -> u16 {
