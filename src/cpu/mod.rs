@@ -46,7 +46,7 @@ impl Cpu {
         ret
     }
 }
-macro_rules! ld_n_nn {
+macro_rules! ld_rr_nn {
     ($cpu:expr, $ram:expr, $n1:ident, $n2:ident) => {
         $cpu.$n2=$cpu.next_byte($ram);
         $cpu.$n1=$cpu.next_byte($ram);
@@ -77,7 +77,7 @@ macro_rules! ld_r_n {
         $cpu.cycles += 8;
     }
 }
-macro_rules! inc_nn {
+macro_rules! inc_rr {
     ($cpu:expr, $r1:ident, $r2:ident) => {{
         if $cpu.$r2 == 0xFF {
             $cpu.$r1 = $cpu.$r1.wrapping_add(1);
@@ -88,7 +88,7 @@ macro_rules! inc_nn {
         $cpu.cycles += 8;
     }}
 }
-macro_rules! dec_nn {
+macro_rules! dec_rr {
     ($cpu:expr, $r1:ident, $r2:ident) => {{
         if $cpu.$r2 == 0x0 {
             $cpu.$r1 = $cpu.$r1.wrapping_sub(1);
@@ -124,25 +124,25 @@ impl Cpu {
         self.cycles += 8;
     }
 
-    fn dec_bc(&mut self, _ram: &mut Ram) { dec_nn!(self, b, c) }
-    fn dec_de(&mut self, _ram: &mut Ram) { dec_nn!(self, d, e) }
-    fn dec_hl(&mut self, _ram: &mut Ram) { dec_nn!(self, h, l) }
+    fn dec_bc(&mut self, _ram: &mut Ram) { dec_rr!(self, b, c) }
+    fn dec_de(&mut self, _ram: &mut Ram) { dec_rr!(self, d, e) }
+    fn dec_hl(&mut self, _ram: &mut Ram) { dec_rr!(self, h, l) }
     fn dec_sp(&mut self, _ram: &mut Ram) {
         self.sp = self.sp.wrapping_sub(1);
         self.cycles += 8;
     }
-    fn inc_bc(&mut self, _ram: &mut Ram) { inc_nn!(self, b, c) }
-    fn inc_de(&mut self, _ram: &mut Ram) { inc_nn!(self, d, e) }
-    fn inc_hl(&mut self, _ram: &mut Ram) { inc_nn!(self, h, l) }
+    fn inc_bc(&mut self, _ram: &mut Ram) { inc_rr!(self, b, c) }
+    fn inc_de(&mut self, _ram: &mut Ram) { inc_rr!(self, d, e) }
+    fn inc_hl(&mut self, _ram: &mut Ram) { inc_rr!(self, h, l) }
     fn inc_sp(&mut self, _ram: &mut Ram) {
         self.sp = self.sp.wrapping_add(1);
         self.cycles += 8;
     }
 
     fn ld_bc_a(&mut self, ram: &mut Ram) { ld_rr_r!(self, ram, bc, a); }
-    fn ld_bc_nn(&mut self, ram: &mut Ram) { ld_n_nn!(self, ram, b, c); }
+    fn ld_bc_nn(&mut self, ram: &mut Ram) { ld_rr_nn!(self, ram, b, c); }
     fn ld_de_a(&mut self, ram: &mut Ram) { ld_rr_r!(self, ram, de, a); }
-    fn ld_de_nn(&mut self, ram: &mut Ram) { ld_n_nn!(self, ram, d, e); }
+    fn ld_de_nn(&mut self, ram: &mut Ram) { ld_rr_nn!(self, ram, d, e); }
     fn ld_nn_a(&mut self, ram: &mut Ram) {
         let mut addr = 0u16;
         addr |= self.next_byte(ram) as u16;
@@ -150,7 +150,7 @@ impl Cpu {
         ram[addr as usize] = self.a;
         self.cycles += 16;
     }
-    fn ld_hl_nn(&mut self, ram: &mut Ram) { ld_n_nn!(self, ram, h, l); }
+    fn ld_hl_nn(&mut self, ram: &mut Ram) { ld_rr_nn!(self, ram, h, l); }
     fn ld_sp_nn(&mut self, ram: &mut Ram) {
         self.sp = LittleEndian::read_u16(&ram[self.pc..]);
         self.pc += 2;

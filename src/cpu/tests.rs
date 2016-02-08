@@ -40,8 +40,8 @@ mod test {
     }
 
     #[test]
-    fn test_dec_nn() {
-        macro_rules! test_dec_nn(
+    fn test_dec_rr() {
+        macro_rules! test_dec_rr(
             ($r1:ident, $r2:ident, $func:expr) => {{
                 let (mut cpu, mut ram) = init(None);
                 cpu.$r1 = 0x0;
@@ -63,14 +63,14 @@ mod test {
                 assert!(cpu.$r2 == 0x5, format!("dec {}{}: Expected {}, got {}", stringify!($r1), stringify!($r2), 0x5, cpu.$r2));
             }}
         );
-        test_dec_nn!(b, c, opcode(0x0B));
-        test_dec_nn!(d, e, opcode(0x1B));
-        test_dec_nn!(h, l, opcode(0x2B));
+        test_dec_rr!(b, c, opcode(0x0B));
+        test_dec_rr!(d, e, opcode(0x1B));
+        test_dec_rr!(h, l, opcode(0x2B));
     }
 
     #[test]
-    fn test_inc_nn() {
-        macro_rules! test_inc_nn(
+    fn test_inc_rr() {
+        macro_rules! test_inc_rr(
             ($r1:ident, $r2:ident, $func:expr) => {{
                 let (mut cpu, mut ram) = init(None);
                 cpu.$r1 = 0x0;
@@ -92,9 +92,9 @@ mod test {
                 assert!(cpu.$r2 == 0x0, format!("inc {}{}: Expected {}, got {}", stringify!($r1), stringify!($r2), 0x0, cpu.$r2));
             }}
         );
-        test_inc_nn!(b, c, opcode(0x03));
-        test_inc_nn!(d, e, opcode(0x13));
-        test_inc_nn!(h, l, opcode(0x23));
+        test_inc_rr!(b, c, opcode(0x03));
+        test_inc_rr!(d, e, opcode(0x13));
+        test_inc_rr!(h, l, opcode(0x23));
     }
 
     #[test]
@@ -122,8 +122,8 @@ mod test {
     }
 
     #[test]
-    fn test_ld_n_nn() {
-        macro_rules! test_ld_n_nn(
+    fn test_ld_rr_nn() {
+        macro_rules! test_ld_rr_nn(
             ($reg1:ident, $reg2:ident, $func: expr) => {{
                 let (mut cpu, mut ram) = init(Some(&[0,0,1,2]));
                 cpu.pc = 2;
@@ -134,9 +134,9 @@ mod test {
             }}
         );
 
-        test_ld_n_nn!(b, c, opcode(0x1));
-        test_ld_n_nn!(d, e, opcode(0x11));
-        test_ld_n_nn!(h, l, opcode(0x21));
+        test_ld_rr_nn!(b, c, opcode(0x1));
+        test_ld_rr_nn!(d, e, opcode(0x11));
+        test_ld_rr_nn!(h, l, opcode(0x21));
 
         let (mut cpu, mut ram) = init(Some(&[0,0,1,2]));
         cpu.pc = 2;
