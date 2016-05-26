@@ -2,54 +2,54 @@
 pub struct CpuFlags(u8);
 impl CpuFlags {
     #[inline(always)]
-    fn z(&self) -> bool {
+    pub fn z(&self) -> bool {
         (self.0 & 0x80) != 0
     }
     #[inline(always)]
-    fn set_z(&mut self) {
+    pub fn set_z(&mut self) {
         self.0 |= 0x80;
     }
     #[inline(always)]
-    fn unset_z(&mut self) {
+    pub fn unset_z(&mut self) {
         self.0 &= !0x80;
     }
 
     #[inline(always)]
-    fn n(&self) -> bool {
+    pub fn n(&self) -> bool {
         (self.0 & 0x40) != 0
     }
     #[inline(always)]
-    fn set_n(&mut self) {
+    pub fn set_n(&mut self) {
         self.0 |= 0x40
     }
     #[inline(always)]
-    fn unset_n(&mut self) {
+    pub fn unset_n(&mut self) {
         self.0 &= !0x40;
     }
 
     #[inline(always)]
-    fn h(&self) -> bool {
+    pub fn h(&self) -> bool {
         (self.0 & 0x20) != 0
     }
     #[inline(always)]
-    fn set_h(&mut self) {
+    pub fn set_h(&mut self) {
         self.0 |= 0x20
     }
     #[inline(always)]
-    fn unset_h(&mut self) {
+    pub fn unset_h(&mut self) {
         self.0 &= !0x20;
     }
 
     #[inline(always)]
-    fn c(&self) -> bool {
+    pub fn c(&self) -> bool {
         (self.0 & 0x10) != 0
     }
     #[inline(always)]
-    fn set_c(&mut self) {
+    pub fn set_c(&mut self) {
         self.0 |= 0x10
     }
     #[inline(always)]
-    fn unset_c(&mut self) {
+    pub fn unset_c(&mut self) {
         self.0 &= !0x10;
     }
 }
