@@ -151,17 +151,17 @@ impl Cpu {
     fn add_a_h(&mut self, _ram: &mut Ram) { add_a_r!(self, h); }
     fn add_a_l(&mut self, _ram: &mut Ram) { add_a_r!(self, l); }
 
-    fn dec_bc(&mut self, _ram: &mut Ram) { dec_rr!(self, b, c) }
-    fn dec_de(&mut self, _ram: &mut Ram) { dec_rr!(self, d, e) }
-    fn dec_hl(&mut self, _ram: &mut Ram) { dec_rr!(self, h, l) }
-    fn dec_sp(&mut self, _ram: &mut Ram) {
+    fn dec_combined_bc(&mut self, _ram: &mut Ram) { dec_rr!(self, b, c) }
+    fn dec_combined_de(&mut self, _ram: &mut Ram) { dec_rr!(self, d, e) }
+    fn dec_combined_hl(&mut self, _ram: &mut Ram) { dec_rr!(self, h, l) }
+    fn dec_combined_sp(&mut self, _ram: &mut Ram) {
         self.sp = self.sp.wrapping_sub(1);
         self.cycles += 8;
     }
-    fn inc_bc(&mut self, _ram: &mut Ram) { inc_rr!(self, b, c) }
-    fn inc_de(&mut self, _ram: &mut Ram) { inc_rr!(self, d, e) }
-    fn inc_hl(&mut self, _ram: &mut Ram) { inc_rr!(self, h, l) }
-    fn inc_sp(&mut self, _ram: &mut Ram) {
+    fn inc_combined_bc(&mut self, _ram: &mut Ram) { inc_rr!(self, b, c) }
+    fn inc_combined_de(&mut self, _ram: &mut Ram) { inc_rr!(self, d, e) }
+    fn inc_combined_hl(&mut self, _ram: &mut Ram) { inc_rr!(self, h, l) }
+    fn inc_combined_sp(&mut self, _ram: &mut Ram) {
         self.sp = self.sp.wrapping_add(1);
         self.cycles += 8;
     }
