@@ -81,15 +81,15 @@ macro_rules! add_a_r {
     ($cpu:expr, $r:ident) => {{
         $cpu.f.unset_n();
         let check = ($cpu.a as u16) + ($cpu.$r as u16);
-        if check == 0 {
-            $cpu.f.set_z();
-        }
-        else if check >= 0xFF {
+        if check >= 0xFF {
             $cpu.f.set_h();
             $cpu.f.set_c();
         }
         let check = $cpu.a;
         $cpu.a = $cpu.a.wrapping_add($cpu.$r);
+        if $cpu.a == 0 {
+            $cpu.f.set_z();
+        }
         if cpuflags::test_half_carry(check, $cpu.a) {
             $cpu.f.set_h();
         }

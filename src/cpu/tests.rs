@@ -66,6 +66,17 @@ mod test {
                 assert!(!cpu.f.c());
 
                 let (mut cpu, mut ram) = init(None);
+                cpu.a = 0xFF;
+                cpu.$r = 0x1;
+                let expected = cpu.a.wrapping_add(cpu.$r);
+                test(&mut cpu, &mut ram, 4, $func);
+                assert!(cpu.a == expected, format!("add a, {}: Expected 0x{:X}, got 0x{:X}", stringify!($r), expected, cpu.a));
+                assert!(cpu.f.z());
+                assert!(!cpu.f.n());
+                assert!(cpu.f.h());
+                assert!(cpu.f.c());
+
+                let (mut cpu, mut ram) = init(None);
                 cpu.a = 0xF0;
                 cpu.$r = 0x11;
                 let expected = cpu.a.wrapping_add(cpu.$r);
@@ -96,6 +107,16 @@ mod test {
             assert!(!cpu.f.z());
             assert!(!cpu.f.n());
             assert!(cpu.f.h());
+            assert!(!cpu.f.c());
+
+            let (mut cpu, mut ram) = init(None);
+            cpu.a = 0x0;
+            let expected = cpu.a.wrapping_add(cpu.a);
+            test(&mut cpu, &mut ram, 4, opcode(0x87));
+            assert!(cpu.a == expected, format!("add a, a: Expected 0x{:X}, got 0x{:X}", expected, cpu.a));
+            assert!(cpu.f.z());
+            assert!(!cpu.f.n());
+            assert!(!cpu.f.h());
             assert!(!cpu.f.c());
 
             let (mut cpu, mut ram) = init(None);
