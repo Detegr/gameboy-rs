@@ -40,6 +40,85 @@ mod test {
     }
 
     #[test]
+    fn test_add_a_r() {
+        macro_rules! test_add_a_r {
+            ($r:ident, $func:expr) => {{
+                let (mut cpu, mut ram) = init(None);
+                cpu.a = 0x10;
+                cpu.$r = 0x1;
+                let expected = cpu.a.wrapping_add(cpu.$r);
+                test(&mut cpu, &mut ram, 4, $func);
+                assert!(cpu.a == expected, format!("add a, {}: Expected 0x{:X}, got 0x{:X}", stringify!($r), expected, cpu.a));
+                assert!(!cpu.f.z());
+                assert!(!cpu.f.n());
+                assert!(!cpu.f.h());
+                assert!(!cpu.f.c());
+
+                let (mut cpu, mut ram) = init(None);
+                cpu.a = 0x10;
+                cpu.$r = 0x10;
+                let expected = cpu.a.wrapping_add(cpu.$r);
+                test(&mut cpu, &mut ram, 4, $func);
+                assert!(cpu.a == expected, format!("add a, {}: Expected 0x{:X}, got 0x{:X}", stringify!($r), expected, cpu.a));
+                assert!(!cpu.f.z());
+                assert!(!cpu.f.n());
+                assert!(cpu.f.h());
+                assert!(!cpu.f.c());
+
+                let (mut cpu, mut ram) = init(None);
+                cpu.a = 0xF0;
+                cpu.$r = 0x11;
+                let expected = cpu.a.wrapping_add(cpu.$r);
+                test(&mut cpu, &mut ram, 4, $func);
+                assert!(cpu.a == expected, format!("add a, {}: Expected 0x{:X}, got 0x{:X}", stringify!($r), expected, cpu.a));
+                assert!(!cpu.f.z());
+                assert!(!cpu.f.n());
+                assert!(cpu.f.h());
+                assert!(cpu.f.c());
+            }}
+        }
+        fn test_add_a_a() {
+            let (mut cpu, mut ram) = init(None);
+            cpu.a = 0x4;
+            let expected = cpu.a.wrapping_add(cpu.a);
+            test(&mut cpu, &mut ram, 4, opcode(0x87));
+            assert!(cpu.a == expected, format!("add a, a: Expected 0x{:X}, got 0x{:X}", expected, cpu.a));
+            assert!(!cpu.f.z());
+            assert!(!cpu.f.n());
+            assert!(!cpu.f.h());
+            assert!(!cpu.f.c());
+
+            let (mut cpu, mut ram) = init(None);
+            cpu.a = 0x8;
+            let expected = cpu.a.wrapping_add(cpu.a);
+            test(&mut cpu, &mut ram, 4, opcode(0x87));
+            assert!(cpu.a == expected, format!("add a, a: Expected 0x{:X}, got 0x{:X}", expected, cpu.a));
+            assert!(!cpu.f.z());
+            assert!(!cpu.f.n());
+            assert!(cpu.f.h());
+            assert!(!cpu.f.c());
+
+            let (mut cpu, mut ram) = init(None);
+            cpu.a = 0xF0;
+            let expected = cpu.a.wrapping_add(cpu.a);
+            test(&mut cpu, &mut ram, 4, opcode(0x87));
+            assert!(cpu.a == expected, format!("add a, a: Expected 0x{:X}, got 0x{:X}", expected, cpu.a));
+            assert!(!cpu.f.z());
+            assert!(!cpu.f.n());
+            assert!(cpu.f.h());
+            assert!(cpu.f.c());
+        }
+
+        test_add_a_a();
+        test_add_a_r!(b, opcode(0x80));
+        test_add_a_r!(c, opcode(0x81));
+        test_add_a_r!(d, opcode(0x82));
+        test_add_a_r!(e, opcode(0x83));
+        test_add_a_r!(h, opcode(0x84));
+        test_add_a_r!(l, opcode(0x85));
+    }
+
+    #[test]
     fn test_dec_rr() {
         macro_rules! test_dec_rr(
             ($r1:ident, $r2:ident, $func:expr) => {{
