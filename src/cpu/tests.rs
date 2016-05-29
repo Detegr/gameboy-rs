@@ -137,6 +137,62 @@ mod test {
         test_add_a_r!(e, opcode(0x83));
         test_add_a_r!(h, opcode(0x84));
         test_add_a_r!(l, opcode(0x85));
+        fn test_add_a_hl() {
+            let (mut cpu, mut ram) = init(None);
+            ram[0x1F01] = 0x1;
+            cpu.a = 0x10;
+            cpu.h = 0x1F;
+            cpu.l = 0x1;
+            let expected = cpu.a.wrapping_add(ram[cpu.hl() as usize]);
+            test(&mut cpu, &mut ram, 8, opcode(0x86));
+            assert!(cpu.a == expected, format!("add a, (hl): Expected 0x{:X}, got 0x{:X}", expected, cpu.a));
+            assert!(!cpu.f.z());
+            assert!(!cpu.f.n());
+            assert!(!cpu.f.h());
+            assert!(!cpu.f.c());
+
+            let (mut cpu, mut ram) = init(None);
+            ram[0x1F01] = 0x10;
+            cpu.a = 0x10;
+            cpu.h = 0x1F;
+            cpu.l = 0x1;
+            let expected = cpu.a.wrapping_add(ram[cpu.hl() as usize]);
+            test(&mut cpu, &mut ram, 8, opcode(0x86));
+            assert!(cpu.a == expected, format!("add a, (hl): Expected 0x{:X}, got 0x{:X}", expected, cpu.a));
+            assert!(!cpu.f.z());
+            assert!(!cpu.f.n());
+            assert!(cpu.f.h());
+            assert!(!cpu.f.c());
+
+            let (mut cpu, mut ram) = init(None);
+            ram[0x1F01] = 0x1;
+            cpu.a = 0xFF;
+            cpu.h = 0x1F;
+            cpu.l = 0x1;
+            let expected = cpu.a.wrapping_add(ram[cpu.hl() as usize]);
+            test(&mut cpu, &mut ram, 8, opcode(0x86));
+            assert!(cpu.a == expected, format!("add a, (hl): Expected 0x{:X}, got 0x{:X}", expected, cpu.a));
+            assert!(cpu.f.z());
+            assert!(!cpu.f.n());
+            assert!(cpu.f.h());
+            assert!(cpu.f.c());
+
+            let (mut cpu, mut ram) = init(None);
+            ram[0x1F01] = 0x11;
+            cpu.a = 0xF0;
+            cpu.h = 0x1F;
+            cpu.l = 0x1;
+            let expected = cpu.a.wrapping_add(ram[cpu.hl() as usize]);
+            test(&mut cpu, &mut ram, 8, opcode(0x86));
+            assert!(cpu.a == expected, format!("add a, (hl): Expected 0x{:X}, got 0x{:X}", expected, cpu.a));
+            assert!(!cpu.f.z());
+            assert!(!cpu.f.n());
+            assert!(cpu.f.h());
+            assert!(cpu.f.c());
+        }
+        test_add_a_hl();
+    }
+
     }
 
     #[test]

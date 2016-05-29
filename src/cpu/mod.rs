@@ -69,15 +69,15 @@ macro_rules! ld_r_n {
     }
 }
 macro_rules! add_a_r {
-    ($cpu:expr, $r:ident) => {{
+    ($cpu:expr, $value:expr) => {{
         $cpu.f.unset_n();
-        let check = ($cpu.a as u16) + ($cpu.$r as u16);
+        let check = ($cpu.a as u16) + ($value as u16);
         if check >= 0xFF {
             $cpu.f.set_h();
             $cpu.f.set_c();
         }
         let check = $cpu.a;
-        $cpu.a = $cpu.a.wrapping_add($cpu.$r);
+        $cpu.a = $cpu.a.wrapping_add($value);
         if $cpu.a == 0 {
             $cpu.f.set_z();
         }
@@ -134,13 +134,17 @@ impl Cpu {
         self.cycles += 8;
     }
 
-    fn add_a_a(&mut self, _ram: &mut Ram) { add_a_r!(self, a); }
-    fn add_a_b(&mut self, _ram: &mut Ram) { add_a_r!(self, b); }
-    fn add_a_c(&mut self, _ram: &mut Ram) { add_a_r!(self, c); }
-    fn add_a_d(&mut self, _ram: &mut Ram) { add_a_r!(self, d); }
-    fn add_a_e(&mut self, _ram: &mut Ram) { add_a_r!(self, e); }
-    fn add_a_h(&mut self, _ram: &mut Ram) { add_a_r!(self, h); }
-    fn add_a_l(&mut self, _ram: &mut Ram) { add_a_r!(self, l); }
+    fn add_a_a(&mut self, _ram: &mut Ram) { add_a_r!(self, self.a); }
+    fn add_a_b(&mut self, _ram: &mut Ram) { add_a_r!(self, self.b); }
+    fn add_a_c(&mut self, _ram: &mut Ram) { add_a_r!(self, self.c); }
+    fn add_a_d(&mut self, _ram: &mut Ram) { add_a_r!(self, self.d); }
+    fn add_a_e(&mut self, _ram: &mut Ram) { add_a_r!(self, self.e); }
+    fn add_a_h(&mut self, _ram: &mut Ram) { add_a_r!(self, self.h); }
+    fn add_a_l(&mut self, _ram: &mut Ram) { add_a_r!(self, self.l); }
+    fn add_a_hl(&mut self, ram: &mut Ram) {
+        add_a_r!(self, ram[self.hl() as usize]);
+        self.cycles += 4;
+    }
 
     fn dec_combined_bc(&mut self, _ram: &mut Ram) { dec_rr!(self, b, c) }
     fn dec_combined_de(&mut self, _ram: &mut Ram) { dec_rr!(self, d, e) }
