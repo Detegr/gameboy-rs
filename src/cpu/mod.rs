@@ -24,26 +24,17 @@ pub struct Cpu {
 }
 
 impl Cpu {
-    #[inline]
+    #[inline(always)]
     fn bc(&self) -> u16 {
-        let mut ret = 0u16;
-        ret |= (self.b as u16) << 8;
-        ret |= self.c as u16;
-        ret
+        (self.b as u16) << 8 | self.c as u16
     }
-    #[inline]
+    #[inline(always)]
     fn de(&self) -> u16 {
-        let mut ret = 0u16;
-        ret |= (self.d as u16) << 8;
-        ret |= self.e as u16;
-        ret
+        (self.d as u16) << 8 | self.e as u16
     }
-    #[inline]
+    #[inline(always)]
     fn hl(&self) -> u16 {
-        let mut ret = 0u16;
-        ret |= (self.h as u16) << 8;
-        ret |= self.l as u16;
-        ret
+        (self.h as u16) << 8 | self.l as u16
     }
 }
 macro_rules! ld_rr_nn {
