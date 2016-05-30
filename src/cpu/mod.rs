@@ -173,7 +173,7 @@ impl Cpu {
     fn dec_l(&mut self, _ram: &mut Ram) { self.l = dec_r!(self, self.l); }
     fn dec_hl(&mut self, ram: &mut Ram) {
         ram[self.hl() as usize] = dec_r!(self, ram[self.hl() as usize]);
-        self.cycles += 4;
+        self.cycles += 8;
     }
 
     fn dec_combined_bc(&mut self, _ram: &mut Ram) { dec_rr!(self, b, c) }

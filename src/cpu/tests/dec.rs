@@ -58,7 +58,7 @@ fn test_dec_r() {
         cpu.h = 0x1F;
         cpu.l = 0x1;
         let expected = ram[0x1F01] - 1;
-        test(&mut cpu, &mut ram, 8, opcode(0x35));
+        test(&mut cpu, &mut ram, 12, opcode(0x35));
         assert!(ram[cpu.hl() as usize] == expected, format!("dec (hl): Expected 0x{:X}, got 0x{:X}", expected, ram[cpu.hl() as usize]));
         assert!(!cpu.f.z());
         assert!(!cpu.f.n());
@@ -70,7 +70,7 @@ fn test_dec_r() {
         cpu.h = 0x1F;
         cpu.l = 0x1;
         let expected = ram[0x1F01] - 1;
-        test(&mut cpu, &mut ram, 8, opcode(0x35));
+        test(&mut cpu, &mut ram, 12, opcode(0x35));
         assert!(ram[cpu.hl() as usize] == expected, format!("dec (hl): Expected 0x{:X}, got 0x{:X}", expected, ram[cpu.hl() as usize]));
         assert!(!cpu.f.z());
         assert!(!cpu.f.n());
@@ -82,7 +82,7 @@ fn test_dec_r() {
         cpu.h = 0x1F;
         cpu.l = 0x1;
         let expected = ram[0x1F01] - 1;
-        test(&mut cpu, &mut ram, 8, opcode(0x35));
+        test(&mut cpu, &mut ram, 12, opcode(0x35));
         assert!(ram[cpu.hl() as usize] == expected, format!("dec (hl): Expected 0x{:X}, got 0x{:X}", expected, ram[cpu.hl() as usize]));
         assert!(cpu.f.z());
         assert!(!cpu.f.n());
@@ -94,7 +94,7 @@ fn test_dec_r() {
         cpu.h = 0x1F;
         cpu.l = 0x1;
         let expected = ram[0x1F01].wrapping_sub(1);
-        test(&mut cpu, &mut ram, 8, opcode(0x35));
+        test(&mut cpu, &mut ram, 12, opcode(0x35));
         assert!(ram[cpu.hl() as usize] == expected, format!("dec (hl): Expected 0x{:X}, got 0x{:X}", expected, ram[cpu.hl() as usize]));
         assert!(!cpu.f.z());
         assert!(!cpu.f.n());
