@@ -98,6 +98,21 @@ macro_rules! inc_rr {
         $cpu.cycles += 8;
     }}
 }
+macro_rules! inc_r {
+    ($cpu:expr, $value:expr) => {{
+        let check = $value;
+        $value = $value.wrapping_add(1);
+        if $value == 0x0 {
+            $cpu.f.set_z();
+        }
+        if cpuflags::test_half_carry(check, $value) {
+            $cpu.f.set_h();
+        }
+        $cpu.f.unset_n();
+        $cpu.cycles += 4;
+        $value
+    }}
+}
 macro_rules! dec_r {
     ($cpu:expr, $value:expr) => {{
         let check = $value;
@@ -162,6 +177,18 @@ impl Cpu {
     fn add_a_hl(&mut self, ram: &mut Ram) {
         add_a_r!(self, ram[self.hl() as usize]);
         self.cycles += 4;
+    }
+
+    fn inc_a(&mut self, _ram: &mut Ram) { self.a = inc_r!(self, self.a); }
+    fn inc_b(&mut self, _ram: &mut Ram) { self.b = inc_r!(self, self.b); }
+    fn inc_c(&mut self, _ram: &mut Ram) { self.c = inc_r!(self, self.c); }
+    fn inc_d(&mut self, _ram: &mut Ram) { self.d = inc_r!(self, self.d); }
+    fn inc_e(&mut self, _ram: &mut Ram) { self.e = inc_r!(self, self.e); }
+    fn inc_h(&mut self, _ram: &mut Ram) { self.h = inc_r!(self, self.h); }
+    fn inc_l(&mut self, _ram: &mut Ram) { self.l = inc_r!(self, self.l); }
+    fn inc_hl(&mut self, ram: &mut Ram) {
+        ram[self.hl() as usize] = inc_r!(self, ram[self.hl() as usize]);
+        self.cycles += 8;
     }
 
     fn dec_a(&mut self, _ram: &mut Ram) { self.a = dec_r!(self, self.a); }
