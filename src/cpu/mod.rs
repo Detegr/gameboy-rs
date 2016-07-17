@@ -118,6 +118,7 @@ macro_rules! dec_r {
         let check = $value;
         if $value == 0x0 {
             $cpu.f.set_c();
+            $cpu.f.set_h();
         }
         $value = $value.wrapping_sub(1);
         if $value == 0x0 {
