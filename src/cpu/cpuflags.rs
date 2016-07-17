@@ -54,6 +54,7 @@ impl CpuFlags {
     }
 }
 
+#[inline(always)]
 pub fn test_half_carry(before: u8, after: u8) -> bool {
     (before & 0xF0) != (after & 0xF0)
 }
