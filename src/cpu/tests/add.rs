@@ -54,7 +54,8 @@ fn test_add_a_r() {
         cpu.a = 0x4;
         let expected = cpu.a.wrapping_add(cpu.a);
         test(&mut cpu, &mut ram, 4, opcode(0x87));
-        assert!(cpu.a == expected, format!("add a, a: Expected 0x{:X}, got 0x{:X}", expected, cpu.a));
+        assert!(cpu.a == expected,
+                format!("add a, a: Expected 0x{:X}, got 0x{:X}", expected, cpu.a));
         assert!(!cpu.f.z());
         assert!(!cpu.f.n());
         assert!(!cpu.f.h());
@@ -64,7 +65,8 @@ fn test_add_a_r() {
         cpu.a = 0x8;
         let expected = cpu.a.wrapping_add(cpu.a);
         test(&mut cpu, &mut ram, 4, opcode(0x87));
-        assert!(cpu.a == expected, format!("add a, a: Expected 0x{:X}, got 0x{:X}", expected, cpu.a));
+        assert!(cpu.a == expected,
+                format!("add a, a: Expected 0x{:X}, got 0x{:X}", expected, cpu.a));
         assert!(!cpu.f.z());
         assert!(!cpu.f.n());
         assert!(cpu.f.h());
@@ -74,7 +76,8 @@ fn test_add_a_r() {
         cpu.a = 0x0;
         let expected = cpu.a.wrapping_add(cpu.a);
         test(&mut cpu, &mut ram, 4, opcode(0x87));
-        assert!(cpu.a == expected, format!("add a, a: Expected 0x{:X}, got 0x{:X}", expected, cpu.a));
+        assert!(cpu.a == expected,
+                format!("add a, a: Expected 0x{:X}, got 0x{:X}", expected, cpu.a));
         assert!(cpu.f.z());
         assert!(!cpu.f.n());
         assert!(!cpu.f.h());
@@ -84,7 +87,8 @@ fn test_add_a_r() {
         cpu.a = 0xF0;
         let expected = cpu.a.wrapping_add(cpu.a);
         test(&mut cpu, &mut ram, 4, opcode(0x87));
-        assert!(cpu.a == expected, format!("add a, a: Expected 0x{:X}, got 0x{:X}", expected, cpu.a));
+        assert!(cpu.a == expected,
+                format!("add a, a: Expected 0x{:X}, got 0x{:X}", expected, cpu.a));
         assert!(!cpu.f.z());
         assert!(!cpu.f.n());
         assert!(cpu.f.h());
@@ -106,7 +110,8 @@ fn test_add_a_r() {
         cpu.l = 0x1;
         let expected = cpu.a.wrapping_add(ram[cpu.hl() as usize]);
         test(&mut cpu, &mut ram, 8, opcode(0x86));
-        assert!(cpu.a == expected, format!("add a, (hl): Expected 0x{:X}, got 0x{:X}", expected, cpu.a));
+        assert!(cpu.a == expected,
+                format!("add a, (hl): Expected 0x{:X}, got 0x{:X}", expected, cpu.a));
         assert!(!cpu.f.z());
         assert!(!cpu.f.n());
         assert!(!cpu.f.h());
@@ -119,7 +124,8 @@ fn test_add_a_r() {
         cpu.l = 0x1;
         let expected = cpu.a.wrapping_add(ram[cpu.hl() as usize]);
         test(&mut cpu, &mut ram, 8, opcode(0x86));
-        assert!(cpu.a == expected, format!("add a, (hl): Expected 0x{:X}, got 0x{:X}", expected, cpu.a));
+        assert!(cpu.a == expected,
+                format!("add a, (hl): Expected 0x{:X}, got 0x{:X}", expected, cpu.a));
         assert!(!cpu.f.z());
         assert!(!cpu.f.n());
         assert!(cpu.f.h());
@@ -132,7 +138,8 @@ fn test_add_a_r() {
         cpu.l = 0x1;
         let expected = cpu.a.wrapping_add(ram[cpu.hl() as usize]);
         test(&mut cpu, &mut ram, 8, opcode(0x86));
-        assert!(cpu.a == expected, format!("add a, (hl): Expected 0x{:X}, got 0x{:X}", expected, cpu.a));
+        assert!(cpu.a == expected,
+                format!("add a, (hl): Expected 0x{:X}, got 0x{:X}", expected, cpu.a));
         assert!(cpu.f.z());
         assert!(!cpu.f.n());
         assert!(cpu.f.h());
@@ -145,7 +152,8 @@ fn test_add_a_r() {
         cpu.l = 0x1;
         let expected = cpu.a.wrapping_add(ram[cpu.hl() as usize]);
         test(&mut cpu, &mut ram, 8, opcode(0x86));
-        assert!(cpu.a == expected, format!("add a, (hl): Expected 0x{:X}, got 0x{:X}", expected, cpu.a));
+        assert!(cpu.a == expected,
+                format!("add a, (hl): Expected 0x{:X}, got 0x{:X}", expected, cpu.a));
         assert!(!cpu.f.z());
         assert!(!cpu.f.n());
         assert!(cpu.f.h());
@@ -153,4 +161,3 @@ fn test_add_a_r() {
     }
     test_add_a_hl();
 }
-

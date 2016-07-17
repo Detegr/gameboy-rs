@@ -104,4 +104,3 @@ fn test_inc_sp() {
     test(&mut cpu, &mut ram, 8, opcode(0x33));
     assert!(cpu.sp == 0x1);
 }
-

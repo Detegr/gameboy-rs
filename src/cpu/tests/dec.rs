@@ -144,4 +144,3 @@ fn test_dec_sp() {
     test(&mut cpu, &mut ram, 8, opcode(0x3B));
     assert!(cpu.sp == 0xFFFE);
 }
-

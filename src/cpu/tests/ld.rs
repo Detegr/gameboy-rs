@@ -17,7 +17,7 @@ fn test_ld_rr_nn() {
     test_ld_rr_nn!(d, e, opcode(0x11));
     test_ld_rr_nn!(h, l, opcode(0x21));
 
-    let (mut cpu, mut ram) = init(Some(&[0,0,1,2]));
+    let (mut cpu, mut ram) = init(Some(&[0, 0, 1, 2]));
     cpu.pc = 2;
     test(&mut cpu, &mut ram, 12, opcode(0x31));
     assert!(cpu.sp == 513);
@@ -195,8 +195,8 @@ fn test_ld_nn_a() {
 fn test_ld_a_bc() {
     let (mut cpu, mut ram) = init(None);
     ram[0x1122] = 123;
-    cpu.b=0x11;
-    cpu.c=0x22;
+    cpu.b = 0x11;
+    cpu.c = 0x22;
     test(&mut cpu, &mut ram, 8, opcode(0x0A));
     assert!(cpu.a == 123,
         format!("ld a, (bc): Expected {}, got {}", 123, cpu.a));
@@ -206,15 +206,15 @@ fn test_ld_a_bc() {
 fn test_ld_a_de() {
     let (mut cpu, mut ram) = init(None);
     ram[0x1122] = 123;
-    cpu.d=0x11;
-    cpu.e=0x22;
+    cpu.d = 0x11;
+    cpu.e = 0x22;
     test(&mut cpu, &mut ram, 8, opcode(0x1A));
     assert!(cpu.a == 123,
         format!("ld a, (de): Expected {}, got {}", 123, cpu.a));
 }
 #[test]
 fn test_ld_a_nn() {
-    let (mut cpu, mut ram) = init(Some(&[0,0,0x22,0x11]));
+    let (mut cpu, mut ram) = init(Some(&[0, 0, 0x22, 0x11]));
     cpu.pc = 2;
     ram[0x1122] = 123;
     test(&mut cpu, &mut ram, 16, opcode(0xFA));

@@ -21,7 +21,9 @@ pub fn test<F>(cpu: &mut Cpu, ram: &mut Ram, cycles: usize, closure: F)
     let prev_cycles = cpu.cycles;
     closure(cpu, ram);
     assert!(cpu.cycles == prev_cycles + cycles,
-        format!("Expected cpu cycles to be {}, got {}", prev_cycles + cycles, cpu.cycles));
+            format!("Expected cpu cycles to be {}, got {}",
+                    prev_cycles + cycles,
+                    cpu.cycles));
 }
 pub fn opcode(opcode: usize) -> opcodes::OpcodeFunction {
     use cpu::opcodes::{OPCODES, OpcodeFunction};
