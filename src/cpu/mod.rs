@@ -116,9 +116,6 @@ macro_rules! inc_r {
 macro_rules! dec_r {
     ($cpu:expr, $value:expr) => {{
         let check = $value;
-        if $value != 0x0 {
-            $cpu.f.set_c();
-        }
         $value = $value.wrapping_sub(1);
         if $value == 0x0 {
             $cpu.f.set_z();

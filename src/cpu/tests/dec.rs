@@ -12,7 +12,6 @@ fn test_dec_r() {
             assert!(!cpu.f.z());
             assert!(!cpu.f.n());
             assert!(cpu.f.h());
-            assert!(cpu.f.c());
 
             let (mut cpu, mut ram) = init(None);
             cpu.$r = 0x10;
@@ -22,7 +21,6 @@ fn test_dec_r() {
             assert!(!cpu.f.z());
             assert!(!cpu.f.n());
             assert!(!cpu.f.h());
-            assert!(cpu.f.c());
 
             let (mut cpu, mut ram) = init(None);
             cpu.$r = 0x1;
@@ -32,7 +30,6 @@ fn test_dec_r() {
             assert!(cpu.f.z());
             assert!(!cpu.f.n());
             assert!(cpu.f.h());
-            assert!(cpu.f.c());
 
             let (mut cpu, mut ram) = init(None);
             cpu.$r = 0x0;
@@ -42,7 +39,6 @@ fn test_dec_r() {
             assert!(!cpu.f.z());
             assert!(!cpu.f.n());
             assert!(!cpu.f.h());
-            assert!(!cpu.f.c());
         }}
     );
     test_dec_r!(a, opcode(0x3D));
@@ -63,7 +59,6 @@ fn test_dec_r() {
         assert!(!cpu.f.z());
         assert!(!cpu.f.n());
         assert!(cpu.f.h());
-        assert!(cpu.f.c());
 
         let (mut cpu, mut ram) = init(None);
         ram[0x1F01] = 0x10;
@@ -75,7 +70,6 @@ fn test_dec_r() {
         assert!(!cpu.f.z());
         assert!(!cpu.f.n());
         assert!(!cpu.f.h());
-        assert!(cpu.f.c());
 
         let (mut cpu, mut ram) = init(None);
         ram[0x1F01] = 0x1;
@@ -87,7 +81,6 @@ fn test_dec_r() {
         assert!(cpu.f.z());
         assert!(!cpu.f.n());
         assert!(cpu.f.h());
-        assert!(cpu.f.c());
 
         let (mut cpu, mut ram) = init(None);
         ram[0x1F01] = 0x0;
@@ -99,7 +92,6 @@ fn test_dec_r() {
         assert!(!cpu.f.z());
         assert!(!cpu.f.n());
         assert!(!cpu.f.h());
-        assert!(!cpu.f.c());
     }
     test_dec_hl();
 }
