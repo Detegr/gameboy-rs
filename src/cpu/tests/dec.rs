@@ -11,8 +11,8 @@ fn test_dec_r() {
             assert!(cpu.$r == expected, format!("dec {}: Expected 0x{:X}, got 0x{:X}", stringify!($r), expected, cpu.$r));
             assert!(!cpu.f.z());
             assert!(!cpu.f.n());
-            assert!(!cpu.f.h());
-            assert!(!cpu.f.c());
+            assert!(cpu.f.h());
+            assert!(cpu.f.c());
 
             let (mut cpu, mut ram) = init(None);
             cpu.$r = 0x10;
@@ -21,8 +21,8 @@ fn test_dec_r() {
             assert!(cpu.$r == expected, format!("dec {}: Expected 0x{:X}, got 0x{:X}", stringify!($r), expected, cpu.$r));
             assert!(!cpu.f.z());
             assert!(!cpu.f.n());
-            assert!(cpu.f.h());
-            assert!(!cpu.f.c());
+            assert!(!cpu.f.h());
+            assert!(cpu.f.c());
 
             let (mut cpu, mut ram) = init(None);
             cpu.$r = 0x1;
@@ -31,8 +31,8 @@ fn test_dec_r() {
             assert!(cpu.$r == expected, format!("dec {}: Expected 0x{:X}, got 0x{:X}", stringify!($r), expected, cpu.$r));
             assert!(cpu.f.z());
             assert!(!cpu.f.n());
-            assert!(!cpu.f.h());
-            assert!(!cpu.f.c());
+            assert!(cpu.f.h());
+            assert!(cpu.f.c());
 
             let (mut cpu, mut ram) = init(None);
             cpu.$r = 0x0;
@@ -41,8 +41,8 @@ fn test_dec_r() {
             assert!(cpu.$r == expected, format!("dec {}: Expected 0x{:X}, got 0x{:X}", stringify!($r), expected, cpu.$r));
             assert!(!cpu.f.z());
             assert!(!cpu.f.n());
-            assert!(cpu.f.h());
-            assert!(cpu.f.c());
+            assert!(!cpu.f.h());
+            assert!(!cpu.f.c());
         }}
     );
     test_dec_r!(a, opcode(0x3D));
@@ -62,8 +62,8 @@ fn test_dec_r() {
         assert!(ram[cpu.hl() as usize] == expected, format!("dec (hl): Expected 0x{:X}, got 0x{:X}", expected, ram[cpu.hl() as usize]));
         assert!(!cpu.f.z());
         assert!(!cpu.f.n());
-        assert!(!cpu.f.h());
-        assert!(!cpu.f.c());
+        assert!(cpu.f.h());
+        assert!(cpu.f.c());
 
         let (mut cpu, mut ram) = init(None);
         ram[0x1F01] = 0x10;
@@ -74,8 +74,8 @@ fn test_dec_r() {
         assert!(ram[cpu.hl() as usize] == expected, format!("dec (hl): Expected 0x{:X}, got 0x{:X}", expected, ram[cpu.hl() as usize]));
         assert!(!cpu.f.z());
         assert!(!cpu.f.n());
-        assert!(cpu.f.h());
-        assert!(!cpu.f.c());
+        assert!(!cpu.f.h());
+        assert!(cpu.f.c());
 
         let (mut cpu, mut ram) = init(None);
         ram[0x1F01] = 0x1;
@@ -86,8 +86,8 @@ fn test_dec_r() {
         assert!(ram[cpu.hl() as usize] == expected, format!("dec (hl): Expected 0x{:X}, got 0x{:X}", expected, ram[cpu.hl() as usize]));
         assert!(cpu.f.z());
         assert!(!cpu.f.n());
-        assert!(!cpu.f.h());
-        assert!(!cpu.f.c());
+        assert!(cpu.f.h());
+        assert!(cpu.f.c());
 
         let (mut cpu, mut ram) = init(None);
         ram[0x1F01] = 0x0;
@@ -98,8 +98,8 @@ fn test_dec_r() {
         assert!(ram[cpu.hl() as usize] == expected, format!("dec (hl): Expected 0x{:X}, got 0x{:X}", expected, ram[cpu.hl() as usize]));
         assert!(!cpu.f.z());
         assert!(!cpu.f.n());
-        assert!(cpu.f.h());
-        assert!(cpu.f.c());
+        assert!(!cpu.f.h());
+        assert!(!cpu.f.c());
     }
     test_dec_hl();
 }

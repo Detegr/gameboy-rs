@@ -55,8 +55,13 @@ impl CpuFlags {
 }
 
 #[inline(always)]
-pub fn test_half_carry(before: u8, after: u8) -> bool {
-    (before & 0xF0) != (after & 0xF0)
+pub fn test_half_carry_addition(before: u8, after: u8) -> bool {
+    before > after || ((before & 0xF0) != (after & 0xF0))
+}
+
+#[inline(always)]
+pub fn test_half_carry_subtraction(before: u8, after: u8) -> bool {
+    before < after || ((before & 0xF0) != (after & 0xF0))
 }
 
 #[cfg(test)]

@@ -81,7 +81,7 @@ macro_rules! add_a_r {
         if $cpu.a == 0 {
             $cpu.f.set_z();
         }
-        if cpuflags::test_half_carry(check, $cpu.a) {
+        if cpuflags::test_half_carry_addition(check, $cpu.a) {
             $cpu.f.set_h();
         }
         $cpu.cycles += 4;
@@ -105,7 +105,7 @@ macro_rules! inc_r {
         if $value == 0x0 {
             $cpu.f.set_z();
         }
-        if cpuflags::test_half_carry(check, $value) {
+        if cpuflags::test_half_carry_addition(check, $value) {
             $cpu.f.set_h();
         }
         $cpu.f.unset_n();
@@ -116,15 +116,14 @@ macro_rules! inc_r {
 macro_rules! dec_r {
     ($cpu:expr, $value:expr) => {{
         let check = $value;
-        if $value == 0x0 {
+        if $value != 0x0 {
             $cpu.f.set_c();
-            $cpu.f.set_h();
         }
         $value = $value.wrapping_sub(1);
         if $value == 0x0 {
             $cpu.f.set_z();
         }
-        if cpuflags::test_half_carry(check, $value) {
+        if !cpuflags::test_half_carry_subtraction(check, $value) {
             $cpu.f.set_h();
         }
         $cpu.f.unset_n();
