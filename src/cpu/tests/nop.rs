@@ -1,5 +1,4 @@
 use cpu::tests::*;
-use cpu::*;
 
 #[test]
 fn test_nop() {

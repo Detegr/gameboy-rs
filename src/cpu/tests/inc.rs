@@ -46,7 +46,14 @@ fn test_inc_r() {
         cpu.l = 0x1;
         let expected = ram[0x1F01] + 1;
         test(&mut cpu, &mut ram, 12, opcode(0x34));
-        assert!(ram[cpu.hl() as usize] == expected, format!("inc (hl): Expected 0x{:X}, got 0x{:X}", expected, ram[cpu.hl() as usize]));
+        assert!(
+            ram[cpu.hl() as usize] == expected,
+            format!(
+                "inc (hl): Expected 0x{:X}, got 0x{:X}",
+                expected,
+                ram[cpu.hl() as usize]
+            )
+        );
         assert!(!cpu.f.z());
         assert!(!cpu.f.n());
         assert!(!cpu.f.h());
@@ -57,7 +64,14 @@ fn test_inc_r() {
         cpu.l = 0x1;
         let expected = ram[0x1F01] + 1;
         test(&mut cpu, &mut ram, 12, opcode(0x34));
-        assert!(ram[cpu.hl() as usize] == expected, format!("inc (hl): Expected 0x{:X}, got 0x{:X}", expected, ram[cpu.hl() as usize]));
+        assert!(
+            ram[cpu.hl() as usize] == expected,
+            format!(
+                "inc (hl): Expected 0x{:X}, got 0x{:X}",
+                expected,
+                ram[cpu.hl() as usize]
+            )
+        );
         assert!(!cpu.f.z());
         assert!(!cpu.f.n());
         assert!(cpu.f.h());
@@ -68,7 +82,14 @@ fn test_inc_r() {
         cpu.l = 0x1;
         let expected = ram[0x1F01].wrapping_add(1);
         test(&mut cpu, &mut ram, 12, opcode(0x34));
-        assert!(ram[cpu.hl() as usize] == expected, format!("inc (hl): Expected 0x{:X}, got 0x{:X}", expected, ram[cpu.hl() as usize]));
+        assert!(
+            ram[cpu.hl() as usize] == expected,
+            format!(
+                "inc (hl): Expected 0x{:X}, got 0x{:X}",
+                expected,
+                ram[cpu.hl() as usize]
+            )
+        );
         assert!(cpu.f.z());
         assert!(!cpu.f.n());
         assert!(cpu.f.h());

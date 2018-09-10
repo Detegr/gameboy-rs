@@ -1,11 +1,11 @@
 use std::ops::{Deref, DerefMut};
 pub struct Ram {
-    memory: Box<[u8]>
+    memory: Box<[u8]>,
 }
 impl Ram {
     pub fn new() -> Ram {
         Ram {
-            memory: vec![0; 65536].into_boxed_slice()
+            memory: vec![0; 65536].into_boxed_slice(),
         }
     }
 

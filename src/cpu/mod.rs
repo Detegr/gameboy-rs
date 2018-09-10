@@ -2,11 +2,11 @@
 mod tests;
 
 use byteorder::{ByteOrder, LittleEndian};
-use std::default::Default;
 use ram::Ram;
+use std::default::Default;
 
-pub mod opcodes;
 pub mod cpuflags;
+pub mod opcodes;
 
 #[derive(Default)]
 pub struct Cpu {
@@ -39,34 +39,34 @@ impl Cpu {
 }
 macro_rules! ld_rr_nn {
     ($cpu:expr, $ram:expr, $n1:ident, $n2:ident) => {
-        $cpu.$n2=$cpu.next_byte($ram);
-        $cpu.$n1=$cpu.next_byte($ram);
+        $cpu.$n2 = $cpu.next_byte($ram);
+        $cpu.$n1 = $cpu.next_byte($ram);
         $cpu.cycles += 12;
-    }
+    };
 }
 macro_rules! ld_r1_r2 {
     ($cpu:expr, $r1:ident, $r2:ident) => {
-        $cpu.$r1 = $cpu.$r2
+        $cpu.$r1 = $cpu.$r2;
         $cpu.cycles += 4;
-    }
+    };
 }
 macro_rules! ld_r_rr {
     ($cpu:expr, $ram:expr, $r:ident, $rr:ident) => {
         $cpu.$r = $ram[$cpu.$rr() as usize];
         $cpu.cycles += 8;
-    }
+    };
 }
 macro_rules! ld_rr_r {
     ($cpu:expr, $ram:expr, $rr:ident, $r:ident) => {
         $ram[$cpu.$rr() as usize] = $cpu.$r;
         $cpu.cycles += 8;
-    }
+    };
 }
 macro_rules! ld_r_n {
     ($cpu:expr, $ram:expr, $r:ident) => {
         $cpu.$r = $cpu.next_byte($ram);
         $cpu.cycles += 8;
-    }
+    };
 }
 macro_rules! add_a_r {
     ($cpu:expr, $value:expr) => {{
@@ -85,7 +85,7 @@ macro_rules! add_a_r {
             $cpu.f.set_h();
         }
         $cpu.cycles += 4;
-    }}
+    }};
 }
 macro_rules! inc_rr {
     ($cpu:expr, $r1:ident, $r2:ident) => {{
@@ -96,7 +96,7 @@ macro_rules! inc_rr {
             $cpu.$r2 += 0x1;
         }
         $cpu.cycles += 8;
-    }}
+    }};
 }
 macro_rules! inc_r {
     ($cpu:expr, $value:expr) => {{
@@ -111,7 +111,7 @@ macro_rules! inc_r {
         $cpu.f.unset_n();
         $cpu.cycles += 4;
         $value
-    }}
+    }};
 }
 macro_rules! dec_r {
     ($cpu:expr, $value:expr) => {{
@@ -126,7 +126,7 @@ macro_rules! dec_r {
         $cpu.f.unset_n();
         $cpu.cycles += 4;
         $value
-    }}
+    }};
 }
 macro_rules! dec_rr {
     ($cpu:expr, $r1:ident, $r2:ident) => {{
@@ -137,7 +137,7 @@ macro_rules! dec_rr {
             $cpu.$r2 -= 0x1;
         }
         $cpu.cycles += 8;
-    }}
+    }};
 }
 
 impl Cpu {

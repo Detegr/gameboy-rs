@@ -136,8 +136,10 @@ fn test_ld_rr_r() {
     cpu.l = 0x22;
     test(&mut cpu, &mut ram, 8, opcode(0x74));
     let value = ram[cpu.hl() as usize];
-    assert!(value == 0x11,
-            format!("ld (hl), h: Expected {}, got {}", 0x11, value));
+    assert!(
+        value == 0x11,
+        format!("ld (hl), h: Expected {}, got {}", 0x11, value)
+    );
 
     // ld_hl_l
     let (mut cpu, mut ram) = init(None);
@@ -145,8 +147,10 @@ fn test_ld_rr_r() {
     cpu.l = 0x22;
     test(&mut cpu, &mut ram, 8, opcode(0x75));
     let value = ram[cpu.hl() as usize];
-    assert!(value == 0x22,
-            format!("ld (hl), l: Expected {}, got {}", 0x22, value));
+    assert!(
+        value == 0x22,
+        format!("ld (hl), l: Expected {}, got {}", 0x22, value)
+    );
 
     // ld_hl_n
     let (mut cpu, mut ram) = init(Some(&[123]));
@@ -154,8 +158,10 @@ fn test_ld_rr_r() {
     cpu.l = 0x22;
     test(&mut cpu, &mut ram, 12, opcode(0x36));
     let value = ram[cpu.hl() as usize];
-    assert!(value == 123,
-            format!("ld (hl), n: Expected {}, got {}", 123, value));
+    assert!(
+        value == 123,
+        format!("ld (hl), n: Expected {}, got {}", 123, value)
+    );
 
     test_ld_rr_r!(b, c, bc, a, opcode(0x02));
     test_ld_rr_r!(d, e, de, a, opcode(0x12));
@@ -165,12 +171,14 @@ fn test_ld_rr_r() {
 fn test_ld_r_n() {
     macro_rules! test_ld_r_n {
         ($r:ident, $func:expr) => {{
-            let (mut cpu, mut ram) = init(Some(&[0,0,123]));
-            cpu.pc=2;
+            let (mut cpu, mut ram) = init(Some(&[0, 0, 123]));
+            cpu.pc = 2;
             test(&mut cpu, &mut ram, 8, $func);
-            assert!(cpu.$r == 123,
-                format!("ld {}, n: Expected {}, got {}", stringify!($r), 123, cpu.$r));
-        }}
+            assert!(
+                cpu.$r == 123,
+                format!("ld {}, n: Expected {}, got {}", stringify!($r), 123, cpu.$r)
+            );
+        }};
     };
     test_ld_r_n!(a, opcode(0x3E));
     test_ld_r_n!(b, opcode(0x06));
@@ -187,8 +195,10 @@ fn test_ld_nn_a() {
     cpu.pc = 2;
     cpu.a = 123;
     test(&mut cpu, &mut ram, 16, opcode(0xEA));
-    assert!(ram[0x1122] == 123,
-        format!("ld (nn), a: Expected {}, got {}", 123, ram[0x1122]));
+    assert!(
+        ram[0x1122] == 123,
+        format!("ld (nn), a: Expected {}, got {}", 123, ram[0x1122])
+    );
 }
 
 #[test]
@@ -198,8 +208,10 @@ fn test_ld_a_bc() {
     cpu.b = 0x11;
     cpu.c = 0x22;
     test(&mut cpu, &mut ram, 8, opcode(0x0A));
-    assert!(cpu.a == 123,
-        format!("ld a, (bc): Expected {}, got {}", 123, cpu.a));
+    assert!(
+        cpu.a == 123,
+        format!("ld a, (bc): Expected {}, got {}", 123, cpu.a)
+    );
 }
 
 #[test]
@@ -209,8 +221,10 @@ fn test_ld_a_de() {
     cpu.d = 0x11;
     cpu.e = 0x22;
     test(&mut cpu, &mut ram, 8, opcode(0x1A));
-    assert!(cpu.a == 123,
-        format!("ld a, (de): Expected {}, got {}", 123, cpu.a));
+    assert!(
+        cpu.a == 123,
+        format!("ld a, (de): Expected {}, got {}", 123, cpu.a)
+    );
 }
 #[test]
 fn test_ld_a_nn() {
@@ -218,8 +232,10 @@ fn test_ld_a_nn() {
     cpu.pc = 2;
     ram[0x1122] = 123;
     test(&mut cpu, &mut ram, 16, opcode(0xFA));
-    assert!(cpu.a == 123,
-        format!("ld a, (nn): Expected 123, got {}", cpu.a));
+    assert!(
+        cpu.a == 123,
+        format!("ld a, (nn): Expected 123, got {}", cpu.a)
+    );
 }
 #[test]
 fn test_ld_a_addr_c() {
@@ -227,8 +243,10 @@ fn test_ld_a_addr_c() {
     cpu.c = 0x05;
     ram[0xFF05] = 123;
     test(&mut cpu, &mut ram, 8, opcode(0xF2));
-    assert!(cpu.a == 123,
-        format!("ld a, (c): Expected 123, got {}", cpu.a));
+    assert!(
+        cpu.a == 123,
+        format!("ld a, (c): Expected 123, got {}", cpu.a)
+    );
 }
 #[test]
 fn test_ld_addr_c_a() {
@@ -236,6 +254,8 @@ fn test_ld_addr_c_a() {
     cpu.a = 123;
     cpu.c = 0x05;
     test(&mut cpu, &mut ram, 8, opcode(0xE2));
-    assert!(ram[0xFF05] == 123,
-        format!("ld (c), a: Expected 123, got {}", ram[0xFF05]));
+    assert!(
+        ram[0xFF05] == 123,
+        format!("ld (c), a: Expected 123, got {}", ram[0xFF05])
+    );
 }
