@@ -188,7 +188,7 @@ impl Cpu {
         Cpu::default()
     }
     #[inline]
-    pub fn _reset(&mut self) {
+    pub fn reset(&mut self) {
         self.sp = 0xFFFE;
         self.pc = 0x100;
     }
@@ -417,5 +417,13 @@ impl Cpu {
 
         self.a <<= 1;
         self.cycles += 4;
+    }
+
+    #[inline]
+    fn ld_deref_a16_sp(&mut self, ram: &mut Ram) {
+        let a16 = LittleEndian::read_u16(&ram[self.pc..]);
+        self.pc += 2;
+        LittleEndian::write_u16(&mut ram[a16 as usize..], self.sp);
+        self.cycles += 20;
     }
 }
