@@ -45,3 +45,4 @@ mod dec;
 mod inc;
 mod ld;
 mod nop;
+mod rlc;

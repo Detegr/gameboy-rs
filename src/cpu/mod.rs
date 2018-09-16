@@ -403,4 +403,19 @@ impl Cpu {
     make_ld_r_n!(ld_e_n, e);
     make_ld_r_n!(ld_h_n, h);
     make_ld_r_n!(ld_l_n, l);
+
+    #[inline]
+    fn rlca(&mut self, _ram: &mut Ram) {
+        self.f.unset_n();
+        self.f.unset_h();
+        self.f.unset_z();
+        if self.a & 0x80 == 0 {
+            self.f.unset_c();
+        } else {
+            self.f.set_c();
+        }
+
+        self.a <<= 1;
+        self.cycles += 4;
+    }
 }
