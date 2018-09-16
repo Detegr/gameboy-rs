@@ -221,7 +221,7 @@ impl Cpu {
     make_add!(add_a_l, l);
 
     #[inline]
-    fn add_a_hl(&mut self, ram: &mut Ram) {
+    fn add_a_deref_hl(&mut self, ram: &mut Ram) {
         add_a_r!(self, ram[self.hl() as usize]);
         self.cycles += 4;
     }
@@ -299,9 +299,9 @@ impl Cpu {
     make_ld_r_r!(ld_a_h, a, h);
     make_ld_r_r!(ld_a_l, a, l);
 
-    make_ld_r_rr!(ld_a_hl, a, hl);
-    make_ld_r_rr!(ld_a_bc, a, bc);
-    make_ld_r_rr!(ld_a_de, a, de);
+    make_ld_r_rr!(ld_a_deref_hl, a, hl);
+    make_ld_r_rr!(ld_a_deref_bc, a, bc);
+    make_ld_r_rr!(ld_a_deref_de, a, de);
 
     #[inline]
     fn ld_a_nn(&mut self, ram: &mut Ram) {
@@ -330,7 +330,7 @@ impl Cpu {
     make_ld_r_r!(ld_b_h, b, h);
     make_ld_r_r!(ld_b_l, b, l);
 
-    make_ld_r_rr!(ld_b_hl, b, hl);
+    make_ld_r_rr!(ld_b_deref_hl, b, hl);
 
     make_ld_r_r!(ld_c_a, c, a);
     make_ld_r_r!(ld_c_b, c, b);
@@ -340,7 +340,7 @@ impl Cpu {
     make_ld_r_r!(ld_c_h, c, h);
     make_ld_r_r!(ld_c_l, c, l);
 
-    make_ld_r_rr!(ld_c_hl, c, hl);
+    make_ld_r_rr!(ld_c_deref_hl, c, hl);
 
     make_ld_r_r!(ld_d_a, d, a);
     make_ld_r_r!(ld_d_b, d, b);
@@ -350,7 +350,7 @@ impl Cpu {
     make_ld_r_r!(ld_d_h, d, h);
     make_ld_r_r!(ld_d_l, d, l);
 
-    make_ld_r_rr!(ld_d_hl, d, hl);
+    make_ld_r_rr!(ld_d_deref_hl, d, hl);
 
     make_ld_r_r!(ld_e_a, e, a);
     make_ld_r_r!(ld_e_b, e, b);
@@ -360,7 +360,7 @@ impl Cpu {
     make_ld_r_r!(ld_e_h, e, h);
     make_ld_r_r!(ld_e_l, e, l);
 
-    make_ld_r_rr!(ld_e_hl, e, hl);
+    make_ld_r_rr!(ld_e_deref_hl, e, hl);
 
     make_ld_r_r!(ld_h_a, h, a);
     make_ld_r_r!(ld_h_b, h, b);
@@ -370,7 +370,7 @@ impl Cpu {
     make_ld_r_r!(ld_h_h, h, h);
     make_ld_r_r!(ld_h_l, h, l);
 
-    make_ld_r_rr!(ld_h_hl, h, hl);
+    make_ld_r_rr!(ld_h_deref_hl, h, hl);
 
     make_ld_r_r!(ld_l_a, l, a);
     make_ld_r_r!(ld_l_b, l, b);
@@ -380,7 +380,7 @@ impl Cpu {
     make_ld_r_r!(ld_l_h, l, h);
     make_ld_r_r!(ld_l_l, l, l);
 
-    make_ld_r_rr!(ld_l_hl, l, hl);
+    make_ld_r_rr!(ld_l_deref_hl, l, hl);
 
     make_ld_rr_r!(ld_hl_a, hl, a);
     make_ld_rr_r!(ld_hl_b, hl, b);
