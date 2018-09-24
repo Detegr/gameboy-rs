@@ -126,14 +126,21 @@ macro_rules! add_a_r {
         if check >= 0xFF {
             $cpu.f.set_h();
             $cpu.f.set_c();
+        } else {
+            $cpu.f.unset_h();
+            $cpu.f.unset_c();
         }
         let check = $cpu.a;
         $cpu.a = $cpu.a.wrapping_add($value);
         if $cpu.a == 0 {
             $cpu.f.set_z();
+        } else {
+            $cpu.f.unset_z();
         }
         if cpuflags::test_half_carry_addition(check, $cpu.a) {
             $cpu.f.set_h();
+        } else {
+            $cpu.f.unset_h();
         }
         $cpu.cycles += 4;
     }};
@@ -166,9 +173,13 @@ macro_rules! inc_r {
         $value = $value.wrapping_add(1);
         if $value == 0x0 {
             $cpu.f.set_z();
+        } else {
+            $cpu.f.unset_z();
         }
         if cpuflags::test_half_carry_addition(check, $value) {
             $cpu.f.set_h();
+        } else {
+            $cpu.f.unset_h();
         }
         $cpu.f.unset_n();
         $cpu.cycles += 4;
@@ -189,9 +200,13 @@ macro_rules! dec_r {
         $value = $value.wrapping_sub(1);
         if $value == 0x0 {
             $cpu.f.set_z();
+        } else {
+            $cpu.f.unset_z();
         }
         if !cpuflags::test_half_carry_subtraction(check, $value) {
             $cpu.f.set_h();
+        } else {
+            $cpu.f.unset_h();
         }
         $cpu.f.unset_n();
         $cpu.cycles += 4;

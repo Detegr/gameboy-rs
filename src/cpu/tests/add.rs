@@ -23,7 +23,6 @@ fn test_add_a_r() {
             assert!(!cpu.f.h());
             assert!(!cpu.f.c());
 
-            let (mut cpu, mut ram) = init(None);
             cpu.a = 0x10;
             cpu.$r = 0x10;
             let expected = cpu.a.wrapping_add(cpu.$r);
@@ -42,7 +41,6 @@ fn test_add_a_r() {
             assert!(cpu.f.h());
             assert!(!cpu.f.c());
 
-            let (mut cpu, mut ram) = init(None);
             cpu.a = 0xFF;
             cpu.$r = 0x1;
             let expected = cpu.a.wrapping_add(cpu.$r);
@@ -61,7 +59,6 @@ fn test_add_a_r() {
             assert!(cpu.f.h());
             assert!(cpu.f.c());
 
-            let (mut cpu, mut ram) = init(None);
             cpu.a = 0xF0;
             cpu.$r = 0x11;
             let expected = cpu.a.wrapping_add(cpu.$r);
@@ -79,6 +76,24 @@ fn test_add_a_r() {
             assert!(!cpu.f.n());
             assert!(cpu.f.h());
             assert!(cpu.f.c());
+
+            cpu.a = 0x10;
+            cpu.$r = 0x1;
+            let expected = cpu.a.wrapping_add(cpu.$r);
+            test(&mut cpu, &mut ram, 4, $func);
+            assert!(
+                cpu.a == expected,
+                format!(
+                    "add a, {}: Expected 0x{:X}, got 0x{:X}",
+                    stringify!($r),
+                    expected,
+                    cpu.a
+                )
+            );
+            assert!(!cpu.f.z());
+            assert!(!cpu.f.n());
+            assert!(!cpu.f.h());
+            assert!(!cpu.f.c());
         }};
     }
     fn test_add_a_a() {

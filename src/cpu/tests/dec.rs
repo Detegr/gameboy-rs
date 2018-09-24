@@ -13,7 +13,6 @@ fn test_dec_r() {
             assert!(!cpu.f.n());
             assert!(cpu.f.h());
 
-            let (mut cpu, mut ram) = init(None);
             cpu.$r = 0x10;
             let expected = cpu.$r.wrapping_sub(0x1);
             test(&mut cpu, &mut ram, 4, $func);
@@ -22,7 +21,6 @@ fn test_dec_r() {
             assert!(!cpu.f.n());
             assert!(!cpu.f.h());
 
-            let (mut cpu, mut ram) = init(None);
             cpu.$r = 0x1;
             let expected = cpu.$r.wrapping_sub(0x1);
             test(&mut cpu, &mut ram, 4, $func);
@@ -31,7 +29,6 @@ fn test_dec_r() {
             assert!(!cpu.f.n());
             assert!(cpu.f.h());
 
-            let (mut cpu, mut ram) = init(None);
             cpu.$r = 0x0;
             let expected = cpu.$r.wrapping_sub(0x1);
             test(&mut cpu, &mut ram, 4, $func);

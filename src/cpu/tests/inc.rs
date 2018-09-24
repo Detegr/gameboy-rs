@@ -13,7 +13,6 @@ fn test_inc_r() {
             assert!(!cpu.f.n());
             assert!(!cpu.f.h());
 
-            let (mut cpu, mut ram) = init(None);
             cpu.$r = 0xF;
             let expected = cpu.$r.wrapping_add(0x1);
             test(&mut cpu, &mut ram, 4, $func);
@@ -22,7 +21,6 @@ fn test_inc_r() {
             assert!(!cpu.f.n());
             assert!(cpu.f.h());
 
-            let (mut cpu, mut ram) = init(None);
             cpu.$r = 0xFF;
             let expected = cpu.$r.wrapping_add(0x1);
             test(&mut cpu, &mut ram, 4, $func);
@@ -30,6 +28,14 @@ fn test_inc_r() {
             assert!(cpu.f.z());
             assert!(!cpu.f.n());
             assert!(cpu.f.h());
+
+            cpu.$r = 0x11;
+            let expected = cpu.$r.wrapping_add(0x1);
+            test(&mut cpu, &mut ram, 4, $func);
+            assert!(cpu.$r == expected, format!("inc {}: Expected 0x{:X}, got 0x{:X}", stringify!($r), expected, cpu.$r));
+            assert!(!cpu.f.z());
+            assert!(!cpu.f.n());
+            assert!(!cpu.f.h());
         }}
     );
     test_inc_r!(a, opcode(0x3C));
