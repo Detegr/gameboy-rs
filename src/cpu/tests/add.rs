@@ -209,3 +209,167 @@ fn test_add_a_r() {
     }
     test_add_a_hl();
 }
+
+#[test]
+fn test_add_rr_rr() {
+    macro_rules! test_add_rr_rr {
+        ($r1:ident, $r2:ident, $r3:ident, $r4:ident, $func:expr) => {
+            let (mut cpu, mut ram) = init(None);
+            cpu.$r1 = 0x01;
+            cpu.$r2 = 0x01;
+            cpu.$r3 = 0x01;
+            cpu.$r4 = 0x10;
+            let expected = 0x0101 + 0x0110;
+            test(&mut cpu, &mut ram, 8, $func);
+            assert!(!cpu.f.n());
+            assert!(!cpu.f.h());
+            assert!(!cpu.f.c());
+
+            let r1r2 = ((cpu.$r1 as u16) << 8) | cpu.$r2 as u16;
+            assert_eq!(r1r2, expected);
+
+            cpu.$r1 = 0x0F;
+            cpu.$r2 = 0x01;
+            cpu.$r3 = 0x01;
+            cpu.$r4 = 0x10;
+            let expected = 0x0F01 + 0x0110;
+            test(&mut cpu, &mut ram, 8, $func);
+            assert!(!cpu.f.n());
+            assert!(cpu.f.h());
+            assert!(!cpu.f.c());
+
+            let r1r2 = ((cpu.$r1 as u16) << 8) | cpu.$r2 as u16;
+            assert_eq!(r1r2, expected);
+
+            cpu.$r1 = 0xFF;
+            cpu.$r2 = 0xFF;
+            cpu.$r3 = 0x00;
+            cpu.$r4 = 0x01;
+            let expected = 0xFFFF_u16.wrapping_add(0x0001);
+            test(&mut cpu, &mut ram, 8, $func);
+            assert!(!cpu.f.n());
+            assert!(cpu.f.h());
+            assert!(cpu.f.c());
+
+            let r1r2 = ((cpu.$r1 as u16) << 8) | cpu.$r2 as u16;
+            assert_eq!(r1r2, expected);
+
+            cpu.$r1 = 0x01;
+            cpu.$r2 = 0x01;
+            cpu.$r3 = 0x01;
+            cpu.$r4 = 0x10;
+            let expected = 0x0101 + 0x0110;
+            test(&mut cpu, &mut ram, 8, $func);
+            assert!(!cpu.f.n());
+            assert!(!cpu.f.h());
+            assert!(!cpu.f.c());
+
+            let r1r2 = ((cpu.$r1 as u16) << 8) | cpu.$r2 as u16;
+            assert_eq!(r1r2, expected);
+        };
+    }
+    test_add_rr_rr!(h, l, b, c, opcode(0x9));
+    test_add_rr_rr!(h, l, d, e, opcode(0x19));
+    // test_add_rr_rr!(h, l, h, l, opcode(0x29));
+    // test_add_rr_rr!(h, l, h, l, opcode(0x39));
+}
+
+#[test]
+fn test_add_hl_hl() {
+    let (mut cpu, mut ram) = init(None);
+    cpu.h = 0x2;
+    cpu.l = 0x2;
+    let expected = 0x0202 + 0x0202;
+    test(&mut cpu, &mut ram, 8, opcode(0x29));
+    assert!(!cpu.f.n());
+    assert!(!cpu.f.h());
+    assert!(!cpu.f.c());
+
+    let r1r2 = ((cpu.h as u16) << 8) | cpu.l as u16;
+    assert_eq!(r1r2, expected);
+
+    cpu.h = 0x0F;
+    cpu.l = 0x01;
+    let expected = 0x0F01 + 0x0F01;
+    test(&mut cpu, &mut ram, 8, opcode(0x29));
+    assert!(!cpu.f.n());
+    assert!(cpu.f.h());
+    assert!(!cpu.f.c());
+    let r1r2 = ((cpu.h as u16) << 8) | cpu.l as u16;
+    assert_eq!(r1r2, expected);
+
+    cpu.h = 0xF0;
+    cpu.l = 0xF0;
+    let expected = 0xF0F0_u16.wrapping_add(0xF0F0);
+    test(&mut cpu, &mut ram, 8, opcode(0x29));
+    assert!(!cpu.f.n());
+    assert!(cpu.f.h());
+    assert!(cpu.f.c());
+
+    let r1r2 = ((cpu.h as u16) << 8) | cpu.l as u16;
+    assert_eq!(r1r2, expected);
+
+    cpu.h = 0x2;
+    cpu.l = 0x2;
+    let expected = 0x0202 + 0x0202;
+    test(&mut cpu, &mut ram, 8, opcode(0x29));
+    assert!(!cpu.f.n());
+    assert!(!cpu.f.h());
+    assert!(!cpu.f.c());
+
+    let r1r2 = ((cpu.h as u16) << 8) | cpu.l as u16;
+    assert_eq!(r1r2, expected);
+}
+
+#[test]
+fn test_add_hl_sp() {
+    let (mut cpu, mut ram) = init(None);
+    cpu.reset();
+    cpu.h = 0x2;
+    cpu.l = 0x2;
+    cpu.sp = 0x202;
+    let expected = cpu.sp + 0x202;
+    test(&mut cpu, &mut ram, 8, opcode(0x39));
+    assert!(!cpu.f.n());
+    assert!(!cpu.f.h());
+    assert!(!cpu.f.c());
+
+    let r1r2 = ((cpu.h as u16) << 8) | cpu.l as u16;
+    assert_eq!(r1r2, expected);
+
+    cpu.h = 0x0F;
+    cpu.l = 0x01;
+    cpu.sp = 0x101;
+    let expected = 0xF01 + 0x101;
+    test(&mut cpu, &mut ram, 8, opcode(0x39));
+    assert!(!cpu.f.n());
+    assert!(cpu.f.h());
+    assert!(!cpu.f.c());
+
+    let r1r2 = ((cpu.h as u16) << 8) | cpu.l as u16;
+    assert_eq!(r1r2, expected);
+
+    cpu.h = 0xF0;
+    cpu.l = 0xF0;
+    cpu.sp = 0xF0F0;
+    let expected = 0xF0F0_u16.wrapping_add(0xF0F0);
+    test(&mut cpu, &mut ram, 8, opcode(0x39));
+    assert!(!cpu.f.n());
+    assert!(cpu.f.h());
+    assert!(cpu.f.c());
+
+    let r1r2 = ((cpu.h as u16) << 8) | cpu.l as u16;
+    assert_eq!(r1r2, expected);
+
+    cpu.h = 0x2;
+    cpu.l = 0x2;
+    cpu.sp = 0x202;
+    let expected = 0x0202 + 0x0202;
+    test(&mut cpu, &mut ram, 8, opcode(0x39));
+    assert!(!cpu.f.n());
+    assert!(!cpu.f.h());
+    assert!(!cpu.f.c());
+
+    let r1r2 = ((cpu.h as u16) << 8) | cpu.l as u16;
+    assert_eq!(r1r2, expected);
+}

@@ -89,6 +89,36 @@ macro_rules! make_add {
         }
     }
 }
+macro_rules! make_add_rr_rr {
+    ($name:ident, $r1: ident, $r2:ident, $r3:ident, $r4:ident) => {
+        #[inline]
+        fn $name(&mut self, _ram: &mut Ram) {
+            let val32_lhs = ((self.$r1 as u32) << 8) & 0xFF00 | self.$r2 as u32 & 0xFF;
+            let val32_rhs = ((self.$r3 as u32) << 8) & 0xFF00 | self.$r4 as u32 & 0xFF;
+            let mut r2 = self.$r2;
+            r2 = r2.wrapping_add(self.$r4);
+            let r1_add = if r2 < self.$r2 { 1 } else { 0 };
+            let mut r1 = self.$r1;
+            r1 = r1.wrapping_add(self.$r3 + r1_add);
+            if cpuflags::test_half_carry_addition(self.$r1, r1) {
+                self.f.set_h();
+            } else {
+                self.f.unset_h();
+            }
+            if val32_lhs + val32_rhs > 65535 {
+                self.f.set_c();
+                self.f.set_h();
+            } else {
+                self.f.unset_c();
+            }
+            self.f.unset_n();
+            self.cycles += 8;
+
+            self.$r1 = r1;
+            self.$r2 = r2;
+        }
+    }
+}
 macro_rules! add_a_r {
     ($cpu:expr, $value:expr) => {{
         $cpu.f.unset_n();
@@ -425,5 +455,36 @@ impl Cpu {
         self.pc += 2;
         LittleEndian::write_u16(&mut ram[a16 as usize..], self.sp);
         self.cycles += 20;
+    }
+
+    make_add_rr_rr!(add_hl_bc, h, l, b, c);
+    make_add_rr_rr!(add_hl_de, h, l, d, e);
+    make_add_rr_rr!(add_hl_hl, h, l, h, l);
+    #[inline]
+    fn add_hl_sp(&mut self, _ram: &mut Ram) {
+        let val32_lhs = ((self.h as u32) << 8) & 0xFF00 | self.l as u32 & 0xFF;
+        let s = ((self.sp & 0xFF00) >> 8) as u8;
+        let p = (self.sp & 0xFF) as u8;
+        let mut l = self.l;
+        l = l.wrapping_add(p);
+        let h_add = if l < self.l { 1 } else { 0 };
+        let mut h = self.h;
+        h = h.wrapping_add(s + h_add);
+        if cpuflags::test_half_carry_addition(self.h, h) {
+            self.f.set_h();
+        } else {
+            self.f.unset_h();
+        }
+        if val32_lhs + (self.sp as u32) > 65535 {
+            self.f.set_c();
+            self.f.set_h();
+        } else {
+            self.f.unset_c();
+        }
+        self.f.unset_n();
+
+        self.h = h;
+        self.l = l;
+        self.cycles += 8;
     }
 }
