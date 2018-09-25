@@ -18,7 +18,7 @@ pub struct Cpu {
     h: u8,
     l: u8,
     f: cpuflags::CpuFlags,
-    pc: usize, // Actually u16 but defined as usize to avoid casting for indexing
+    pc: u16,
     sp: u16,
     cycles: usize,
 }
@@ -227,6 +227,32 @@ macro_rules! make_dec_rr {
         }
     }
 }
+macro_rules! make_jr_cc_n {
+    ($name:ident, $flag:ident set) => {
+        #[inline]
+        fn $name(&mut self, ram: &mut Ram) {
+            if self.f.$flag() {
+                self.jr_n(ram);
+            } else {
+                // FIXME: Does it take 12 cycles
+                // even though the jump is not taken?
+                self.cycles += 12;
+            }
+        }
+    };
+    ($name:ident, $flag:ident not set) => {
+        #[inline]
+        fn $name(&mut self, ram: &mut Ram) {
+            if !self.f.$flag() {
+                self.jr_n(ram);
+            } else {
+                // FIXME: Does it take 12 cycles
+                // even though the jump is not taken?
+                self.cycles += 12;
+            }
+        }
+    }
+}
 
 impl Cpu {
     pub fn new() -> Cpu {
@@ -239,11 +265,8 @@ impl Cpu {
     }
     #[inline]
     fn next_byte(&mut self, ram: &mut Ram) -> u8 {
-        if self.pc > 65536 {
-            panic!("Program counter out of bounds")
-        }
-        let ret = ram[self.pc];
-        self.pc += 1;
+        let ret = ram[self.pc as usize];
+        self.pc = self.pc.wrapping_add(1);
         ret
     }
 
@@ -331,7 +354,7 @@ impl Cpu {
     make_ld_rr_nn!(ld_hl_nn, h, l);
     #[inline]
     fn ld_sp_nn(&mut self, ram: &mut Ram) {
-        self.sp = LittleEndian::read_u16(&ram[self.pc..]);
+        self.sp = LittleEndian::read_u16(&ram[self.pc as usize..]);
         self.pc += 2;
         self.cycles += 12;
     }
@@ -466,7 +489,7 @@ impl Cpu {
 
     #[inline]
     fn ld_deref_a16_sp(&mut self, ram: &mut Ram) {
-        let a16 = LittleEndian::read_u16(&ram[self.pc..]);
+        let a16 = LittleEndian::read_u16(&ram[self.pc as usize..]);
         self.pc += 2;
         LittleEndian::write_u16(&mut ram[a16 as usize..], self.sp);
         self.cycles += 20;
@@ -510,10 +533,15 @@ impl Cpu {
         // FIXME: How should pc behave? Is the addition done
         // after increasing it when reading a byte, or is it
         // relative to the position before reading the byte?
-        self.pc -= 1;
+        self.pc = self.pc.wrapping_sub(1);
+        self.pc = self.pc.wrapping_add(n as i8 as u16);
 
-        self.pc = self.pc.wrapping_add(n as usize);
         // FIXME: In GBCPUman this is 8 cycles
         self.cycles += 12;
     }
+
+    make_jr_cc_n!(jr_nz_n, z not set);
+    make_jr_cc_n!(jr_z_n, z set);
+    make_jr_cc_n!(jr_nc_n, c not set);
+    make_jr_cc_n!(jr_c_n, c set);
 }

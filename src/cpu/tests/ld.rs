@@ -264,13 +264,13 @@ fn test_ld_deref_a16_sp() {
     use byteorder::{ByteOrder, LittleEndian};
     let (mut cpu, mut ram) = init(Some(&[0; 0x1000]));
     cpu.reset();
-    LittleEndian::write_u16(&mut ram[cpu.pc..], 0x800);
+    LittleEndian::write_u16(&mut ram[cpu.pc as usize..], 0x800);
     test(&mut cpu, &mut ram, 20, opcode(0x8));
     let sp_from_ram = LittleEndian::read_u16(&ram[0x800..]);
     assert_eq!(cpu.sp, sp_from_ram);
 
     cpu.sp = 0x1234;
-    LittleEndian::write_u16(&mut ram[cpu.pc..], 0x400);
+    LittleEndian::write_u16(&mut ram[cpu.pc as usize..], 0x400);
     test(&mut cpu, &mut ram, 20, opcode(0x8));
     let sp_from_ram = LittleEndian::read_u16(&ram[0x400..]);
     assert_eq!(cpu.sp, sp_from_ram);
