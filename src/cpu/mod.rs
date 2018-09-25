@@ -502,4 +502,18 @@ impl Cpu {
         self.l = l;
         self.cycles += 8;
     }
+
+    #[inline]
+    fn jr_n(&mut self, ram: &mut Ram) {
+        let n = self.next_byte(ram);
+
+        // FIXME: How should pc behave? Is the addition done
+        // after increasing it when reading a byte, or is it
+        // relative to the position before reading the byte?
+        self.pc -= 1;
+
+        self.pc = self.pc.wrapping_add(n as usize);
+        // FIXME: In GBCPUman this is 8 cycles
+        self.cycles += 12;
+    }
 }
