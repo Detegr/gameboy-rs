@@ -20,6 +20,7 @@ pub struct Cpu {
     f: cpuflags::CpuFlags,
     pc: u16,
     sp: u16,
+    stopped: bool,
     cycles: usize,
 }
 
@@ -559,4 +560,10 @@ impl Cpu {
     make_jr_cc_n!(jr_z_n, z set);
     make_jr_cc_n!(jr_nc_n, c not set);
     make_jr_cc_n!(jr_c_n, c set);
+
+    fn stop(&mut self, _ram: &mut Ram) {
+        self.stopped = true;
+        self.cycles += 4;
+        // TODO: Wake up until a button press
+    }
 }

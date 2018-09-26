@@ -47,3 +47,4 @@ mod jr;
 mod ld;
 mod nop;
 mod rotate;
+mod stop;
