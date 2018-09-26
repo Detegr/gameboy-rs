@@ -597,9 +597,28 @@ impl Cpu {
     make_jr_cc_n!(jr_nc_n, c not set);
     make_jr_cc_n!(jr_c_n, c set);
 
+    #[inline]
     fn stop(&mut self, _ram: &mut Ram) {
         self.stopped = true;
         self.cycles += 4;
         // TODO: Wake up until a button press
+    }
+
+    #[inline]
+    fn ld_hli_a(&mut self, ram: &mut Ram) {
+        ram[self.hl() as usize] = self.a;
+        let hl = self.hl().wrapping_add(1);
+        self.h = ((hl >> 8) & 0xFF) as u8;
+        self.l = (hl & 0xFF) as u8;
+        self.cycles += 8;
+    }
+
+    #[inline]
+    fn ld_hld_a(&mut self, ram: &mut Ram) {
+        ram[self.hl() as usize] = self.a;
+        let hl = self.hl().wrapping_sub(1);
+        self.h = ((hl >> 8) & 0xFF) as u8;
+        self.l = (hl & 0xFF) as u8;
+        self.cycles += 8;
     }
 }

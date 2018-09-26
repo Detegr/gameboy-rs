@@ -275,3 +275,43 @@ fn test_ld_deref_a16_sp() {
     let sp_from_ram = LittleEndian::read_u16(&ram[0x400..]);
     assert_eq!(cpu.sp, sp_from_ram);
 }
+
+#[test]
+fn test_ld_hli_a() {
+    let (mut cpu, mut ram) = init(None);
+    cpu.h = 0x11;
+    cpu.l = 0x22;
+    cpu.a = 0xFF;
+    ram[0x1122] = 0x1;
+
+    assert_eq!(ram[0x1122], 0x1);
+    test(&mut cpu, &mut ram, 8, opcode(0x22));
+    assert_eq!(ram[0x1122], 0xFF);
+    assert_eq!(cpu.hl(), 0x1123);
+
+    cpu.h = 0xFF;
+    cpu.l = 0xFF;
+    test(&mut cpu, &mut ram, 8, opcode(0x22));
+    assert_eq!(ram[0xFFFF], 0xFF);
+    assert_eq!(cpu.hl(), 0x0);
+}
+
+#[test]
+fn test_ld_hld_a() {
+    let (mut cpu, mut ram) = init(None);
+    cpu.h = 0x11;
+    cpu.l = 0x22;
+    cpu.a = 0xFF;
+    ram[0x1122] = 0x1;
+
+    assert_eq!(ram[0x1122], 0x1);
+    test(&mut cpu, &mut ram, 8, opcode(0x32));
+    assert_eq!(ram[0x1122], 0xFF);
+    assert_eq!(cpu.hl(), 0x1121);
+
+    cpu.h = 0x0;
+    cpu.l = 0x0;
+    test(&mut cpu, &mut ram, 8, opcode(0x32));
+    assert_eq!(ram[0x0], 0xFF);
+    assert_eq!(cpu.hl(), 0xFFFF);
+}
