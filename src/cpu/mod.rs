@@ -484,7 +484,25 @@ impl Cpu {
             self.f.unset_c();
         }
 
+        self.a = self.a.rotate_left(1);
+        self.cycles += 4;
+    }
+
+    #[inline]
+    fn rla(&mut self, _ram: &mut Ram) {
+        self.f.unset_n();
+        self.f.unset_h();
+        self.f.unset_z();
+        let old_carry = self.f.c();
+        if (self.a & 0x80) != 0 {
+            self.f.set_c();
+        } else {
+            self.f.unset_c();
+        }
         self.a <<= 1;
+        if old_carry {
+            self.a |= 0x1;
+        }
         self.cycles += 4;
     }
 
@@ -499,7 +517,25 @@ impl Cpu {
             self.f.unset_c();
         }
 
+        self.a = self.a.rotate_right(1);
+        self.cycles += 4;
+    }
+
+    #[inline]
+    fn rra(&mut self, _ram: &mut Ram) {
+        self.f.unset_n();
+        self.f.unset_h();
+        self.f.unset_z();
+        let old_carry = self.f.c();
+        if (self.a & 0x1) != 0 {
+            self.f.set_c();
+        } else {
+            self.f.unset_c();
+        }
         self.a >>= 1;
+        if old_carry {
+            self.a |= 0x80;
+        }
         self.cycles += 4;
     }
 
