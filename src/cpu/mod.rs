@@ -477,13 +477,28 @@ impl Cpu {
         self.f.unset_n();
         self.f.unset_h();
         self.f.unset_z();
-        if self.a & 0x80 == 0 {
-            self.f.unset_c();
-        } else {
+        if (self.a & 0x80) != 0 {
             self.f.set_c();
+        } else {
+            self.f.unset_c();
         }
 
         self.a <<= 1;
+        self.cycles += 4;
+    }
+
+    #[inline]
+    fn rrca(&mut self, _ram: &mut Ram) {
+        self.f.unset_n();
+        self.f.unset_h();
+        self.f.unset_z();
+        if (self.a & 0x1) != 0 {
+            self.f.set_c();
+        } else {
+            self.f.unset_c();
+        }
+
+        self.a >>= 1;
         self.cycles += 4;
     }
 

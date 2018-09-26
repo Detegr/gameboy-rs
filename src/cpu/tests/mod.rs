@@ -46,4 +46,4 @@ mod inc;
 mod jr;
 mod ld;
 mod nop;
-mod rlc;
+mod rotate;
