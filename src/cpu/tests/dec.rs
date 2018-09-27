@@ -10,15 +10,15 @@ fn test_dec_r() {
             test(&mut cpu, &mut ram, 4, $func);
             assert!(cpu.$r == expected, format!("dec {}: Expected 0x{:X}, got 0x{:X}", stringify!($r), expected, cpu.$r));
             assert!(!cpu.f.z());
-            assert!(!cpu.f.n());
-            assert!(cpu.f.h());
+            assert!(cpu.f.n());
+            assert!(!cpu.f.h());
 
             cpu.$r = 0x10;
             let expected = cpu.$r.wrapping_sub(0x1);
             test(&mut cpu, &mut ram, 4, $func);
             assert!(cpu.$r == expected, format!("dec {}: Expected 0x{:X}, got 0x{:X}", stringify!($r), expected, cpu.$r));
             assert!(!cpu.f.z());
-            assert!(!cpu.f.n());
+            assert!(cpu.f.n());
             assert!(!cpu.f.h());
 
             cpu.$r = 0x1;
@@ -26,16 +26,16 @@ fn test_dec_r() {
             test(&mut cpu, &mut ram, 4, $func);
             assert!(cpu.$r == expected, format!("dec {}: Expected 0x{:X}, got 0x{:X}", stringify!($r), expected, cpu.$r));
             assert!(cpu.f.z());
-            assert!(!cpu.f.n());
-            assert!(cpu.f.h());
+            assert!(cpu.f.n());
+            assert!(!cpu.f.h());
 
             cpu.$r = 0x0;
             let expected = cpu.$r.wrapping_sub(0x1);
             test(&mut cpu, &mut ram, 4, $func);
             assert!(cpu.$r == expected, format!("dec {}: Expected 0x{:X}, got 0x{:X}", stringify!($r), expected, cpu.$r));
             assert!(!cpu.f.z());
-            assert!(!cpu.f.n());
-            assert!(!cpu.f.h());
+            assert!(cpu.f.n());
+            assert!(cpu.f.h(), "half-carry must be set when overflowing");
         }}
     );
     test_dec_r!(a, opcode(0x3D));
@@ -61,8 +61,8 @@ fn test_dec_r() {
             )
         );
         assert!(!cpu.f.z());
-        assert!(!cpu.f.n());
-        assert!(cpu.f.h());
+        assert!(cpu.f.n());
+        assert!(!cpu.f.h());
 
         let (mut cpu, mut ram) = init(None);
         ram[0x1F01] = 0x10;
@@ -79,7 +79,7 @@ fn test_dec_r() {
             )
         );
         assert!(!cpu.f.z());
-        assert!(!cpu.f.n());
+        assert!(cpu.f.n());
         assert!(!cpu.f.h());
 
         let (mut cpu, mut ram) = init(None);
@@ -97,8 +97,8 @@ fn test_dec_r() {
             )
         );
         assert!(cpu.f.z());
-        assert!(!cpu.f.n());
-        assert!(cpu.f.h());
+        assert!(cpu.f.n());
+        assert!(!cpu.f.h());
 
         let (mut cpu, mut ram) = init(None);
         ram[0x1F01] = 0x0;
@@ -115,8 +115,8 @@ fn test_dec_r() {
             )
         );
         assert!(!cpu.f.z());
-        assert!(!cpu.f.n());
-        assert!(!cpu.f.h());
+        assert!(cpu.f.n());
+        assert!(cpu.f.h());
     }
     test_dec_hl();
 }

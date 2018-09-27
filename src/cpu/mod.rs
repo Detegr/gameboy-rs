@@ -101,7 +101,7 @@ macro_rules! make_add_rr_rr {
             let r1_add = if r2 < self.$r2 { 1 } else { 0 };
             let mut r1 = self.$r1;
             r1 = r1.wrapping_add(self.$r3 + r1_add);
-            if cpuflags::test_half_carry_addition(self.$r1, r1) {
+            if cpuflags::test_half_carry_addition(self.$r1, self.$r3 + r1_add) {
                 self.f.set_h();
             } else {
                 self.f.unset_h();
@@ -131,17 +131,16 @@ macro_rules! add_a_r {
             $cpu.f.unset_h();
             $cpu.f.unset_c();
         }
-        let check = $cpu.a;
+        if cpuflags::test_half_carry_addition($cpu.a, $value) {
+            $cpu.f.set_h();
+        } else {
+            $cpu.f.unset_h();
+        }
         $cpu.a = $cpu.a.wrapping_add($value);
         if $cpu.a == 0 {
             $cpu.f.set_z();
         } else {
             $cpu.f.unset_z();
-        }
-        if cpuflags::test_half_carry_addition(check, $cpu.a) {
-            $cpu.f.set_h();
-        } else {
-            $cpu.f.unset_h();
         }
         $cpu.cycles += 4;
     }};
@@ -170,17 +169,16 @@ macro_rules! make_inc {
 }
 macro_rules! inc_r {
     ($cpu:expr, $value:expr) => {{
-        let check = $value;
+        if cpuflags::test_half_carry_addition($value, 1) {
+            $cpu.f.set_h();
+        } else {
+            $cpu.f.unset_h();
+        }
         $value = $value.wrapping_add(1);
         if $value == 0x0 {
             $cpu.f.set_z();
         } else {
             $cpu.f.unset_z();
-        }
-        if cpuflags::test_half_carry_addition(check, $value) {
-            $cpu.f.set_h();
-        } else {
-            $cpu.f.unset_h();
         }
         $cpu.f.unset_n();
         $cpu.cycles += 4;
@@ -197,19 +195,18 @@ macro_rules! make_dec {
 }
 macro_rules! dec_r {
     ($cpu:expr, $value:expr) => {{
-        let check = $value;
+        if cpuflags::test_half_carry_subtraction($value, 1) {
+            $cpu.f.set_h();
+        } else {
+            $cpu.f.unset_h();
+        }
         $value = $value.wrapping_sub(1);
         if $value == 0x0 {
             $cpu.f.set_z();
         } else {
             $cpu.f.unset_z();
         }
-        if !cpuflags::test_half_carry_subtraction(check, $value) {
-            $cpu.f.set_h();
-        } else {
-            $cpu.f.unset_h();
-        }
-        $cpu.f.unset_n();
+        $cpu.f.set_n();
         $cpu.cycles += 4;
         $value
     }};
@@ -560,7 +557,7 @@ impl Cpu {
         let h_add = if l < self.l { 1 } else { 0 };
         let mut h = self.h;
         h = h.wrapping_add(s + h_add);
-        if cpuflags::test_half_carry_addition(self.h, h) {
+        if cpuflags::test_half_carry_addition(self.h, s + h_add) {
             self.f.set_h();
         } else {
             self.f.unset_h();
@@ -620,5 +617,31 @@ impl Cpu {
         self.h = ((hl >> 8) & 0xFF) as u8;
         self.l = (hl & 0xFF) as u8;
         self.cycles += 8;
+    }
+
+    fn daa(&mut self, _ram: &mut Ram) {
+        if !self.f.n() {
+            // Last operation was addition
+            if self.f.c() || self.a > 0x99 {
+                self.a = self.a.wrapping_add(0x60);
+                self.f.set_c();
+            }
+            if self.f.h() || (self.a & 0x0F) > 0x9 {
+                self.a = self.a.wrapping_add(0x6);
+            }
+        } else {
+            // Last operation was subtraction
+            if self.f.c() {
+                self.a = self.a.wrapping_sub(0x60);
+            }
+            if self.f.h() {
+                self.a = self.a.wrapping_sub(0x6);
+            }
+        }
+        self.f.unset_h();
+        if self.a == 0 {
+            self.f.set_z();
+        }
+        self.cycles += 4;
     }
 }

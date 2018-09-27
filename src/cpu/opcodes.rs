@@ -42,7 +42,7 @@ pub static OPCODES: &'static [OpcodeFunction] = &[
     Cpu::inc_h,
     Cpu::dec_h,
     Cpu::ld_h_n,
-    Cpu::nyi,
+    Cpu::daa,
     Cpu::jr_z_n,
     Cpu::add_hl_hl,
     Cpu::nyi,
