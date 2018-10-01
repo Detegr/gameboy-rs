@@ -670,4 +670,12 @@ impl Cpu {
 
         self.cycles += 4;
     }
+
+    fn scf(&mut self, _ram: &mut Ram) {
+        self.f.unset_n();
+        self.f.unset_h();
+        self.f.set_c();
+
+        self.cycles += 4;
+    }
 }
