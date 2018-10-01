@@ -46,6 +46,7 @@ mod dec;
 mod inc;
 mod jr;
 mod ld;
+mod misc;
 mod nop;
 mod rotate;
 mod stop;

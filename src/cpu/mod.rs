@@ -662,4 +662,12 @@ impl Cpu {
         }
         self.cycles += 4;
     }
+
+    fn cpl(&mut self, _ram: &mut Ram) {
+        self.a = !self.a;
+        self.f.set_n();
+        self.f.set_h();
+
+        self.cycles += 4;
+    }
 }
