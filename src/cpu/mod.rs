@@ -619,6 +619,24 @@ impl Cpu {
         self.cycles += 8;
     }
 
+    #[inline]
+    fn ld_a_hli(&mut self, ram: &mut Ram) {
+        self.a = ram[self.hl() as usize];
+        let hl = self.hl().wrapping_add(1);
+        self.h = ((hl >> 8) & 0xFF) as u8;
+        self.l = (hl & 0xFF) as u8;
+        self.cycles += 8;
+    }
+
+    #[inline]
+    fn ld_a_hld(&mut self, ram: &mut Ram) {
+        self.a = ram[self.hl() as usize];
+        let hl = self.hl().wrapping_sub(1);
+        self.h = ((hl >> 8) & 0xFF) as u8;
+        self.l = (hl & 0xFF) as u8;
+        self.cycles += 8;
+    }
+
     fn daa(&mut self, _ram: &mut Ram) {
         if !self.f.n() {
             // Last operation was addition
