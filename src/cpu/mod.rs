@@ -8,6 +8,19 @@ use std::default::Default;
 pub mod cpuflags;
 pub mod opcodes;
 
+
+#[derive(Debug, PartialEq)]
+pub enum RunState {
+    Running,
+    Stopped,
+    Halted,
+}
+impl Default for RunState {
+    fn default() -> RunState {
+        RunState::Running
+    }
+}
+
 #[derive(Default)]
 pub struct Cpu {
     a: u8,
@@ -20,7 +33,7 @@ pub struct Cpu {
     f: cpuflags::CpuFlags,
     pc: u16,
     sp: u16,
-    stopped: bool,
+    run_state: RunState,
     cycles: usize,
 }
 
@@ -596,9 +609,9 @@ impl Cpu {
 
     #[inline]
     fn stop(&mut self, _ram: &mut Ram) {
-        self.stopped = true;
+        self.run_state = RunState::Stopped;
         self.cycles += 4;
-        // TODO: Wake up until a button press
+        // TODO: Wake up to a button press
     }
 
     #[inline]
@@ -689,5 +702,11 @@ impl Cpu {
         }
 
         self.cycles += 4;
+    }
+
+    fn halt(&mut self, _ram: &mut Ram) {
+        self.run_state = RunState::Halted;
+        self.cycles += 4;
+        // TODO: Wake up to an interrupt
     }
 }
