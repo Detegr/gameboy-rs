@@ -457,7 +457,7 @@ impl Cpu {
     make_ld_rr_r!(ld_hl_l, hl, l);
 
     #[inline]
-    fn ld_hl_n(&mut self, ram: &mut Ram) {
+    fn ld_deref_hl_n(&mut self, ram: &mut Ram) {
         ram[self.hl() as usize] = self.next_byte(ram);
         self.cycles += 12;
     }
