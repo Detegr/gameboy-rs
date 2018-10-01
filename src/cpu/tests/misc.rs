@@ -31,3 +31,27 @@ fn test_scf() {
     assert!(!cpu.f.n());
     assert!(!cpu.f.h());
 }
+
+#[test]
+fn test_ccf() {
+    let (mut cpu, mut ram) = init(None);
+    assert!(!cpu.f.z());
+    assert!(!cpu.f.c());
+    assert!(!cpu.f.n());
+    assert!(!cpu.f.h());
+    test(&mut cpu, &mut ram, 4, opcode(0x3F));
+    assert!(!cpu.f.z());
+    assert!(cpu.f.c());
+    assert!(!cpu.f.n());
+    assert!(!cpu.f.h());
+    test(&mut cpu, &mut ram, 4, opcode(0x3F));
+    assert!(!cpu.f.z());
+    assert!(!cpu.f.c());
+    assert!(!cpu.f.n());
+    assert!(!cpu.f.h());
+    test(&mut cpu, &mut ram, 4, opcode(0x3F));
+    assert!(!cpu.f.z());
+    assert!(cpu.f.c());
+    assert!(!cpu.f.n());
+    assert!(!cpu.f.h());
+}
