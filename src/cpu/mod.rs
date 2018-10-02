@@ -103,6 +103,18 @@ macro_rules! make_add {
         }
     }
 }
+macro_rules! make_adc {
+    ($name:ident, $reg: ident) => {
+        #[inline]
+        fn $name(&mut self, _ram: &mut Ram) {
+            if self.f.c() {
+                add_a_r!(self, self.$reg + 1);
+            } else {
+                add_a_r!(self, self.$reg);
+            }
+        }
+    }
+}
 macro_rules! make_add_rr_rr {
     ($name:ident, $r1: ident, $r2:ident, $r3:ident, $r4:ident) => {
         #[inline]
@@ -709,4 +721,20 @@ impl Cpu {
         self.cycles += 4;
         // TODO: Wake up to an interrupt
     }
+
+    make_adc!(adc_a_b, b);
+    make_adc!(adc_a_c, c);
+    make_adc!(adc_a_d, d);
+    make_adc!(adc_a_e, e);
+    make_adc!(adc_a_h, h);
+    make_adc!(adc_a_l, l);
+
+    #[inline]
+    fn adc_a_deref_hl(&mut self, ram: &mut Ram) {
+        let c = if self.f.c() { 1 } else { 0 };
+        add_a_r!(self, ram[self.hl() as usize].wrapping_add(c));
+        self.cycles += 4;
+    }
+
+    make_adc!(adc_a_a, a);
 }
