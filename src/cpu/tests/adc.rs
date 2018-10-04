@@ -62,7 +62,7 @@ fn test_adc_a_r() {
             cpu.a = 0xF0;
             cpu.$r = 0x11;
             let carry = 1;
-            let expected = cpu.a.wrapping_add(cpu.$r) + carry;
+            let expected = cpu.a.wrapping_add(cpu.$r).wrapping_add(carry);
             test(&mut cpu, &mut ram, 4, $func);
             assert!(
                 cpu.a == expected,
@@ -80,7 +80,7 @@ fn test_adc_a_r() {
 
             cpu.a = 0x10;
             cpu.$r = 0x1;
-            let expected = cpu.a.wrapping_add(cpu.$r) + carry;
+            let expected = cpu.a.wrapping_add(cpu.$r).wrapping_add(carry);
             test(&mut cpu, &mut ram, 4, $func);
             assert!(
                 cpu.a == expected,

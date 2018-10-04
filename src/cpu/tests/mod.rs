@@ -50,5 +50,6 @@ mod ld;
 mod misc;
 mod nop;
 mod rotate;
+mod sbc;
 mod stop;
 mod sub;

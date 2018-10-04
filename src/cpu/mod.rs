@@ -108,7 +108,7 @@ macro_rules! make_adc {
         #[inline]
         fn $name(&mut self, _ram: &mut Ram) {
             if self.f.c() {
-                add_a_r!(self, self.$reg + 1);
+                add_a_r!(self, self.$reg.wrapping_add(1));
             } else {
                 add_a_r!(self, self.$reg);
             }
@@ -175,6 +175,18 @@ macro_rules! make_sub {
         #[inline]
         fn $name(&mut self, _ram: &mut Ram) {
             sub_a_r!(self, self.$reg);
+        }
+    }
+}
+macro_rules! make_sbc {
+    ($name:ident, $reg: ident) => {
+        #[inline]
+        fn $name(&mut self, _ram: &mut Ram) {
+            if self.f.c() {
+                sub_a_r!(self, self.$reg.wrapping_add(1));
+            } else {
+                sub_a_r!(self, self.$reg);
+            }
         }
     }
 }
@@ -782,6 +794,21 @@ impl Cpu {
     #[inline]
     fn sub_a_deref_hl(&mut self, ram: &mut Ram) {
         sub_a_r!(self, ram[self.hl() as usize]);
+        self.cycles += 4;
+    }
+
+    make_sbc!(sbc_a_b, b);
+    make_sbc!(sbc_a_c, c);
+    make_sbc!(sbc_a_d, d);
+    make_sbc!(sbc_a_e, e);
+    make_sbc!(sbc_a_h, h);
+    make_sbc!(sbc_a_l, l);
+    make_sbc!(sbc_a_a, a);
+
+    #[inline]
+    fn sbc_a_deref_hl(&mut self, ram: &mut Ram) {
+        let c = if self.f.c() { 1 } else { 0 };
+        sub_a_r!(self, ram[self.hl() as usize].wrapping_add(c));
         self.cycles += 4;
     }
 }
