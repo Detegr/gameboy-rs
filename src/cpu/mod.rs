@@ -170,6 +170,39 @@ macro_rules! add_a_r {
         $cpu.cycles += 4;
     }};
 }
+macro_rules! make_sub {
+    ($name:ident, $reg: ident) => {
+        #[inline]
+        fn $name(&mut self, _ram: &mut Ram) {
+            sub_a_r!(self, self.$reg);
+        }
+    }
+}
+macro_rules! sub_a_r {
+    ($cpu:expr, $value:expr) => {{
+        $cpu.f.set_n();
+        let check = ($cpu.a as i16) - ($value as i16);
+        if check < 0 {
+            $cpu.f.set_h();
+            $cpu.f.set_c();
+        } else {
+            $cpu.f.unset_h();
+            $cpu.f.unset_c();
+        }
+        if cpuflags::test_half_carry_subtraction($cpu.a, $value) {
+            $cpu.f.set_h();
+        } else {
+            $cpu.f.unset_h();
+        }
+        $cpu.a = $cpu.a.wrapping_sub($value);
+        if $cpu.a == 0 {
+            $cpu.f.set_z();
+        } else {
+            $cpu.f.unset_z();
+        }
+        $cpu.cycles += 4;
+    }};
+}
 macro_rules! make_inc_rr {
     ($name:ident, $r1:ident, $r2:ident) => {
         #[inline]
@@ -737,4 +770,18 @@ impl Cpu {
     }
 
     make_adc!(adc_a_a, a);
+
+    make_sub!(sub_a_b, b);
+    make_sub!(sub_a_c, c);
+    make_sub!(sub_a_d, d);
+    make_sub!(sub_a_e, e);
+    make_sub!(sub_a_h, h);
+    make_sub!(sub_a_l, l);
+    make_sub!(sub_a_a, a);
+
+    #[inline]
+    fn sub_a_deref_hl(&mut self, ram: &mut Ram) {
+        sub_a_r!(self, ram[self.hl() as usize]);
+        self.cycles += 4;
+    }
 }

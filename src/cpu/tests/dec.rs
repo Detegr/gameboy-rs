@@ -19,7 +19,7 @@ fn test_dec_r() {
             assert!(cpu.$r == expected, format!("dec {}: Expected 0x{:X}, got 0x{:X}", stringify!($r), expected, cpu.$r));
             assert!(!cpu.f.z());
             assert!(cpu.f.n());
-            assert!(!cpu.f.h());
+            assert!(cpu.f.h());
 
             cpu.$r = 0x1;
             let expected = cpu.$r.wrapping_sub(0x1);
@@ -80,7 +80,7 @@ fn test_dec_r() {
         );
         assert!(!cpu.f.z());
         assert!(cpu.f.n());
-        assert!(!cpu.f.h());
+        assert!(cpu.f.h());
 
         let (mut cpu, mut ram) = init(None);
         ram[0x1F01] = 0x1;

@@ -61,7 +61,7 @@ pub fn test_half_carry_addition(a: u8, b: u8) -> bool {
 
 #[inline(always)]
 pub fn test_half_carry_subtraction(a: u8, b: u8) -> bool {
-    a < b
+    ((a & 0xF).wrapping_sub(b & 0xF) & 0x10) == 0x10
 }
 
 #[cfg(test)]
