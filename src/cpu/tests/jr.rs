@@ -36,7 +36,7 @@ fn test_jr_cc_n() {
 
     cpu.f.set_z();
     assert!(cpu.f.z());
-    test(&mut cpu, &mut ram, 12, opcode(0x20));
+    test(&mut cpu, &mut ram, 8, opcode(0x20));
     assert_eq!(cpu.pc, unchanged);
 
     cpu.f.unset_z();
@@ -46,7 +46,7 @@ fn test_jr_cc_n() {
     cpu.f.unset_z();
     ram[cpu.pc as usize] = 0x1;
     let unchanged = cpu.pc;
-    test(&mut cpu, &mut ram, 12, opcode(0x28));
+    test(&mut cpu, &mut ram, 8, opcode(0x28));
     assert_eq!(cpu.pc, unchanged);
 
     cpu.f.set_z();
@@ -62,7 +62,7 @@ fn test_jr_cc_n() {
 
     cpu.f.set_c();
     assert!(cpu.f.c());
-    test(&mut cpu, &mut ram, 12, opcode(0x30));
+    test(&mut cpu, &mut ram, 8, opcode(0x30));
     assert_eq!(cpu.pc, unchanged);
 
     cpu.f.unset_c();
@@ -72,7 +72,7 @@ fn test_jr_cc_n() {
     cpu.f.unset_c();
     ram[cpu.pc as usize] = 0x1;
     let unchanged = cpu.pc;
-    test(&mut cpu, &mut ram, 12, opcode(0x38));
+    test(&mut cpu, &mut ram, 8, opcode(0x38));
     assert_eq!(cpu.pc, unchanged);
 
     cpu.f.set_c();
