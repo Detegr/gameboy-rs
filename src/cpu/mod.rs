@@ -321,6 +321,23 @@ macro_rules! make_jr_cc_n {
         }
     }
 }
+macro_rules! make_and {
+    ($name:ident, $r:ident) => {
+        #[inline]
+        fn $name(&mut self, _ram: &mut Ram) {
+            self.f.set_h();
+            self.f.unset_n();
+            self.f.unset_c();
+            self.a &= self.$r;
+            if self.a == 0 {
+                self.f.set_z();
+            } else {
+                self.f.unset_z();
+            }
+            self.cycles += 4;
+        }
+    }
+}
 
 impl Cpu {
     pub fn new() -> Cpu {
@@ -809,6 +826,29 @@ impl Cpu {
     fn sbc_a_deref_hl(&mut self, ram: &mut Ram) {
         let c = if self.f.c() { 1 } else { 0 };
         sub_a_r!(self, ram[self.hl() as usize].wrapping_add(c));
+        self.cycles += 4;
+    }
+
+    make_and!(and_a_b, b);
+    make_and!(and_a_c, c);
+    make_and!(and_a_d, d);
+    make_and!(and_a_e, e);
+    make_and!(and_a_h, h);
+    make_and!(and_a_l, l);
+    make_and!(and_a_a, a);
+
+    #[inline]
+    fn and_a_deref_hl(&mut self, ram: &mut Ram) {
+        let value = ram[self.hl() as usize];
+        self.f.set_h();
+        self.f.unset_n();
+        self.f.unset_c();
+        self.a &= value;
+        if self.a == 0 {
+            self.f.set_z();
+        } else {
+            self.f.unset_z();
+        }
         self.cycles += 4;
     }
 }
