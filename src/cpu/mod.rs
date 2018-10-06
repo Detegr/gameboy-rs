@@ -882,7 +882,7 @@ impl Cpu {
         } else {
             self.f.unset_z();
         }
-        self.cycles += 4;
+        self.cycles += 8;
     }
 
     make_xor!(xor_a_b, b);
@@ -913,7 +913,7 @@ impl Cpu {
         } else {
             self.f.unset_z();
         }
-        self.cycles += 4;
+        self.cycles += 8;
     }
 
     make_or!(or_a_b, b);
@@ -936,6 +936,6 @@ impl Cpu {
         } else {
             self.f.unset_z();
         }
-        self.cycles += 4;
+        self.cycles += 8;
     }
 }

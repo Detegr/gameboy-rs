@@ -43,7 +43,7 @@ fn test_or_a_deref_hl() {
     cpu.l = 0x1;
     cpu.a = 0xA3;
     let expected = cpu.a | ram[0x1F01];
-    test(&mut cpu, &mut ram, 4, opcode(0xB6));
+    test(&mut cpu, &mut ram, 8, opcode(0xB6));
     assert!(
         cpu.a == expected,
         format!(
@@ -59,7 +59,7 @@ fn test_or_a_deref_hl() {
     cpu.a = 0x0;
     ram[0x1F01] = 0x0;
     let expected = cpu.a | ram[0x1F01];
-    test(&mut cpu, &mut ram, 4, opcode(0xB6));
+    test(&mut cpu, &mut ram, 8, opcode(0xB6));
     assert!(
         cpu.a == expected,
         format!(
