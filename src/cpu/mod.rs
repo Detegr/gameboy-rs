@@ -337,6 +337,23 @@ macro_rules! make_and {
         }
     }
 }
+macro_rules! make_or {
+    ($name:ident, $r:ident) => {
+        #[inline]
+        fn $name(&mut self, _ram: &mut Ram) {
+            self.f.unset_h();
+            self.f.unset_n();
+            self.f.unset_c();
+            self.a |= self.$r;
+            if self.a == 0 {
+                self.f.set_z();
+            } else {
+                self.f.unset_z();
+            }
+            self.cycles += 4;
+        }
+    }
+}
 macro_rules! make_xor {
     ($name:ident, $r:ident) => {
         #[inline]
@@ -891,6 +908,29 @@ impl Cpu {
         self.f.unset_n();
         self.f.unset_c();
         self.a ^= value;
+        if self.a == 0 {
+            self.f.set_z();
+        } else {
+            self.f.unset_z();
+        }
+        self.cycles += 4;
+    }
+
+    make_or!(or_a_b, b);
+    make_or!(or_a_c, c);
+    make_or!(or_a_d, d);
+    make_or!(or_a_e, e);
+    make_or!(or_a_h, h);
+    make_or!(or_a_l, l);
+    make_or!(or_a_a, a);
+
+    #[inline]
+    fn or_a_deref_hl(&mut self, ram: &mut Ram) {
+        let value = ram[self.hl() as usize];
+        self.f.unset_h();
+        self.f.unset_n();
+        self.f.unset_c();
+        self.a |= value;
         if self.a == 0 {
             self.f.set_z();
         } else {

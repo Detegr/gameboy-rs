@@ -50,6 +50,7 @@ mod jr;
 mod ld;
 mod misc;
 mod nop;
+mod or;
 mod rotate;
 mod sbc;
 mod stop;
