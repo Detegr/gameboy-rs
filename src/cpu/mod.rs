@@ -8,7 +8,6 @@ use std::default::Default;
 pub mod cpuflags;
 pub mod opcodes;
 
-
 #[derive(Debug, PartialEq)]
 pub enum RunState {
     Running,
@@ -329,6 +328,23 @@ macro_rules! make_and {
             self.f.unset_n();
             self.f.unset_c();
             self.a &= self.$r;
+            if self.a == 0 {
+                self.f.set_z();
+            } else {
+                self.f.unset_z();
+            }
+            self.cycles += 4;
+        }
+    }
+}
+macro_rules! make_xor {
+    ($name:ident, $r:ident) => {
+        #[inline]
+        fn $name(&mut self, _ram: &mut Ram) {
+            self.f.unset_h();
+            self.f.unset_n();
+            self.f.unset_c();
+            self.a ^= self.$r;
             if self.a == 0 {
                 self.f.set_z();
             } else {
@@ -844,6 +860,37 @@ impl Cpu {
         self.f.unset_n();
         self.f.unset_c();
         self.a &= value;
+        if self.a == 0 {
+            self.f.set_z();
+        } else {
+            self.f.unset_z();
+        }
+        self.cycles += 4;
+    }
+
+    make_xor!(xor_a_b, b);
+    make_xor!(xor_a_c, c);
+    make_xor!(xor_a_d, d);
+    make_xor!(xor_a_e, e);
+    make_xor!(xor_a_h, h);
+    make_xor!(xor_a_l, l);
+    #[inline]
+    fn xor_a_a(&mut self, _ram: &mut Ram) {
+        self.f.unset_h();
+        self.f.unset_n();
+        self.f.unset_c();
+        self.f.set_z();
+        self.a = 0;
+        self.cycles += 4;
+    }
+
+    #[inline]
+    fn xor_a_deref_hl(&mut self, ram: &mut Ram) {
+        let value = ram[self.hl() as usize];
+        self.f.unset_h();
+        self.f.unset_n();
+        self.f.unset_c();
+        self.a ^= value;
         if self.a == 0 {
             self.f.set_z();
         } else {

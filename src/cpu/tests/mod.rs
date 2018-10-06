@@ -54,3 +54,4 @@ mod rotate;
 mod sbc;
 mod stop;
 mod sub;
+mod xor;
