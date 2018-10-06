@@ -43,6 +43,7 @@ pub fn opcode(opcode: usize) -> opcodes::OpcodeFunction {
 mod adc;
 mod add;
 mod and;
+mod cp;
 mod daa;
 mod dec;
 mod inc;

@@ -371,6 +371,38 @@ macro_rules! make_xor {
         }
     }
 }
+macro_rules! cp_a_r {
+    ($cpu:expr, $value:expr) => {{
+        $cpu.f.set_n();
+        let check = ($cpu.a as i16) - ($value as i16);
+        if check < 0 {
+            $cpu.f.set_h();
+            $cpu.f.set_c();
+        } else {
+            $cpu.f.unset_h();
+            $cpu.f.unset_c();
+        }
+        if cpuflags::test_half_carry_subtraction($cpu.a, $value) {
+            $cpu.f.set_h();
+        } else {
+            $cpu.f.unset_h();
+        }
+        if $cpu.a == $value {
+            $cpu.f.set_z();
+        } else {
+            $cpu.f.unset_z();
+        }
+        $cpu.cycles += 4;
+    }};
+}
+macro_rules! make_cp {
+    ($name:ident, $r:ident) => {
+        #[inline]
+        fn $name(&mut self, _ram: &mut Ram) {
+            cp_a_r!(self, self.$r)
+        }
+    }
+}
 
 impl Cpu {
     pub fn new() -> Cpu {
@@ -937,5 +969,18 @@ impl Cpu {
             self.f.unset_z();
         }
         self.cycles += 8;
+    }
+
+    make_cp!(cp_a_b, b);
+    make_cp!(cp_a_c, c);
+    make_cp!(cp_a_d, d);
+    make_cp!(cp_a_e, e);
+    make_cp!(cp_a_h, h);
+    make_cp!(cp_a_l, l);
+    make_cp!(cp_a_a, a);
+    #[inline]
+    fn cp_a_deref_hl(&mut self, ram: &mut Ram) {
+        cp_a_r!(self, ram[self.hl() as usize]);
+        self.cycles += 4;
     }
 }
