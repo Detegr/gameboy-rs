@@ -973,9 +973,29 @@ impl Cpu {
     make_cp!(cp_a_h, h);
     make_cp!(cp_a_l, l);
     make_cp!(cp_a_a, a);
+
     #[inline]
     fn cp_a_deref_hl(&mut self, ram: &mut Ram) {
         cp_a_r!(self, ram[self.hl() as usize]);
         self.cycles += 4;
+    }
+
+    #[inline]
+    fn ret(&mut self, ram: &mut Ram) {
+        // TODO: Should popping from empty stack
+        // result in a zero or is it an error?
+        assert!(
+            self.sp.wrapping_add(2) > self.sp,
+            "less than 2 bytes of data in the stack"
+        );
+        let byte1 = ram[self.sp as usize];
+        self.sp += 1;
+        let byte2 = ram[self.sp as usize];
+        self.sp += 1;
+
+        let addr = ((byte2 as u16) << 8) | byte1 as u16;
+        self.pc = addr;
+
+        self.cycles += 16;
     }
 }
