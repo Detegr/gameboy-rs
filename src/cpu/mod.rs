@@ -301,9 +301,7 @@ macro_rules! make_jr_cc_n {
             if self.f.$flag() {
                 self.jr_n(ram);
             } else {
-                // FIXME: Does it take 12 cycles
-                // even though the jump is not taken?
-                self.cycles += 12;
+                self.cycles += 8;
             }
         }
     };
@@ -313,9 +311,7 @@ macro_rules! make_jr_cc_n {
             if !self.f.$flag() {
                 self.jr_n(ram);
             } else {
-                // FIXME: Does it take 12 cycles
-                // even though the jump is not taken?
-                self.cycles += 12;
+                self.cycles += 8;
             }
         }
     }
@@ -737,7 +733,6 @@ impl Cpu {
         self.pc = self.pc.wrapping_sub(1);
         self.pc = self.pc.wrapping_add(n as i8 as u16);
 
-        // FIXME: In GBCPUman this is 8 cycles
         self.cycles += 12;
     }
 
