@@ -399,6 +399,30 @@ macro_rules! make_cp {
         }
     }
 }
+macro_rules! make_ret {
+    ($name:ident, $flag:ident set) => {
+        #[inline]
+        fn $name(&mut self, ram: &mut Ram) {
+            if self.f.$flag() {
+                self.ret(ram);
+                self.cycles += 4;
+            } else {
+                self.cycles += 8;
+            }
+        }
+    };
+    ($name:ident, $flag:ident not set) => {
+        #[inline]
+        fn $name(&mut self, ram: &mut Ram) {
+            if !self.f.$flag() {
+                self.ret(ram);
+                self.cycles += 4;
+            } else {
+                self.cycles += 8;
+            }
+        }
+    }
+}
 
 impl Cpu {
     pub fn new() -> Cpu {
@@ -998,4 +1022,9 @@ impl Cpu {
 
         self.cycles += 16;
     }
+
+    make_ret!(ret_nz, z not set);
+    make_ret!(ret_z, z set);
+    make_ret!(ret_c, c set);
+    make_ret!(ret_nc, c not set);
 }
