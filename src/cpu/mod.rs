@@ -437,6 +437,25 @@ macro_rules! make_ret {
         }
     }
 }
+macro_rules! make_pop {
+    ($name:ident, $r1:ident, $r2:ident) => {
+        #[inline]
+        fn $name(&mut self, ram: &mut Ram) {
+            assert!(
+                self.sp.wrapping_add(2) > self.sp,
+                "less than 2 bytes of data in the stack"
+            );
+            self.sp += 1;
+            let byte = ram[self.sp as usize];
+            self.$r2 = byte;
+            self.sp += 1;
+            let byte = ram[self.sp as usize];
+            self.$r1 = byte;
+
+            self.cycles += 12;
+        }
+    }
+}
 
 impl Cpu {
     pub fn new() -> Cpu {
@@ -1042,10 +1061,10 @@ impl Cpu {
             self.sp.wrapping_add(2) > self.sp,
             "less than 2 bytes of data in the stack"
         );
+        self.sp += 1;
         let byte1 = ram[self.sp as usize];
         self.sp += 1;
         let byte2 = ram[self.sp as usize];
-        self.sp += 1;
 
         let addr = ((byte2 as u16) << 8) | byte1 as u16;
         self.pc = addr;
@@ -1074,5 +1093,44 @@ impl Cpu {
     fn ei(&mut self, _ram: &mut Ram) {
         // Enable interrupts after executing the next instruction
         self.interrupts = InterruptState::WillEnable;
+    }
+
+    make_pop!(pop_bc, b, c);
+    make_pop!(pop_de, d, e);
+    make_pop!(pop_hl, h, l);
+
+    #[inline]
+    fn pop_af(&mut self, ram: &mut Ram) {
+        assert!(
+            self.sp.wrapping_add(2) > self.sp,
+            "less than 2 bytes of data in the stack"
+        );
+        self.sp += 1;
+        let byte = ram[self.sp as usize];
+        if byte & 0x80 == 0 {
+            self.f.unset_z();
+        } else {
+            self.f.set_z();
+        }
+        if byte & 0x40 == 0 {
+            self.f.unset_n();
+        } else {
+            self.f.set_n();
+        }
+        if byte & 0x20 == 0 {
+            self.f.unset_h();
+        } else {
+            self.f.set_h();
+        }
+        if byte & 0x10 == 0 {
+            self.f.unset_c();
+        } else {
+            self.f.set_c();
+        }
+        self.sp += 1;
+        let byte = ram[self.sp as usize];
+        self.a = byte;
+
+        self.cycles += 12;
     }
 }

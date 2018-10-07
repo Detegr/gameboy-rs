@@ -7,8 +7,8 @@ fn test_ret() {
     cpu.reset();
     let old_sp = cpu.sp;
     cpu.sp -= 2;
-    ram[(cpu.sp) as usize] = 0xC0;
-    ram[(cpu.sp + 1) as usize] = 0xAA;
+    ram[(cpu.sp + 1) as usize] = 0xC0;
+    ram[(cpu.sp + 2) as usize] = 0xAA;
 
     test(&mut cpu, &mut ram, 16, opcode(0xC9));
 
@@ -24,8 +24,8 @@ fn test_reti() {
     cpu.sp -= 2;
     cpu.interrupts = cpu::InterruptState::Disabled;
 
-    ram[(cpu.sp) as usize] = 0xC0;
-    ram[(cpu.sp + 1) as usize] = 0xAA;
+    ram[(cpu.sp + 1) as usize] = 0xC0;
+    ram[(cpu.sp + 2) as usize] = 0xAA;
 
     test(&mut cpu, &mut ram, 16, opcode(0xD9));
     assert_eq!(cpu.sp, old_sp);
@@ -39,8 +39,8 @@ fn test_ret_nz() {
     cpu.reset();
     let old_sp = cpu.sp;
     cpu.sp -= 2;
-    ram[(cpu.sp) as usize] = 0xC0;
-    ram[(cpu.sp + 1) as usize] = 0xAA;
+    ram[(cpu.sp + 1) as usize] = 0xC0;
+    ram[(cpu.sp + 2) as usize] = 0xAA;
 
     cpu.f.set_z();
 
@@ -61,8 +61,8 @@ fn test_ret_z() {
     cpu.reset();
     let old_sp = cpu.sp;
     cpu.sp -= 2;
-    ram[(cpu.sp) as usize] = 0xC0;
-    ram[(cpu.sp + 1) as usize] = 0xAA;
+    ram[(cpu.sp + 1) as usize] = 0xC0;
+    ram[(cpu.sp + 2) as usize] = 0xAA;
 
     cpu.f.unset_z();
 
@@ -83,8 +83,8 @@ fn test_ret_nc() {
     cpu.reset();
     let old_sp = cpu.sp;
     cpu.sp -= 2;
-    ram[(cpu.sp) as usize] = 0xC0;
-    ram[(cpu.sp + 1) as usize] = 0xAA;
+    ram[(cpu.sp + 1) as usize] = 0xC0;
+    ram[(cpu.sp + 2) as usize] = 0xAA;
 
     cpu.f.set_c();
 
@@ -105,8 +105,8 @@ fn test_ret_c() {
     cpu.reset();
     let old_sp = cpu.sp;
     cpu.sp -= 2;
-    ram[(cpu.sp) as usize] = 0xC0;
-    ram[(cpu.sp + 1) as usize] = 0xAA;
+    ram[(cpu.sp + 1) as usize] = 0xC0;
+    ram[(cpu.sp + 2) as usize] = 0xAA;
 
     cpu.f.unset_c();
 
