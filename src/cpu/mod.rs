@@ -489,9 +489,12 @@ impl Cpu {
         ret
     }
 
-    #[inline]
     fn nyi(&mut self, _: &mut Ram) {
         panic!("Instruction not yet implemented")
+    }
+
+    fn na(&mut self, _: &mut Ram) {
+        panic!("Instruction not available. This is a bug.")
     }
 
     #[inline]

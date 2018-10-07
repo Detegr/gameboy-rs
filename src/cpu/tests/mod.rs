@@ -51,6 +51,7 @@ mod jr;
 mod ld;
 mod misc;
 mod nop;
+mod notavailable;
 mod or;
 mod pop;
 mod ret;
