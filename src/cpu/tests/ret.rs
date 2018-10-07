@@ -1,3 +1,4 @@
+use cpu;
 use cpu::tests::*;
 
 #[test]
@@ -13,6 +14,23 @@ fn test_ret() {
 
     assert_eq!(cpu.sp, old_sp);
     assert_eq!(cpu.pc, 0xAAC0);
+}
+
+#[test]
+fn test_reti() {
+    let (mut cpu, mut ram) = init(None);
+    cpu.reset();
+    let old_sp = cpu.sp;
+    cpu.sp -= 2;
+    cpu.interrupts = cpu::InterruptState::Disabled;
+
+    ram[(cpu.sp) as usize] = 0xC0;
+    ram[(cpu.sp + 1) as usize] = 0xAA;
+
+    test(&mut cpu, &mut ram, 16, opcode(0xD9));
+    assert_eq!(cpu.sp, old_sp);
+    assert_eq!(cpu.pc, 0xAAC0);
+    assert_eq!(cpu.interrupts, cpu::InterruptState::Enabled);
 }
 
 #[test]

@@ -20,6 +20,19 @@ impl Default for RunState {
     }
 }
 
+#[derive(Copy, Clone, Debug, PartialEq)]
+pub enum InterruptState {
+    Disabled,
+    Enabled,
+    WillDisable,
+    WillEnable,
+}
+impl Default for InterruptState {
+    fn default() -> InterruptState {
+        InterruptState::Enabled
+    }
+}
+
 #[derive(Default)]
 pub struct Cpu {
     a: u8,
@@ -33,6 +46,7 @@ pub struct Cpu {
     pc: u16,
     sp: u16,
     run_state: RunState,
+    interrupts: InterruptState,
     cycles: usize,
 }
 
@@ -432,6 +446,22 @@ impl Cpu {
     pub fn reset(&mut self) {
         self.sp = 0xFFFE;
         self.pc = 0x100;
+        self.interrupts = InterruptState::Enabled; // TODO: This is just a guess
+    }
+    pub fn step(&mut self, ram: &mut Ram) {
+        let opcode = self.next_byte(ram);
+        let old_interrupts_state = self.interrupts;
+        let new_interrupts_state = match self.interrupts {
+            InterruptState::WillEnable => InterruptState::Enabled,
+            InterruptState::WillDisable => InterruptState::Disabled,
+            state => state,
+        };
+        opcodes::OPCODES[opcode as usize](self, ram);
+        if self.interrupts == old_interrupts_state {
+            // The instruction did not modify interrupts flag,
+            // enable/disable if we were in WillEnable/WillDisable state
+            self.interrupts = new_interrupts_state;
+        }
     }
     #[inline]
     fn next_byte(&mut self, ram: &mut Ram) -> u8 {
@@ -1027,4 +1057,22 @@ impl Cpu {
     make_ret!(ret_z, z set);
     make_ret!(ret_c, c set);
     make_ret!(ret_nc, c not set);
+
+    #[inline]
+    fn reti(&mut self, ram: &mut Ram) {
+        self.ret(ram);
+        self.interrupts = InterruptState::Enabled;
+    }
+
+    #[inline]
+    fn di(&mut self, _ram: &mut Ram) {
+        // Disable interrupts after executing the next instruction
+        self.interrupts = InterruptState::WillDisable;
+    }
+
+    #[inline]
+    fn ei(&mut self, _ram: &mut Ram) {
+        // Enable interrupts after executing the next instruction
+        self.interrupts = InterruptState::WillEnable;
+    }
 }
