@@ -315,6 +315,7 @@ macro_rules! make_jr_cc_n {
             if self.f.$flag() {
                 self.jr_n(ram);
             } else {
+                self.pc += 1;
                 self.cycles += 8;
             }
         }
@@ -325,6 +326,7 @@ macro_rules! make_jr_cc_n {
             if !self.f.$flag() {
                 self.jr_n(ram);
             } else {
+                self.pc += 1;
                 self.cycles += 8;
             }
         }
