@@ -1358,4 +1358,27 @@ impl Cpu {
         cp_a_n!(self, n);
         self.cycles += 4;
     }
+
+    #[inline]
+    fn ldh_deref_n_a(&mut self, ram: &mut Ram) {
+        // TODO: Tests
+        let n = self.next_byte(ram);
+        let addr = 0xFF00_u16 | n as u16;
+        ram[addr as usize] = self.a;
+        self.cycles += 12;
+    }
+
+    #[inline]
+    fn ldh_a_deref_n(&mut self, ram: &mut Ram) {
+        // TODO: Tests
+        let n = self.next_byte(ram);
+        let addr = 0xFF00_u16 | n as u16;
+        self.a = ram[addr as usize];
+        self.cycles += 12;
+    }
+
+    #[inline]
+    fn ld_sp_hl(&mut self, _ram: &mut Ram) {
+        self.sp = self.hl();
+    }
 }
