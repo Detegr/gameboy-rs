@@ -123,7 +123,7 @@ macro_rules! make_add {
     ($name:ident, $reg: ident) => {
         #[inline]
         fn $name(&mut self, _ram: &mut Ram) {
-            add_a_r!(self, self.$reg);
+            add_a_n!(self, self.$reg);
         }
     }
 }
@@ -132,9 +132,9 @@ macro_rules! make_adc {
         #[inline]
         fn $name(&mut self, _ram: &mut Ram) {
             if self.f.c() {
-                add_a_r!(self, self.$reg.wrapping_add(1));
+                add_a_n!(self, self.$reg.wrapping_add(1));
             } else {
-                add_a_r!(self, self.$reg);
+                add_a_n!(self, self.$reg);
             }
         }
     }
@@ -169,7 +169,7 @@ macro_rules! make_add_rr_rr {
         }
     }
 }
-macro_rules! add_a_r {
+macro_rules! add_a_n {
     ($cpu:expr, $value:expr) => {{
         $cpu.f.unset_n();
         let check = ($cpu.a as u16) + ($value as u16);
@@ -603,7 +603,7 @@ impl Cpu {
 
     #[inline]
     fn add_a_deref_hl(&mut self, ram: &mut Ram) {
-        add_a_r!(self, ram[self.hl() as usize]);
+        add_a_n!(self, ram[self.hl() as usize]);
         self.cycles += 4;
     }
 
@@ -1021,7 +1021,7 @@ impl Cpu {
     #[inline]
     fn adc_a_deref_hl(&mut self, ram: &mut Ram) {
         let c = if self.f.c() { 1 } else { 0 };
-        add_a_r!(self, ram[self.hl() as usize].wrapping_add(c));
+        add_a_n!(self, ram[self.hl() as usize].wrapping_add(c));
         self.cycles += 4;
     }
 
@@ -1267,4 +1267,10 @@ impl Cpu {
     make_rst!(rst_28h, 0x28);
     make_rst!(rst_30h, 0x30);
     make_rst!(rst_38h, 0x38);
+
+    fn add_a_n(&mut self, ram: &mut Ram) {
+        let n = self.next_byte(ram);
+        add_a_n!(self, n);
+        self.cycles += 4;
+    }
 }
