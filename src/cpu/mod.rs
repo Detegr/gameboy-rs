@@ -536,6 +536,17 @@ macro_rules! make_push {
         }
     }
 }
+macro_rules! make_rst {
+    ($name:ident, $to:expr) => {
+        #[inline]
+        fn $name(&mut self, ram: &mut Ram) {
+            let val = self.pc;
+            self.push_u16(ram, val);
+            self.pc = $to;
+            self.cycles += 16;
+        }
+    }
+}
 
 impl Cpu {
     pub fn new() -> Cpu {
@@ -1247,4 +1258,13 @@ impl Cpu {
         self.push(ram, v2);
         self.cycles += 16;
     }
+
+    make_rst!(rst_00h, 0x0);
+    make_rst!(rst_08h, 0x8);
+    make_rst!(rst_10h, 0x10);
+    make_rst!(rst_18h, 0x18);
+    make_rst!(rst_20h, 0x20);
+    make_rst!(rst_28h, 0x28);
+    make_rst!(rst_30h, 0x30);
+    make_rst!(rst_38h, 0x38);
 }

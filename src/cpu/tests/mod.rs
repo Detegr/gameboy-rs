@@ -59,6 +59,7 @@ mod pop;
 mod push;
 mod ret;
 mod rotate;
+mod rst;
 mod sbc;
 mod stop;
 mod sub;
