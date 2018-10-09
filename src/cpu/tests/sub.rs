@@ -197,6 +197,103 @@ fn test_sub_a_r() {
         assert!(!cpu.f.c());
     }
     test_sub_a_hl();
+
+    fn test_sub_a_n() {
+        let (mut cpu, mut ram) = init(None);
+        let val = 0x1;
+        cpu.a = 0x10;
+        ram[cpu.pc as usize] = val;
+        let expected = cpu.a.wrapping_sub(val);
+        test(&mut cpu, &mut ram, 8, opcode(0xD6));
+        assert!(
+            cpu.a == expected,
+            format!(
+                "sub a, {}: Expected 0x{:X}, got 0x{:X}",
+                stringify!($r),
+                expected,
+                cpu.a
+            )
+        );
+        assert!(!cpu.f.z());
+        assert!(cpu.f.n());
+        assert!(cpu.f.h());
+        assert!(!cpu.f.c());
+
+        cpu.a = 0x1F;
+        ram[cpu.pc as usize] = val;
+        let expected = cpu.a.wrapping_sub(val);
+        test(&mut cpu, &mut ram, 8, opcode(0xD6));
+        assert!(
+            cpu.a == expected,
+            format!(
+                "sub a, {}: Expected 0x{:X}, got 0x{:X}",
+                stringify!($r),
+                expected,
+                cpu.a
+            )
+        );
+        assert!(!cpu.f.z());
+        assert!(cpu.f.n());
+        assert!(!cpu.f.h());
+        assert!(!cpu.f.c());
+
+        cpu.a = 0x0;
+        ram[cpu.pc as usize] = val;
+        let expected = cpu.a.wrapping_sub(val);
+        test(&mut cpu, &mut ram, 8, opcode(0xD6));
+        assert!(
+            cpu.a == expected,
+            format!(
+                "sub a, {}: Expected 0x{:X}, got 0x{:X}",
+                stringify!($r),
+                expected,
+                cpu.a
+            )
+        );
+        assert!(!cpu.f.z());
+        assert!(cpu.f.n());
+        assert!(cpu.f.h());
+        assert!(cpu.f.c());
+
+        let val = 0x11;
+        cpu.a = 0xF0;
+        ram[cpu.pc as usize] = val;
+        let expected = cpu.a.wrapping_sub(val);
+        test(&mut cpu, &mut ram, 8, opcode(0xD6));
+        assert!(
+            cpu.a == expected,
+            format!(
+                "sub a, {}: Expected 0x{:X}, got 0x{:X}",
+                stringify!($r),
+                expected,
+                cpu.a
+            )
+        );
+        assert!(!cpu.f.z());
+        assert!(cpu.f.n());
+        assert!(cpu.f.h());
+        assert!(!cpu.f.c());
+
+        let val = 0x10;
+        cpu.a = 0x10;
+        ram[cpu.pc as usize] = val;
+        let expected = cpu.a.wrapping_sub(val);
+        test(&mut cpu, &mut ram, 8, opcode(0xD6));
+        assert!(
+            cpu.a == expected,
+            format!(
+                "sub a, {}: Expected 0x{:X}, got 0x{:X}",
+                stringify!($r),
+                expected,
+                cpu.a
+            )
+        );
+        assert!(cpu.f.z());
+        assert!(cpu.f.n());
+        assert!(!cpu.f.h());
+        assert!(!cpu.f.c());
+    }
+    test_sub_a_n();
 }
 
 /*
