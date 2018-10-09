@@ -235,4 +235,102 @@ fn test_adc_a_r() {
         assert!(cpu.f.c());
     }
     test_adc_a_hl();
+
+    fn test_adc_a_n() {
+        let (mut cpu, mut ram) = init(None);
+        let val = 0x1;
+        cpu.a = 0x10;
+        ram[cpu.pc as usize] = val;
+        let expected = cpu.a.wrapping_add(val);
+        test(&mut cpu, &mut ram, 8, opcode(0xCE));
+        assert!(
+            cpu.a == expected,
+            format!(
+                "adc a, {}: Expected 0x{:X}, got 0x{:X}",
+                stringify!($r),
+                expected,
+                cpu.a
+            )
+        );
+        assert!(!cpu.f.z());
+        assert!(!cpu.f.n());
+        assert!(!cpu.f.h());
+        assert!(!cpu.f.c());
+
+        cpu.a = 0x1F;
+        ram[cpu.pc as usize] = val;
+        let expected = cpu.a.wrapping_add(val);
+        test(&mut cpu, &mut ram, 8, opcode(0xCE));
+        assert!(
+            cpu.a == expected,
+            format!(
+                "adc a, {}: Expected 0x{:X}, got 0x{:X}",
+                stringify!($r),
+                expected,
+                cpu.a
+            )
+        );
+        assert!(!cpu.f.z());
+        assert!(!cpu.f.n());
+        assert!(cpu.f.h());
+        assert!(!cpu.f.c());
+
+        cpu.a = 0xFF;
+        ram[cpu.pc as usize] = val;
+        let expected = cpu.a.wrapping_add(val);
+        test(&mut cpu, &mut ram, 8, opcode(0xCE));
+        assert!(
+            cpu.a == expected,
+            format!(
+                "adc a, {}: Expected 0x{:X}, got 0x{:X}",
+                stringify!($r),
+                expected,
+                cpu.a
+            )
+        );
+        assert!(cpu.f.z());
+        assert!(!cpu.f.n());
+        assert!(cpu.f.h());
+        assert!(cpu.f.c());
+
+        let val = 0x11;
+        cpu.a = 0xF0;
+        ram[cpu.pc as usize] = val;
+        let carry = 1;
+        let expected = cpu.a.wrapping_add(val).wrapping_add(carry);
+        test(&mut cpu, &mut ram, 8, opcode(0xCE));
+        assert!(
+            cpu.a == expected,
+            format!(
+                "adc a, {}: Expected 0x{:X}, got 0x{:X}",
+                stringify!($r),
+                expected,
+                cpu.a
+            )
+        );
+        assert!(!cpu.f.z());
+        assert!(!cpu.f.n());
+        assert!(!cpu.f.h());
+        assert!(cpu.f.c());
+
+        let val = 0x1;
+        cpu.a = 0x10;
+        ram[cpu.pc as usize] = val;
+        let expected = cpu.a.wrapping_add(val).wrapping_add(carry);
+        test(&mut cpu, &mut ram, 8, opcode(0xCE));
+        assert!(
+            cpu.a == expected,
+            format!(
+                "adc a, {}: Expected 0x{:X}, got 0x{:X}",
+                stringify!($r),
+                expected,
+                cpu.a
+            )
+        );
+        assert!(!cpu.f.z());
+        assert!(!cpu.f.n());
+        assert!(!cpu.f.h());
+        assert!(!cpu.f.c());
+    }
+    test_adc_a_n();
 }

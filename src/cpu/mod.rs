@@ -1280,4 +1280,14 @@ impl Cpu {
         add_a_n!(self, n);
         self.cycles += 4;
     }
+
+    fn adc_a_n(&mut self, ram: &mut Ram) {
+        let n = if self.f.c() {
+            self.next_byte(ram) + 1
+        } else {
+            self.next_byte(ram)
+        };
+        add_a_n!(self, n);
+        self.cycles += 4;
+    }
 }

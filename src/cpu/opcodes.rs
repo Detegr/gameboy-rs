@@ -206,10 +206,10 @@ pub static OPCODES: [OpcodeFunction; 512] = [
     Cpu::ret_z,
     Cpu::ret,
     Cpu::jp_z,
-    Cpu::nyi, // Prefix CB, implemented in Cpu::step()
+    Cpu::na, // Prefix CB, implemented in Cpu::step()
     Cpu::call_z,
     Cpu::call,
-    Cpu::nyi,
+    Cpu::adc_a_n,
     Cpu::rst_08h,
     Cpu::ret_nc,
     Cpu::pop_de,
