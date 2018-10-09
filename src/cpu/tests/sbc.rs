@@ -197,4 +197,6 @@ fn test_sbc_a_r() {
         assert!(!cpu.f.c());
     }
     test_sbc_a_hl();
+
+    // TODO: test_sbc_a_n
 }

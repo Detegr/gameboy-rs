@@ -225,7 +225,7 @@ pub static OPCODES: [OpcodeFunction; 512] = [
     Cpu::na,
     Cpu::call_c,
     Cpu::na,
-    Cpu::nyi,
+    Cpu::sbc_a_n,
     Cpu::rst_18h,
     Cpu::nyi,
     Cpu::pop_hl,

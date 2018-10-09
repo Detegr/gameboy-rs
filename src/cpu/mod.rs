@@ -1275,12 +1275,14 @@ impl Cpu {
     make_rst!(rst_30h, 0x30);
     make_rst!(rst_38h, 0x38);
 
+    #[inline]
     fn add_a_n(&mut self, ram: &mut Ram) {
         let n = self.next_byte(ram);
         add_a_n!(self, n);
         self.cycles += 4;
     }
 
+    #[inline]
     fn adc_a_n(&mut self, ram: &mut Ram) {
         let n = if self.f.c() {
             self.next_byte(ram) + 1
@@ -1291,8 +1293,20 @@ impl Cpu {
         self.cycles += 4;
     }
 
+    #[inline]
     fn sub_a_n(&mut self, ram: &mut Ram) {
         let n = self.next_byte(ram);
+        sub_a_n!(self, n);
+        self.cycles += 4;
+    }
+
+    #[inline]
+    fn sbc_a_n(&mut self, ram: &mut Ram) {
+        let n = if self.f.c() {
+            self.next_byte(ram) + 1
+        } else {
+            self.next_byte(ram)
+        };
         sub_a_n!(self, n);
         self.cycles += 4;
     }
