@@ -343,58 +343,73 @@ macro_rules! make_jr_cc_n {
         }
     }
 }
+macro_rules! and_a_n {
+    ($cpu:expr, $value:expr) => {
+        $cpu.f.set_h();
+        $cpu.f.unset_n();
+        $cpu.f.unset_c();
+        $cpu.a &= $value;
+        if $cpu.a == 0 {
+            $cpu.f.set_z();
+        } else {
+            $cpu.f.unset_z();
+        }
+        $cpu.cycles += 4;
+    };
+}
 macro_rules! make_and {
     ($name:ident, $r:ident) => {
         #[inline]
         fn $name(&mut self, _ram: &mut Ram) {
-            self.f.set_h();
-            self.f.unset_n();
-            self.f.unset_c();
-            self.a &= self.$r;
-            if self.a == 0 {
-                self.f.set_z();
-            } else {
-                self.f.unset_z();
-            }
-            self.cycles += 4;
+            and_a_n!(self, self.$r);
         }
     }
+}
+macro_rules! or_a_n {
+    ($cpu:expr, $value:expr) => {
+        $cpu.f.unset_h();
+        $cpu.f.unset_n();
+        $cpu.f.unset_c();
+        $cpu.a |= $value;
+        if $cpu.a == 0 {
+            $cpu.f.set_z();
+        } else {
+            $cpu.f.unset_z();
+        }
+        $cpu.cycles += 4;
+    };
 }
 macro_rules! make_or {
     ($name:ident, $r:ident) => {
         #[inline]
         fn $name(&mut self, _ram: &mut Ram) {
-            self.f.unset_h();
-            self.f.unset_n();
-            self.f.unset_c();
-            self.a |= self.$r;
-            if self.a == 0 {
-                self.f.set_z();
-            } else {
-                self.f.unset_z();
-            }
-            self.cycles += 4;
+            or_a_n!(self, self.$r);
         }
     }
+}
+macro_rules! xor_a_n {
+    ($cpu:expr, $value:expr) => {
+        $cpu.f.unset_h();
+        $cpu.f.unset_n();
+        $cpu.f.unset_c();
+        $cpu.a ^= $value;
+        if $cpu.a == 0 {
+            $cpu.f.set_z();
+        } else {
+            $cpu.f.unset_z();
+        }
+        $cpu.cycles += 4;
+    };
 }
 macro_rules! make_xor {
     ($name:ident, $r:ident) => {
         #[inline]
         fn $name(&mut self, _ram: &mut Ram) {
-            self.f.unset_h();
-            self.f.unset_n();
-            self.f.unset_c();
-            self.a ^= self.$r;
-            if self.a == 0 {
-                self.f.set_z();
-            } else {
-                self.f.unset_z();
-            }
-            self.cycles += 4;
+            xor_a_n!(self, self.$r);
         }
     }
 }
-macro_rules! cp_a_r {
+macro_rules! cp_a_n {
     ($cpu:expr, $value:expr) => {{
         $cpu.f.set_n();
         let check = ($cpu.a as i16) - ($value as i16);
@@ -422,7 +437,7 @@ macro_rules! make_cp {
     ($name:ident, $r:ident) => {
         #[inline]
         fn $name(&mut self, _ram: &mut Ram) {
-            cp_a_r!(self, self.$r)
+            cp_a_n!(self, self.$r)
         }
     }
 }
@@ -1150,7 +1165,7 @@ impl Cpu {
 
     #[inline]
     fn cp_a_deref_hl(&mut self, ram: &mut Ram) {
-        cp_a_r!(self, ram[self.hl() as usize]);
+        cp_a_n!(self, ram[self.hl() as usize]);
         self.cycles += 4;
     }
 
@@ -1302,12 +1317,45 @@ impl Cpu {
 
     #[inline]
     fn sbc_a_n(&mut self, ram: &mut Ram) {
+        // TODO: Tests
         let n = if self.f.c() {
             self.next_byte(ram) + 1
         } else {
             self.next_byte(ram)
         };
         sub_a_n!(self, n);
+        self.cycles += 4;
+    }
+
+    #[inline]
+    fn and_a_n(&mut self, ram: &mut Ram) {
+        // TODO: Tests
+        let n = self.next_byte(ram);
+        and_a_n!(self, n);
+        self.cycles += 4;
+    }
+
+    #[inline]
+    fn xor_a_n(&mut self, ram: &mut Ram) {
+        // TODO: Tests
+        let n = self.next_byte(ram);
+        xor_a_n!(self, n);
+        self.cycles += 4;
+    }
+
+    #[inline]
+    fn or_a_n(&mut self, ram: &mut Ram) {
+        // TODO: Tests
+        let n = self.next_byte(ram);
+        or_a_n!(self, n);
+        self.cycles += 4;
+    }
+
+    #[inline]
+    fn cp_a_n(&mut self, ram: &mut Ram) {
+        // TODO: Tests
+        let n = self.next_byte(ram);
+        cp_a_n!(self, n);
         self.cycles += 4;
     }
 }
