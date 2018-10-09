@@ -559,7 +559,14 @@ impl Cpu {
         self.interrupts = InterruptState::Enabled; // TODO: This is just a guess
     }
     pub fn step(&mut self, ram: &mut Ram) {
-        let opcode = self.next_byte(ram);
+        let opcode = {
+            let opcode = self.next_byte(ram);
+            if opcode == 0xCB {
+                self.next_byte(ram) + 0xFF
+            } else {
+                opcode
+            }
+        };
         let old_interrupts_state = self.interrupts;
         let new_interrupts_state = match self.interrupts {
             InterruptState::WillEnable => InterruptState::Enabled,
