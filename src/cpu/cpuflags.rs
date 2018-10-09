@@ -1,5 +1,5 @@
 #[derive(Default)]
-pub struct CpuFlags(u8);
+pub struct CpuFlags(pub u8);
 impl CpuFlags {
     #[inline(always)]
     pub fn z(&self) -> bool {

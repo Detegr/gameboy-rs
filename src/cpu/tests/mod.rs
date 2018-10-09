@@ -56,6 +56,7 @@ mod nop;
 mod notavailable;
 mod or;
 mod pop;
+mod push;
 mod ret;
 mod rotate;
 mod sbc;

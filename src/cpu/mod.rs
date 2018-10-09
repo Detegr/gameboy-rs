@@ -517,6 +517,25 @@ macro_rules! make_call {
         }
     }
 }
+macro_rules! make_push {
+    ($name:ident, $r1:ident, $r2:ident) => {
+        #[inline]
+        fn $name(&mut self, ram: &mut Ram) {
+            assert!(
+                self.sp.wrapping_sub(2) < self.sp,
+                "stack overflow"
+            );
+
+            let v1 = self.$r1;
+            let v2 = self.$r2;
+
+            self.push(ram, v1);
+            self.push(ram, v2);
+
+            self.cycles += 16;
+        }
+    }
+}
 
 impl Cpu {
     pub fn new() -> Cpu {
@@ -1171,26 +1190,7 @@ impl Cpu {
         );
         self.sp += 1;
         let byte = ram[self.sp as usize];
-        if byte & 0x80 == 0 {
-            self.f.unset_z();
-        } else {
-            self.f.set_z();
-        }
-        if byte & 0x40 == 0 {
-            self.f.unset_n();
-        } else {
-            self.f.set_n();
-        }
-        if byte & 0x20 == 0 {
-            self.f.unset_h();
-        } else {
-            self.f.set_h();
-        }
-        if byte & 0x10 == 0 {
-            self.f.unset_c();
-        } else {
-            self.f.set_c();
-        }
+        self.f.0 = byte;
         self.sp += 1;
         let byte = ram[self.sp as usize];
         self.a = byte;
@@ -1233,4 +1233,18 @@ impl Cpu {
     make_call!(call_z, z set);
     make_call!(call_nc, c not set);
     make_call!(call_c, c set);
+
+    make_push!(push_bc, b, c);
+    make_push!(push_de, d, e);
+    make_push!(push_hl, h, l);
+
+    #[inline]
+    fn push_af(&mut self, ram: &mut Ram) {
+        let v1 = self.a;
+        let v2 = self.f.0;
+
+        self.push(ram, v1);
+        self.push(ram, v2);
+        self.cycles += 16;
+    }
 }
