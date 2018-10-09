@@ -63,6 +63,17 @@ impl Cpu {
     fn hl(&self) -> u16 {
         (self.h as u16) << 8 | self.l as u16
     }
+    #[inline]
+    fn push(&mut self, ram: &mut Ram, value: u8) {
+        assert!(self.sp > 0);
+        ram[self.sp as usize] = value;
+        self.sp -= 1;
+    }
+    #[inline]
+    fn push_u16(&mut self, ram: &mut Ram, value: u16) {
+        self.push(ram, (value & 0xFF) as u8);
+        self.push(ram, (value >> 8) as u8);
+    }
 }
 macro_rules! make_ld_rr_nn {
     ($name: ident, $r1:ident, $r2:ident) => {
@@ -455,6 +466,54 @@ macro_rules! make_pop {
             self.$r1 = byte;
 
             self.cycles += 12;
+        }
+    }
+}
+macro_rules! make_jp {
+    ($name:ident, $flag:ident set) => {
+        #[inline]
+        fn $name(&mut self, ram: &mut Ram) {
+            if self.f.$flag() {
+                self.jp(ram);
+            } else {
+                self.cycles += 12;
+                self.pc += 2;
+            }
+        }
+    };
+    ($name:ident, $flag:ident not set) => {
+        #[inline]
+        fn $name(&mut self, ram: &mut Ram) {
+            if !self.f.$flag() {
+                self.jp(ram);
+            } else {
+                self.cycles += 12;
+                self.pc += 2;
+            }
+        }
+    }
+}
+macro_rules! make_call {
+    ($name:ident, $flag:ident set) => {
+        #[inline]
+        fn $name(&mut self, ram: &mut Ram) {
+            if self.f.$flag() {
+                self.call(ram);
+            } else {
+                self.pc += 2;
+                self.cycles += 12;
+            }
+        }
+    };
+    ($name:ident, $flag:ident not set) => {
+        #[inline]
+        fn $name(&mut self, ram: &mut Ram) {
+            if !self.f.$flag() {
+                self.call(ram);
+            } else {
+                self.pc += 2;
+                self.cycles += 12;
+            }
         }
     }
 }
@@ -1138,4 +1197,40 @@ impl Cpu {
 
         self.cycles += 12;
     }
+
+    #[inline]
+    fn jp(&mut self, ram: &mut Ram) {
+        let l = self.next_byte(ram);
+        let h = self.next_byte(ram);
+        self.pc = ((h as u16) << 8) | l as u16;
+        self.cycles += 16;
+    }
+
+    make_jp!(jp_nz, z not set);
+    make_jp!(jp_z, z set);
+    make_jp!(jp_nc, c not set);
+    make_jp!(jp_c, c set);
+
+    #[inline]
+    fn jp_hl(&mut self, _ram: &mut Ram) {
+        self.pc = self.hl();
+        self.cycles += 4;
+    }
+
+    #[inline]
+    fn call(&mut self, ram: &mut Ram) {
+        // Address of next instruction is 2 bytes away
+        // from this instruction, as this instruction is
+        // 3 bytes long but the first byte has been already
+        // read when the execution ends up here.
+        let addr = self.pc + 2;
+        self.push_u16(ram, addr);
+        self.jp(ram);
+        self.cycles += 8;
+    }
+
+    make_call!(call_nz, z not set);
+    make_call!(call_z, z set);
+    make_call!(call_nc, c not set);
+    make_call!(call_c, c set);
 }
