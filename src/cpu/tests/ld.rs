@@ -353,3 +353,54 @@ fn test_ld_a_hld() {
     assert_eq!(cpu.a, 0x0);
     assert_eq!(cpu.hl(), 0xFFFF);
 }
+
+#[test]
+fn test_ld_hl_sp_plus_n() {
+    let (mut cpu, mut ram) = init(None);
+    cpu.reset();
+
+    cpu.sp = 0x1000;
+    ram[cpu.pc as usize] = 0x10;
+    test(&mut cpu, &mut ram, 12, opcode(0xF8));
+    assert_eq!(cpu.hl(), 0x1010);
+    assert!(!cpu.f.z());
+    assert!(!cpu.f.n());
+    assert!(!cpu.f.h());
+    assert!(!cpu.f.c());
+
+    cpu.sp = 0x10FF;
+    ram[cpu.pc as usize] = 0x1;
+    test(&mut cpu, &mut ram, 12, opcode(0xF8));
+    assert_eq!(cpu.hl(), 0x1100);
+    assert!(!cpu.f.z());
+    assert!(!cpu.f.n());
+    assert!(cpu.f.h());
+    assert!(cpu.f.c());
+
+    cpu.sp = 0x101F;
+    ram[cpu.pc as usize] = 0x1;
+    test(&mut cpu, &mut ram, 12, opcode(0xF8));
+    assert_eq!(cpu.hl(), 0x1020);
+    assert!(!cpu.f.z());
+    assert!(!cpu.f.n());
+    assert!(cpu.f.h());
+    assert!(!cpu.f.c());
+
+    cpu.sp = 0x1020;
+    ram[cpu.pc as usize] = -1i8 as u8;
+    test(&mut cpu, &mut ram, 12, opcode(0xF8));
+    assert_eq!(cpu.hl(), 0x101F);
+    assert!(!cpu.f.z());
+    assert!(!cpu.f.n());
+    assert!(cpu.f.h());
+    assert!(!cpu.f.c());
+
+    cpu.sp = 0x1000;
+    ram[cpu.pc as usize] = -1i8 as u8;
+    test(&mut cpu, &mut ram, 12, opcode(0xF8));
+    assert_eq!(cpu.hl(), 0xFFF);
+    assert!(!cpu.f.z());
+    assert!(!cpu.f.n());
+    assert!(cpu.f.h());
+    assert!(cpu.f.c());
+}

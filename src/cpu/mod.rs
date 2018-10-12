@@ -173,7 +173,7 @@ macro_rules! add_a_n {
     ($cpu:expr, $value:expr) => {{
         $cpu.f.unset_n();
         let check = ($cpu.a as u16) + ($value as u16);
-        if check >= 0xFF {
+        if check > 0xFF {
             $cpu.f.set_h();
             $cpu.f.set_c();
         } else {
@@ -561,6 +561,35 @@ macro_rules! make_rst {
             self.cycles += 16;
         }
     }
+}
+macro_rules! set_flags_u16_plus_i8 {
+    ($cpu:expr, $u16:expr, $i8:expr) => {
+        $cpu.f.unset_n();
+        $cpu.f.unset_z();
+        // Half carry and carry flags are calculated
+        // with lower 8 bits
+        let check = ($u16 & 0xFF) as i16 + ($i8 as i16);
+        if check > 0xFF || check < 0 {
+            $cpu.f.set_h();
+            $cpu.f.set_c();
+        } else {
+            $cpu.f.unset_h();
+            $cpu.f.unset_c();
+        }
+        if $i8 > 0 {
+            if cpuflags::test_half_carry_addition(($u16 & 0xFF) as u8, $i8 as u8) {
+                $cpu.f.set_h();
+            } else {
+                $cpu.f.unset_h();
+            }
+        } else {
+            if cpuflags::test_half_carry_subtraction(($u16 & 0xFF) as u8, (-$i8) as u8) {
+                $cpu.f.set_h();
+            } else {
+                $cpu.f.unset_h();
+            }
+        }
+    };
 }
 
 impl Cpu {
@@ -1380,5 +1409,23 @@ impl Cpu {
     #[inline]
     fn ld_sp_hl(&mut self, _ram: &mut Ram) {
         self.sp = self.hl();
+    }
+
+    #[inline]
+    fn add_sp_n(&mut self, ram: &mut Ram) {
+        let n = self.next_byte(ram);
+        set_flags_u16_plus_i8!(self, self.sp, n as i8);
+        self.sp = self.sp.wrapping_add(n as i8 as u16);
+        self.cycles += 16;
+    }
+
+    #[inline]
+    fn ld_hl_sp_plus_n(&mut self, ram: &mut Ram) {
+        let n = self.next_byte(ram);
+        set_flags_u16_plus_i8!(self, self.sp, n as i8);
+        let hl = self.sp.wrapping_add(n as i8 as u16);
+        self.h = ((hl >> 8) & 0xFF) as u8;
+        self.l = (hl & 0xFF) as u8;
+        self.cycles += 12;
     }
 }
