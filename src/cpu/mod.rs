@@ -63,6 +63,11 @@ impl Cpu {
     fn hl(&self) -> u16 {
         (self.h as u16) << 8 | self.l as u16
     }
+    #[inline(always)]
+    fn set_hl(&mut self, val: u16) {
+        self.h = (val >> 8) as u8;
+        self.l = (val & 0xFF) as u8;
+    }
     #[inline]
     fn push(&mut self, ram: &mut Ram, value: u8) {
         assert!(self.sp > 0);
@@ -591,6 +596,65 @@ macro_rules! set_flags_u16_plus_i8 {
         }
     };
 }
+macro_rules! rlc_n {
+    ($cpu:expr, $value:expr) => {{
+        $cpu.f.unset_n();
+        $cpu.f.unset_h();
+        if ($value & 0x80) != 0 {
+            $cpu.f.set_c();
+        } else {
+            $cpu.f.unset_c();
+        }
+
+        $value = $value.rotate_left(1);
+
+        if $value == 0 {
+            $cpu.f.set_z();
+        } else {
+            $cpu.f.unset_z();
+        }
+
+        $value
+    }};
+}
+macro_rules! make_rlc_r {
+    ($name:ident, $r:ident) => {
+        #[inline]
+        fn $name(&mut self, _ram: &mut Ram) {
+            self.$r = rlc_n!(self, self.$r);
+            self.cycles += 8;
+        }
+    }
+}
+
+macro_rules! rrc_n {
+    ($cpu:expr, $value:expr) => {{
+        $cpu.f.unset_n();
+        $cpu.f.unset_h();
+        if ($value & 0x1) != 0 {
+            $cpu.f.set_c();
+        } else {
+            $cpu.f.unset_c();
+        }
+
+        if $value == 0 {
+            $cpu.f.set_z();
+        } else {
+            $cpu.f.unset_z();
+        }
+
+        $value.rotate_right(1)
+    }};
+}
+macro_rules! make_rrc_r {
+    ($name:ident, $r:ident) => {
+        #[inline]
+        fn $name(&mut self, _ram: &mut Ram) {
+            self.$r = rrc_n!(self, self.$r);
+            self.cycles += 8;
+        }
+    }
+}
 
 impl Cpu {
     pub fn new() -> Cpu {
@@ -838,16 +902,8 @@ impl Cpu {
 
     #[inline]
     fn rlca(&mut self, _ram: &mut Ram) {
-        self.f.unset_n();
-        self.f.unset_h();
+        self.a = rlc_n!(self, self.a);
         self.f.unset_z();
-        if (self.a & 0x80) != 0 {
-            self.f.set_c();
-        } else {
-            self.f.unset_c();
-        }
-
-        self.a = self.a.rotate_left(1);
         self.cycles += 4;
     }
 
@@ -871,16 +927,8 @@ impl Cpu {
 
     #[inline]
     fn rrca(&mut self, _ram: &mut Ram) {
-        self.f.unset_n();
-        self.f.unset_h();
+        self.a = rrc_n!(self, self.a);
         self.f.unset_z();
-        if (self.a & 0x1) != 0 {
-            self.f.set_c();
-        } else {
-            self.f.unset_c();
-        }
-
-        self.a = self.a.rotate_right(1);
         self.cycles += 4;
     }
 
@@ -970,8 +1018,7 @@ impl Cpu {
     fn ld_hli_a(&mut self, ram: &mut Ram) {
         ram[self.hl() as usize] = self.a;
         let hl = self.hl().wrapping_add(1);
-        self.h = ((hl >> 8) & 0xFF) as u8;
-        self.l = (hl & 0xFF) as u8;
+        self.set_hl(hl);
         self.cycles += 8;
     }
 
@@ -979,8 +1026,7 @@ impl Cpu {
     fn ld_hld_a(&mut self, ram: &mut Ram) {
         ram[self.hl() as usize] = self.a;
         let hl = self.hl().wrapping_sub(1);
-        self.h = ((hl >> 8) & 0xFF) as u8;
-        self.l = (hl & 0xFF) as u8;
+        self.set_hl(hl);
         self.cycles += 8;
     }
 
@@ -988,8 +1034,7 @@ impl Cpu {
     fn ld_a_hli(&mut self, ram: &mut Ram) {
         self.a = ram[self.hl() as usize];
         let hl = self.hl().wrapping_add(1);
-        self.h = ((hl >> 8) & 0xFF) as u8;
-        self.l = (hl & 0xFF) as u8;
+        self.set_hl(hl);
         self.cycles += 8;
     }
 
@@ -997,8 +1042,7 @@ impl Cpu {
     fn ld_a_hld(&mut self, ram: &mut Ram) {
         self.a = ram[self.hl() as usize];
         let hl = self.hl().wrapping_sub(1);
-        self.h = ((hl >> 8) & 0xFF) as u8;
-        self.l = (hl & 0xFF) as u8;
+        self.set_hl(hl);
         self.cycles += 8;
     }
 
@@ -1424,8 +1468,39 @@ impl Cpu {
         let n = self.next_byte(ram);
         set_flags_u16_plus_i8!(self, self.sp, n as i8);
         let hl = self.sp.wrapping_add(n as i8 as u16);
-        self.h = ((hl >> 8) & 0xFF) as u8;
-        self.l = (hl & 0xFF) as u8;
+        self.set_hl(hl);
         self.cycles += 12;
     }
+
+    make_rlc_r!(rlc_b, b);
+    make_rlc_r!(rlc_c, c);
+    make_rlc_r!(rlc_d, d);
+    make_rlc_r!(rlc_e, e);
+    make_rlc_r!(rlc_h, h);
+    make_rlc_r!(rlc_l, l);
+
+    #[inline]
+    fn rlc_deref_hl(&mut self, ram: &mut Ram) {
+        let val = rlc_n!(self, ram[self.hl() as usize]);
+        self.set_hl(val as u16);
+        self.cycles += 16;
+    }
+
+    make_rlc_r!(rlc_a, a);
+
+    make_rrc_r!(rrc_b, b);
+    make_rrc_r!(rrc_c, c);
+    make_rrc_r!(rrc_d, d);
+    make_rrc_r!(rrc_e, e);
+    make_rrc_r!(rrc_h, h);
+    make_rrc_r!(rrc_l, l);
+
+    #[inline]
+    fn rrc_deref_hl(&mut self, ram: &mut Ram) {
+        let val = rrc_n!(self, ram[self.hl() as usize]);
+        self.set_hl(val as u16);
+        self.cycles += 16;
+    }
+
+    make_rrc_r!(rrc_a, a);
 }

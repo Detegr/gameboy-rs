@@ -125,6 +125,14 @@ fn test_rrca() {
     assert!(!cpu.f.n());
     assert!(!cpu.f.h());
     assert!(!cpu.f.c());
+
+    cpu.a = 0x0;
+    test(&mut cpu, &mut ram, 4, opcode(0xF));
+    assert_eq!(cpu.a, 0x0);
+    assert!(!cpu.f.z());
+    assert!(!cpu.f.n());
+    assert!(!cpu.f.h());
+    assert!(!cpu.f.c());
 }
 
 #[test]
@@ -154,6 +162,14 @@ fn test_rlca() {
 
     test(&mut cpu, &mut ram, 4, opcode(0x7));
     assert_eq!(cpu.a, 0x82);
+    assert!(!cpu.f.z());
+    assert!(!cpu.f.n());
+    assert!(!cpu.f.h());
+    assert!(!cpu.f.c());
+
+    cpu.a = 0x0;
+    test(&mut cpu, &mut ram, 4, opcode(0x7));
+    assert_eq!(cpu.a, 0x0);
     assert!(!cpu.f.z());
     assert!(!cpu.f.n());
     assert!(!cpu.f.h());
