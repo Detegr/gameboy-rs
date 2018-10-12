@@ -656,6 +656,69 @@ macro_rules! make_rrc_r {
     }
 }
 
+macro_rules! rl_n {
+    ($cpu:expr, $value:expr) => {{
+        $cpu.f.unset_n();
+        $cpu.f.unset_h();
+        let old_carry = $cpu.f.c();
+        if ($value & 0x80) != 0 {
+            $cpu.f.set_c();
+        } else {
+            $cpu.f.unset_c();
+        }
+        $value <<= 1;
+        if old_carry {
+            $value |= 0x1;
+        }
+        if $value == 0 {
+            $cpu.f.set_z();
+        } else {
+            $cpu.f.unset_z();
+        }
+        $value
+    }};
+}
+macro_rules! make_rl_r {
+    ($name:ident, $r:ident) => {
+        #[inline]
+        fn $name(&mut self, _ram: &mut Ram) {
+            self.$r = rl_n!(self, self.$r);
+            self.cycles += 8;
+        }
+    }
+}
+macro_rules! rr_n {
+    ($cpu:expr, $value:expr) => {{
+        $cpu.f.unset_n();
+        $cpu.f.unset_h();
+        let old_carry = $cpu.f.c();
+        if ($value & 0x1) != 0 {
+            $cpu.f.set_c();
+        } else {
+            $cpu.f.unset_c();
+        }
+        $value >>= 1;
+        if old_carry {
+            $value |= 0x80;
+        }
+        if $value == 0 {
+            $cpu.f.set_z();
+        } else {
+            $cpu.f.unset_z();
+        }
+        $value
+    }};
+}
+macro_rules! make_rr_r {
+    ($name:ident, $r:ident) => {
+        #[inline]
+        fn $name(&mut self, _ram: &mut Ram) {
+            self.$r = rr_n!(self, self.$r);
+            self.cycles += 8;
+        }
+    }
+}
+
 impl Cpu {
     pub fn new() -> Cpu {
         Cpu::default()
@@ -909,19 +972,8 @@ impl Cpu {
 
     #[inline]
     fn rla(&mut self, _ram: &mut Ram) {
-        self.f.unset_n();
-        self.f.unset_h();
+        self.a = rl_n!(self, self.a);
         self.f.unset_z();
-        let old_carry = self.f.c();
-        if (self.a & 0x80) != 0 {
-            self.f.set_c();
-        } else {
-            self.f.unset_c();
-        }
-        self.a <<= 1;
-        if old_carry {
-            self.a |= 0x1;
-        }
         self.cycles += 4;
     }
 
@@ -934,19 +986,8 @@ impl Cpu {
 
     #[inline]
     fn rra(&mut self, _ram: &mut Ram) {
-        self.f.unset_n();
-        self.f.unset_h();
+        self.a = rr_n!(self, self.a);
         self.f.unset_z();
-        let old_carry = self.f.c();
-        if (self.a & 0x1) != 0 {
-            self.f.set_c();
-        } else {
-            self.f.unset_c();
-        }
-        self.a >>= 1;
-        if old_carry {
-            self.a |= 0x80;
-        }
         self.cycles += 4;
     }
 
@@ -1478,7 +1519,7 @@ impl Cpu {
     make_rlc_r!(rlc_e, e);
     make_rlc_r!(rlc_h, h);
     make_rlc_r!(rlc_l, l);
-
+    make_rlc_r!(rlc_a, a);
     #[inline]
     fn rlc_deref_hl(&mut self, ram: &mut Ram) {
         let val = rlc_n!(self, ram[self.hl() as usize]);
@@ -1486,15 +1527,13 @@ impl Cpu {
         self.cycles += 16;
     }
 
-    make_rlc_r!(rlc_a, a);
-
     make_rrc_r!(rrc_b, b);
     make_rrc_r!(rrc_c, c);
     make_rrc_r!(rrc_d, d);
     make_rrc_r!(rrc_e, e);
     make_rrc_r!(rrc_h, h);
     make_rrc_r!(rrc_l, l);
-
+    make_rrc_r!(rrc_a, a);
     #[inline]
     fn rrc_deref_hl(&mut self, ram: &mut Ram) {
         let val = rrc_n!(self, ram[self.hl() as usize]);
@@ -1502,5 +1541,31 @@ impl Cpu {
         self.cycles += 16;
     }
 
-    make_rrc_r!(rrc_a, a);
+    make_rl_r!(rl_b, b);
+    make_rl_r!(rl_c, c);
+    make_rl_r!(rl_d, d);
+    make_rl_r!(rl_e, e);
+    make_rl_r!(rl_h, h);
+    make_rl_r!(rl_l, l);
+    make_rl_r!(rl_a, a);
+    #[inline]
+    fn rl_deref_hl(&mut self, ram: &mut Ram) {
+        let val = rl_n!(self, ram[self.hl() as usize]);
+        self.set_hl(val as u16);
+        self.cycles += 16;
+    }
+
+    make_rr_r!(rr_b, b);
+    make_rr_r!(rr_c, c);
+    make_rr_r!(rr_d, d);
+    make_rr_r!(rr_e, e);
+    make_rr_r!(rr_h, h);
+    make_rr_r!(rr_l, l);
+    make_rr_r!(rr_a, a);
+    #[inline]
+    fn rr_deref_hl(&mut self, ram: &mut Ram) {
+        let val = rr_n!(self, ram[self.hl() as usize]);
+        self.set_hl(val as u16);
+        self.cycles += 16;
+    }
 }

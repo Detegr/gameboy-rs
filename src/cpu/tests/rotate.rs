@@ -45,6 +45,14 @@ fn test_rra() {
     assert!(!cpu.f.n());
     assert!(!cpu.f.h());
     assert!(!cpu.f.c());
+
+    cpu.a = 0x0;
+    test(&mut cpu, &mut ram, 4, opcode(0x1F));
+    assert_eq!(cpu.a, 0x0);
+    assert!(!cpu.f.z());
+    assert!(!cpu.f.n());
+    assert!(!cpu.f.h());
+    assert!(!cpu.f.c());
 }
 
 #[test]
@@ -88,6 +96,14 @@ fn test_rla() {
 
     test(&mut cpu, &mut ram, 4, opcode(0x17));
     assert_eq!(cpu.a, 0x5);
+    assert!(!cpu.f.z());
+    assert!(!cpu.f.n());
+    assert!(!cpu.f.h());
+    assert!(!cpu.f.c());
+
+    cpu.a = 0x0;
+    test(&mut cpu, &mut ram, 4, opcode(0x17));
+    assert_eq!(cpu.a, 0x0);
     assert!(!cpu.f.z());
     assert!(!cpu.f.n());
     assert!(!cpu.f.h());
