@@ -64,4 +64,5 @@ mod sbc;
 mod shift;
 mod stop;
 mod sub;
+mod swap;
 mod xor;

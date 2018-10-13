@@ -773,6 +773,36 @@ macro_rules! make_sra {
     }
 }
 
+macro_rules! swap_n {
+    ($cpu:expr, $value:expr) => {{
+        $cpu.f.unset_c();
+        $cpu.f.unset_n();
+        $cpu.f.unset_h();
+
+        let upper = $value & 0xF0;
+        let lower = $value & 0xF;
+
+        $value = (lower << 4) | (upper >> 4);
+
+        if $value == 0 {
+            $cpu.f.set_z();
+        } else {
+            $cpu.f.unset_z();
+        }
+
+        $value
+    }};
+}
+macro_rules! make_swap {
+    ($name:ident, $r:ident) => {
+        #[inline]
+        fn $name(&mut self, _ram: &mut Ram) {
+            self.$r = swap_n!(self, self.$r);
+            self.cycles += 8;
+        }
+    }
+}
+
 impl Cpu {
     pub fn new() -> Cpu {
         Cpu::default()
@@ -1647,6 +1677,20 @@ impl Cpu {
     #[inline]
     fn sra_deref_hl(&mut self, ram: &mut Ram) {
         let val = sra_n!(self, ram[self.hl() as usize]);
+        self.set_hl(val as u16);
+        self.cycles += 16;
+    }
+
+    make_swap!(swap_b, b);
+    make_swap!(swap_c, c);
+    make_swap!(swap_d, d);
+    make_swap!(swap_e, e);
+    make_swap!(swap_h, h);
+    make_swap!(swap_l, l);
+    make_swap!(swap_a, a);
+    #[inline]
+    fn swap_deref_hl(&mut self, ram: &mut Ram) {
+        let val = swap_n!(self, ram[self.hl() as usize]);
         self.set_hl(val as u16);
         self.cycles += 16;
     }
