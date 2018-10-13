@@ -802,6 +802,31 @@ macro_rules! make_swap {
         }
     }
 }
+macro_rules! srl_n {
+    ($cpu:expr, $value:expr) => {{
+        if ($value & 0x1) != 0 {
+            $cpu.f.set_c();
+        } else {
+            $cpu.f.unset_c();
+        }
+        $value >>= 1;
+        if $value == 0 {
+            $cpu.f.set_z();
+        } else {
+            $cpu.f.unset_z();
+        }
+        $value
+    }};
+}
+macro_rules! make_srl {
+    ($name:ident, $r:ident) => {
+        #[inline]
+        fn $name(&mut self, _ram: &mut Ram) {
+            self.$r = srl_n!(self, self.$r);
+            self.cycles += 8;
+        }
+    }
+}
 
 impl Cpu {
     pub fn new() -> Cpu {
@@ -1691,6 +1716,20 @@ impl Cpu {
     #[inline]
     fn swap_deref_hl(&mut self, ram: &mut Ram) {
         let val = swap_n!(self, ram[self.hl() as usize]);
+        self.set_hl(val as u16);
+        self.cycles += 16;
+    }
+
+    make_srl!(srl_b, b);
+    make_srl!(srl_c, c);
+    make_srl!(srl_d, d);
+    make_srl!(srl_e, e);
+    make_srl!(srl_h, h);
+    make_srl!(srl_l, l);
+    make_srl!(srl_a, a);
+    #[inline]
+    fn srl_deref_hl(&mut self, ram: &mut Ram) {
+        let val = srl_n!(self, ram[self.hl() as usize]);
         self.set_hl(val as u16);
         self.cycles += 16;
     }
