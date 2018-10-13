@@ -61,6 +61,7 @@ mod ret;
 mod rotate;
 mod rst;
 mod sbc;
+mod shift;
 mod stop;
 mod sub;
 mod xor;

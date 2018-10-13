@@ -718,6 +718,60 @@ macro_rules! make_rr_r {
         }
     }
 }
+macro_rules! sla_n {
+    ($cpu:expr, $value:expr) => {{
+        if ($value & 0x80) != 0 {
+            $cpu.f.set_c();
+        } else {
+            $cpu.f.unset_c();
+        }
+        $value <<= 1;
+        if $value == 0 {
+            $cpu.f.set_z();
+        } else {
+            $cpu.f.unset_z();
+        }
+        $value
+    }};
+}
+macro_rules! make_sla {
+    ($name:ident, $r:ident) => {
+        #[inline]
+        fn $name(&mut self, _ram: &mut Ram) {
+            self.$r = sla_n!(self, self.$r);
+            self.cycles += 8;
+        }
+    }
+}
+macro_rules! sra_n {
+    ($cpu:expr, $value:expr) => {{
+        if ($value & 0x1) != 0 {
+            $cpu.f.set_c();
+        } else {
+            $cpu.f.unset_c();
+        }
+        let bit7 = ($value & 0x80) != 0;
+        $value >>= 1;
+        if bit7 {
+            $value |= 0x80;
+        }
+        if $value == 0 {
+            $cpu.f.set_z();
+        } else {
+            $cpu.f.unset_z();
+        }
+        $value
+    }};
+}
+macro_rules! make_sra {
+    ($name:ident, $r:ident) => {
+        #[inline]
+        fn $name(&mut self, _ram: &mut Ram) {
+            self.$r = sra_n!(self, self.$r);
+            self.cycles += 8;
+        }
+    }
+}
 
 impl Cpu {
     pub fn new() -> Cpu {
@@ -1565,6 +1619,34 @@ impl Cpu {
     #[inline]
     fn rr_deref_hl(&mut self, ram: &mut Ram) {
         let val = rr_n!(self, ram[self.hl() as usize]);
+        self.set_hl(val as u16);
+        self.cycles += 16;
+    }
+
+    make_sla!(sla_b, b);
+    make_sla!(sla_c, c);
+    make_sla!(sla_d, d);
+    make_sla!(sla_e, e);
+    make_sla!(sla_h, h);
+    make_sla!(sla_l, l);
+    make_sla!(sla_a, a);
+    #[inline]
+    fn sla_deref_hl(&mut self, ram: &mut Ram) {
+        let val = sla_n!(self, ram[self.hl() as usize]);
+        self.set_hl(val as u16);
+        self.cycles += 16;
+    }
+
+    make_sra!(sra_b, b);
+    make_sra!(sra_c, c);
+    make_sra!(sra_d, d);
+    make_sra!(sra_e, e);
+    make_sra!(sra_h, h);
+    make_sra!(sra_l, l);
+    make_sra!(sra_a, a);
+    #[inline]
+    fn sra_deref_hl(&mut self, ram: &mut Ram) {
+        let val = sra_n!(self, ram[self.hl() as usize]);
         self.set_hl(val as u16);
         self.cycles += 16;
     }
