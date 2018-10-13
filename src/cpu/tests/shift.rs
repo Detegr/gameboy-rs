@@ -3,6 +3,10 @@ use cpu::tests::*;
 macro_rules! test_sla_r {
     ($r:ident, $func: expr) => {
         let (mut cpu, mut ram) = init(None);
+        cpu.f.set_c();
+        cpu.f.set_z();
+        cpu.f.set_n();
+        cpu.f.set_h();
 
         cpu.$r = 0xA0;
         test(&mut cpu, &mut ram, 8, $func);
@@ -49,6 +53,10 @@ fn test_sla_r() {
 macro_rules! test_sra_r {
     ($r:ident, $func: expr) => {
         let (mut cpu, mut ram) = init(None);
+        cpu.f.set_c();
+        cpu.f.set_z();
+        cpu.f.set_n();
+        cpu.f.set_h();
 
         cpu.$r = 0x85;
         test(&mut cpu, &mut ram, 8, $func);
@@ -103,6 +111,10 @@ fn test_sra_r() {
 macro_rules! test_srl_r {
     ($r:ident, $func: expr) => {
         let (mut cpu, mut ram) = init(None);
+        cpu.f.set_c();
+        cpu.f.set_z();
+        cpu.f.set_n();
+        cpu.f.set_h();
 
         cpu.$r = 0x85;
         test(&mut cpu, &mut ram, 8, $func);

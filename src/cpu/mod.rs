@@ -720,6 +720,8 @@ macro_rules! make_rr_r {
 }
 macro_rules! sla_n {
     ($cpu:expr, $value:expr) => {{
+        $cpu.f.unset_n();
+        $cpu.f.unset_h();
         if ($value & 0x80) != 0 {
             $cpu.f.set_c();
         } else {
@@ -745,6 +747,8 @@ macro_rules! make_sla {
 }
 macro_rules! sra_n {
     ($cpu:expr, $value:expr) => {{
+        $cpu.f.unset_n();
+        $cpu.f.unset_h();
         if ($value & 0x1) != 0 {
             $cpu.f.set_c();
         } else {
@@ -804,6 +808,8 @@ macro_rules! make_swap {
 }
 macro_rules! srl_n {
     ($cpu:expr, $value:expr) => {{
+        $cpu.f.unset_n();
+        $cpu.f.unset_h();
         if ($value & 0x1) != 0 {
             $cpu.f.set_c();
         } else {
