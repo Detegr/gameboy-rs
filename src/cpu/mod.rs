@@ -834,6 +834,96 @@ macro_rules! make_srl {
     }
 }
 
+macro_rules! bit_n_n {
+    ($cpu:expr, $bit:expr, $value: expr) => {
+        $cpu.f.unset_n();
+        $cpu.f.set_h();
+        let mask = 0x1u8 << $bit;
+        if ($value & mask) == 0 {
+            $cpu.f.set_c();
+        } else {
+            $cpu.f.unset_c();
+        }
+    };
+}
+
+macro_rules! make_bit {
+    ($name:ident, $bit:expr, $r:ident) => {
+        #[inline]
+        fn $name(&mut self, _ram: &mut Ram) {
+            bit_n_n!(self, $bit, self.$r);
+            self.cycles += 8;
+        }
+    }
+}
+
+macro_rules! make_bit_deref_hl {
+    ($name:ident, $bit:expr) => {
+        #[inline]
+        fn $name(&mut self, ram: &mut Ram) {
+            let val = sra_n!(self, ram[self.hl() as usize]);
+            bit_n_n!(self, $bit, val);
+            self.cycles += 16;
+        }
+    }
+}
+
+macro_rules! res_n_n {
+    ($cpu:expr, $bit:expr, $value: expr) => {{
+        let mask = 0x1u8 << $bit;
+        $value &= !mask;
+        $value
+    }};
+}
+
+macro_rules! make_res {
+    ($name:ident, $bit:expr, $r:ident) => {
+        #[inline]
+        fn $name(&mut self, _ram: &mut Ram) {
+            self.$r = res_n_n!(self, $bit, self.$r);
+            self.cycles += 8;
+        }
+    }
+}
+
+macro_rules! make_res_deref_hl {
+    ($name:ident, $bit:expr) => {
+        #[inline]
+        fn $name(&mut self, ram: &mut Ram) {
+            let val = res_n_n!(self, $bit, ram[self.hl() as usize]);
+            ram[self.hl() as usize] = val;
+            self.cycles += 16;
+        }
+    }
+}
+
+macro_rules! set_n_n {
+    ($cpu:expr, $bit:expr, $value: expr) => {{
+        let mask = 0x1u8 << $bit;
+        $value |= mask;
+        $value
+    }};
+}
+macro_rules! make_set {
+    ($name:ident, $bit:expr, $r:ident) => {
+        #[inline]
+        fn $name(&mut self, _ram: &mut Ram) {
+            self.$r = set_n_n!(self, $bit, self.$r);
+            self.cycles += 8;
+        }
+    }
+}
+macro_rules! make_set_deref_hl {
+    ($name:ident, $bit:expr) => {
+        #[inline]
+        fn $name(&mut self, ram: &mut Ram) {
+            let val = set_n_n!(self, $bit, ram[self.hl() as usize]);
+            ram[self.hl() as usize] = val;
+            self.cycles += 16;
+        }
+    }
+}
+
 impl Cpu {
     pub fn new() -> Cpu {
         Cpu::default()
@@ -1739,4 +1829,220 @@ impl Cpu {
         self.set_hl(val as u16);
         self.cycles += 16;
     }
+
+    make_bit!(bit0_b, 0, b);
+    make_bit!(bit0_c, 0, c);
+    make_bit!(bit0_d, 0, d);
+    make_bit!(bit0_e, 0, e);
+    make_bit!(bit0_h, 0, h);
+    make_bit!(bit0_l, 0, l);
+    make_bit_deref_hl!(bit0_deref_hl, 0);
+    make_bit!(bit0_a, 0, a);
+
+    make_bit!(bit1_b, 1, b);
+    make_bit!(bit1_c, 1, c);
+    make_bit!(bit1_d, 1, d);
+    make_bit!(bit1_e, 1, e);
+    make_bit!(bit1_h, 1, h);
+    make_bit!(bit1_l, 1, l);
+    make_bit_deref_hl!(bit1_deref_hl, 1);
+    make_bit!(bit1_a, 1, a);
+
+    make_bit!(bit2_b, 2, b);
+    make_bit!(bit2_c, 2, c);
+    make_bit!(bit2_d, 2, d);
+    make_bit!(bit2_e, 2, e);
+    make_bit!(bit2_h, 2, h);
+    make_bit!(bit2_l, 2, l);
+    make_bit_deref_hl!(bit2_deref_hl, 2);
+    make_bit!(bit2_a, 2, a);
+
+    make_bit!(bit3_b, 3, b);
+    make_bit!(bit3_c, 3, c);
+    make_bit!(bit3_d, 3, d);
+    make_bit!(bit3_e, 3, e);
+    make_bit!(bit3_h, 3, h);
+    make_bit!(bit3_l, 3, l);
+    make_bit_deref_hl!(bit3_deref_hl, 3);
+    make_bit!(bit3_a, 3, a);
+
+    make_bit!(bit4_b, 4, b);
+    make_bit!(bit4_c, 4, c);
+    make_bit!(bit4_d, 4, d);
+    make_bit!(bit4_e, 4, e);
+    make_bit!(bit4_h, 4, h);
+    make_bit!(bit4_l, 4, l);
+    make_bit_deref_hl!(bit4_deref_hl, 4);
+    make_bit!(bit4_a, 4, a);
+
+    make_bit!(bit5_b, 5, b);
+    make_bit!(bit5_c, 5, c);
+    make_bit!(bit5_d, 5, d);
+    make_bit!(bit5_e, 5, e);
+    make_bit!(bit5_h, 5, h);
+    make_bit!(bit5_l, 5, l);
+    make_bit_deref_hl!(bit5_deref_hl, 5);
+    make_bit!(bit5_a, 5, a);
+
+    make_bit!(bit6_b, 6, b);
+    make_bit!(bit6_c, 6, c);
+    make_bit!(bit6_d, 6, d);
+    make_bit!(bit6_e, 6, e);
+    make_bit!(bit6_h, 6, h);
+    make_bit!(bit6_l, 6, l);
+    make_bit_deref_hl!(bit6_deref_hl, 6);
+    make_bit!(bit6_a, 6, a);
+
+    make_bit!(bit7_b, 7, b);
+    make_bit!(bit7_c, 7, c);
+    make_bit!(bit7_d, 7, d);
+    make_bit!(bit7_e, 7, e);
+    make_bit!(bit7_h, 7, h);
+    make_bit!(bit7_l, 7, l);
+    make_bit_deref_hl!(bit7_deref_hl, 7);
+    make_bit!(bit7_a, 7, a);
+
+    make_res!(res0_b, 0, b);
+    make_res!(res0_c, 0, c);
+    make_res!(res0_d, 0, d);
+    make_res!(res0_e, 0, e);
+    make_res!(res0_h, 0, h);
+    make_res!(res0_l, 0, l);
+    make_res_deref_hl!(res0_deref_hl, 0);
+    make_res!(res0_a, 0, a);
+
+    make_res!(res1_b, 1, b);
+    make_res!(res1_c, 1, c);
+    make_res!(res1_d, 1, d);
+    make_res!(res1_e, 1, e);
+    make_res!(res1_h, 1, h);
+    make_res!(res1_l, 1, l);
+    make_res_deref_hl!(res1_deref_hl, 1);
+    make_res!(res1_a, 1, a);
+
+    make_res!(res2_b, 2, b);
+    make_res!(res2_c, 2, c);
+    make_res!(res2_d, 2, d);
+    make_res!(res2_e, 2, e);
+    make_res!(res2_h, 2, h);
+    make_res!(res2_l, 2, l);
+    make_res_deref_hl!(res2_deref_hl, 2);
+    make_res!(res2_a, 2, a);
+
+    make_res!(res3_b, 3, b);
+    make_res!(res3_c, 3, c);
+    make_res!(res3_d, 3, d);
+    make_res!(res3_e, 3, e);
+    make_res!(res3_h, 3, h);
+    make_res!(res3_l, 3, l);
+    make_res_deref_hl!(res3_deref_hl, 3);
+    make_res!(res3_a, 3, a);
+
+    make_res!(res4_b, 4, b);
+    make_res!(res4_c, 4, c);
+    make_res!(res4_d, 4, d);
+    make_res!(res4_e, 4, e);
+    make_res!(res4_h, 4, h);
+    make_res!(res4_l, 4, l);
+    make_res_deref_hl!(res4_deref_hl, 4);
+    make_res!(res4_a, 4, a);
+
+    make_res!(res5_b, 5, b);
+    make_res!(res5_c, 5, c);
+    make_res!(res5_d, 5, d);
+    make_res!(res5_e, 5, e);
+    make_res!(res5_h, 5, h);
+    make_res!(res5_l, 5, l);
+    make_res_deref_hl!(res5_deref_hl, 5);
+    make_res!(res5_a, 5, a);
+
+    make_res!(res6_b, 6, b);
+    make_res!(res6_c, 6, c);
+    make_res!(res6_d, 6, d);
+    make_res!(res6_e, 6, e);
+    make_res!(res6_h, 6, h);
+    make_res!(res6_l, 6, l);
+    make_res_deref_hl!(res6_deref_hl, 6);
+    make_res!(res6_a, 6, a);
+
+    make_res!(res7_b, 7, b);
+    make_res!(res7_c, 7, c);
+    make_res!(res7_d, 7, d);
+    make_res!(res7_e, 7, e);
+    make_res!(res7_h, 7, h);
+    make_res!(res7_l, 7, l);
+    make_res_deref_hl!(res7_deref_hl, 7);
+    make_res!(res7_a, 7, a);
+
+    make_set!(set0_b, 0, b);
+    make_set!(set0_c, 0, c);
+    make_set!(set0_d, 0, d);
+    make_set!(set0_e, 0, e);
+    make_set!(set0_h, 0, h);
+    make_set!(set0_l, 0, l);
+    make_set_deref_hl!(set0_deref_hl, 0);
+    make_set!(set0_a, 0, a);
+
+    make_set!(set1_b, 1, b);
+    make_set!(set1_c, 1, c);
+    make_set!(set1_d, 1, d);
+    make_set!(set1_e, 1, e);
+    make_set!(set1_h, 1, h);
+    make_set!(set1_l, 1, l);
+    make_set_deref_hl!(set1_deref_hl, 1);
+    make_set!(set1_a, 1, a);
+
+    make_set!(set2_b, 2, b);
+    make_set!(set2_c, 2, c);
+    make_set!(set2_d, 2, d);
+    make_set!(set2_e, 2, e);
+    make_set!(set2_h, 2, h);
+    make_set!(set2_l, 2, l);
+    make_set_deref_hl!(set2_deref_hl, 2);
+    make_set!(set2_a, 2, a);
+
+    make_set!(set3_b, 3, b);
+    make_set!(set3_c, 3, c);
+    make_set!(set3_d, 3, d);
+    make_set!(set3_e, 3, e);
+    make_set!(set3_h, 3, h);
+    make_set!(set3_l, 3, l);
+    make_set_deref_hl!(set3_deref_hl, 3);
+    make_set!(set3_a, 3, a);
+
+    make_set!(set4_b, 4, b);
+    make_set!(set4_c, 4, c);
+    make_set!(set4_d, 4, d);
+    make_set!(set4_e, 4, e);
+    make_set!(set4_h, 4, h);
+    make_set!(set4_l, 4, l);
+    make_set_deref_hl!(set4_deref_hl, 4);
+    make_set!(set4_a, 4, a);
+
+    make_set!(set5_b, 5, b);
+    make_set!(set5_c, 5, c);
+    make_set!(set5_d, 5, d);
+    make_set!(set5_e, 5, e);
+    make_set!(set5_h, 5, h);
+    make_set!(set5_l, 5, l);
+    make_set_deref_hl!(set5_deref_hl, 5);
+    make_set!(set5_a, 5, a);
+
+    make_set!(set6_b, 6, b);
+    make_set!(set6_c, 6, c);
+    make_set!(set6_d, 6, d);
+    make_set!(set6_e, 6, e);
+    make_set!(set6_h, 6, h);
+    make_set!(set6_l, 6, l);
+    make_set_deref_hl!(set6_deref_hl, 6);
+    make_set!(set6_a, 6, a);
+
+    make_set!(set7_b, 7, b);
+    make_set!(set7_c, 7, c);
+    make_set!(set7_d, 7, d);
+    make_set!(set7_e, 7, e);
+    make_set!(set7_h, 7, h);
+    make_set!(set7_l, 7, l);
+    make_set_deref_hl!(set7_deref_hl, 7);
+    make_set!(set7_a, 7, a);
 }
