@@ -1,7 +1,6 @@
 #[cfg(test)]
 mod tests;
 
-use byteorder::{ByteOrder, LittleEndian};
 use ram::Ram;
 use std::default::Default;
 
@@ -73,7 +72,7 @@ impl Cpu {
     #[inline]
     fn push(&mut self, ram: &mut Ram, value: u8) {
         assert!(self.sp > 0);
-        ram[self.sp as usize] = value;
+        ram.write_u8(self.sp, value).unwrap();
         self.sp -= 1;
     }
     #[inline]
@@ -117,7 +116,7 @@ impl Cpu {
     }
     #[inline]
     fn next_byte(&mut self, ram: &mut Ram) -> u8 {
-        let ret = ram[self.pc as usize];
+        let ret = ram.read_u8(self.pc).unwrap();
         self.pc = self.pc.wrapping_add(1);
         ret
     }
@@ -145,7 +144,7 @@ impl Cpu {
 
     #[inline]
     fn add_a_deref_hl(&mut self, ram: &mut Ram) {
-        add_a_n!(self, ram[self.hl() as usize]);
+        add_a_n!(self, ram.read_u8(self.hl()).unwrap());
         self.cycles += 4;
     }
 
@@ -159,7 +158,8 @@ impl Cpu {
 
     #[inline]
     fn inc_deref_hl(&mut self, ram: &mut Ram) {
-        ram[self.hl() as usize] = inc_r!(self, ram[self.hl() as usize]);
+        let value = ram.read_u8(self.hl()).unwrap();
+        ram.write_u8(self.hl(), inc_n!(self, value)).unwrap();
         self.cycles += 8;
     }
 
@@ -173,7 +173,8 @@ impl Cpu {
 
     #[inline]
     fn dec_deref_hl(&mut self, ram: &mut Ram) {
-        ram[self.hl() as usize] = dec_r!(self, ram[self.hl() as usize]);
+        let value = ram.read_u8(self.hl()).unwrap();
+        ram.write_u8(self.hl(), dec_n!(self, value)).unwrap();
         self.cycles += 8;
     }
 
@@ -203,13 +204,13 @@ impl Cpu {
         let mut addr = 0u16;
         addr |= self.next_byte(ram) as u16;
         addr |= (self.next_byte(ram) as u16) << 8;
-        ram[addr as usize] = self.a;
+        ram.write_u8(addr, self.a).unwrap();
         self.cycles += 16;
     }
     make_ld_rr_nn!(ld_hl_nn, h, l);
     #[inline]
     fn ld_sp_nn(&mut self, ram: &mut Ram) {
-        self.sp = LittleEndian::read_u16(&ram[self.pc as usize..]);
+        self.sp = ram.read_u16(self.pc).unwrap();
         self.pc += 2;
         self.cycles += 12;
     }
@@ -231,17 +232,17 @@ impl Cpu {
         let mut addr = 0u16;
         addr |= self.next_byte(ram) as u16;
         addr |= (self.next_byte(ram) as u16) << 8;
-        self.a = ram[addr as usize];
+        self.a = ram.read_u8(addr).unwrap();
         self.cycles += 16;
     }
     #[inline]
     fn ld_a_addr_c(&mut self, ram: &mut Ram) {
-        self.a = ram[0xFF00 | (self.c as usize)];
+        self.a = ram.read_u8(0xFF00 | (self.c as u16)).unwrap();
         self.cycles += 8;
     }
     #[inline]
     fn ld_addr_c_a(&mut self, ram: &mut Ram) {
-        ram[0xFF00 | (self.c as usize)] = self.a;
+        ram.write_u8(0xFF00 | (self.c as u16), self.a).unwrap();
         self.cycles += 8;
     }
 
@@ -315,7 +316,7 @@ impl Cpu {
 
     #[inline]
     fn ld_deref_hl_n(&mut self, ram: &mut Ram) {
-        ram[self.hl() as usize] = self.next_byte(ram);
+        ram.write_u8(self.hl(), self.next_byte(ram)).unwrap();
         self.cycles += 12;
     }
 
@@ -357,9 +358,9 @@ impl Cpu {
 
     #[inline]
     fn ld_deref_a16_sp(&mut self, ram: &mut Ram) {
-        let a16 = LittleEndian::read_u16(&ram[self.pc as usize..]);
+        let a16 = ram.read_u16(self.pc).unwrap();
         self.pc += 2;
-        LittleEndian::write_u16(&mut ram[a16 as usize..], self.sp);
+        ram.write_u16(a16, self.sp).unwrap();
         self.cycles += 20;
     }
 
@@ -421,7 +422,7 @@ impl Cpu {
 
     #[inline]
     fn ld_hli_a(&mut self, ram: &mut Ram) {
-        ram[self.hl() as usize] = self.a;
+        ram.write_u8(self.hl(), self.a).unwrap();
         let hl = self.hl().wrapping_add(1);
         self.set_hl(hl);
         self.cycles += 8;
@@ -429,7 +430,7 @@ impl Cpu {
 
     #[inline]
     fn ld_hld_a(&mut self, ram: &mut Ram) {
-        ram[self.hl() as usize] = self.a;
+        ram.write_u8(self.hl(), self.a).unwrap();
         let hl = self.hl().wrapping_sub(1);
         self.set_hl(hl);
         self.cycles += 8;
@@ -437,7 +438,7 @@ impl Cpu {
 
     #[inline]
     fn ld_a_hli(&mut self, ram: &mut Ram) {
-        self.a = ram[self.hl() as usize];
+        self.a = ram.read_u8(self.hl()).unwrap();
         let hl = self.hl().wrapping_add(1);
         self.set_hl(hl);
         self.cycles += 8;
@@ -445,7 +446,7 @@ impl Cpu {
 
     #[inline]
     fn ld_a_hld(&mut self, ram: &mut Ram) {
-        self.a = ram[self.hl() as usize];
+        self.a = ram.read_u8(self.hl()).unwrap();
         let hl = self.hl().wrapping_sub(1);
         self.set_hl(hl);
         self.cycles += 8;
@@ -521,7 +522,7 @@ impl Cpu {
     #[inline]
     fn adc_a_deref_hl(&mut self, ram: &mut Ram) {
         let c = if self.f.c() { 1 } else { 0 };
-        add_a_n!(self, ram[self.hl() as usize].wrapping_add(c));
+        add_a_n!(self, ram.read_u8(self.hl()).unwrap().wrapping_add(c));
         self.cycles += 4;
     }
 
@@ -537,7 +538,7 @@ impl Cpu {
 
     #[inline]
     fn sub_a_deref_hl(&mut self, ram: &mut Ram) {
-        sub_a_n!(self, ram[self.hl() as usize]);
+        sub_a_n!(self, ram.read_u8(self.hl()).unwrap());
         self.cycles += 4;
     }
 
@@ -552,7 +553,7 @@ impl Cpu {
     #[inline]
     fn sbc_a_deref_hl(&mut self, ram: &mut Ram) {
         let c = if self.f.c() { 1 } else { 0 };
-        sub_a_n!(self, ram[self.hl() as usize].wrapping_add(c));
+        sub_a_n!(self, ram.read_u8(self.hl()).unwrap().wrapping_add(c));
         self.cycles += 4;
     }
 
@@ -566,7 +567,7 @@ impl Cpu {
 
     #[inline]
     fn and_a_deref_hl(&mut self, ram: &mut Ram) {
-        let value = ram[self.hl() as usize];
+        let value = ram.read_u8(self.hl()).unwrap();
         self.f.set_h();
         self.f.unset_n();
         self.f.unset_c();
@@ -597,7 +598,7 @@ impl Cpu {
 
     #[inline]
     fn xor_a_deref_hl(&mut self, ram: &mut Ram) {
-        let value = ram[self.hl() as usize];
+        let value = ram.read_u8(self.hl()).unwrap();
         self.f.unset_h();
         self.f.unset_n();
         self.f.unset_c();
@@ -620,7 +621,7 @@ impl Cpu {
 
     #[inline]
     fn or_a_deref_hl(&mut self, ram: &mut Ram) {
-        let value = ram[self.hl() as usize];
+        let value = ram.read_u8(self.hl()).unwrap();
         self.f.unset_h();
         self.f.unset_n();
         self.f.unset_c();
@@ -643,7 +644,7 @@ impl Cpu {
 
     #[inline]
     fn cp_a_deref_hl(&mut self, ram: &mut Ram) {
-        cp_a_n!(self, ram[self.hl() as usize]);
+        cp_a_n!(self, ram.read_u8(self.hl()).unwrap());
         self.cycles += 4;
     }
 
@@ -656,9 +657,9 @@ impl Cpu {
             "less than 2 bytes of data in the stack"
         );
         self.sp += 1;
-        let byte1 = ram[self.sp as usize];
+        let byte1 = ram.read_u8(self.sp).unwrap();
         self.sp += 1;
-        let byte2 = ram[self.sp as usize];
+        let byte2 = ram.read_u8(self.sp).unwrap();
 
         let addr = ((byte2 as u16) << 8) | byte1 as u16;
         self.pc = addr;
@@ -700,10 +701,10 @@ impl Cpu {
             "less than 2 bytes of data in the stack"
         );
         self.sp += 1;
-        let byte = ram[self.sp as usize];
+        let byte = ram.read_u8(self.sp).unwrap();
         self.f.0 = byte;
         self.sp += 1;
-        let byte = ram[self.sp as usize];
+        let byte = ram.read_u8(self.sp).unwrap();
         self.a = byte;
 
         self.cycles += 12;
@@ -842,7 +843,7 @@ impl Cpu {
         // TODO: Tests
         let n = self.next_byte(ram);
         let addr = 0xFF00_u16 | n as u16;
-        ram[addr as usize] = self.a;
+        ram.write_u8(addr, self.a).unwrap();
         self.cycles += 12;
     }
 
@@ -851,7 +852,7 @@ impl Cpu {
         // TODO: Tests
         let n = self.next_byte(ram);
         let addr = 0xFF00_u16 | n as u16;
-        self.a = ram[addr as usize];
+        self.a = ram.read_u8(addr).unwrap();
         self.cycles += 12;
     }
 
@@ -886,7 +887,8 @@ impl Cpu {
     make_rlc_r!(rlc_a, a);
     #[inline]
     fn rlc_deref_hl(&mut self, ram: &mut Ram) {
-        let val = rlc_n!(self, ram[self.hl() as usize]);
+        let val = ram.read_u8(self.hl()).unwrap();
+        let val = rlc_n!(self, val);
         self.set_hl(val as u16);
         self.cycles += 16;
     }
@@ -900,7 +902,8 @@ impl Cpu {
     make_rrc_r!(rrc_a, a);
     #[inline]
     fn rrc_deref_hl(&mut self, ram: &mut Ram) {
-        let val = rrc_n!(self, ram[self.hl() as usize]);
+        let val = ram.read_u8(self.hl()).unwrap();
+        let val = rrc_n!(self, val);
         self.set_hl(val as u16);
         self.cycles += 16;
     }
@@ -914,7 +917,8 @@ impl Cpu {
     make_rl_r!(rl_a, a);
     #[inline]
     fn rl_deref_hl(&mut self, ram: &mut Ram) {
-        let val = rl_n!(self, ram[self.hl() as usize]);
+        let val = ram.read_u8(self.hl()).unwrap();
+        let val = rl_n!(self, val);
         self.set_hl(val as u16);
         self.cycles += 16;
     }
@@ -928,7 +932,8 @@ impl Cpu {
     make_rr_r!(rr_a, a);
     #[inline]
     fn rr_deref_hl(&mut self, ram: &mut Ram) {
-        let val = rr_n!(self, ram[self.hl() as usize]);
+        let val = ram.read_u8(self.hl()).unwrap();
+        let val = rr_n!(self, val);
         self.set_hl(val as u16);
         self.cycles += 16;
     }
@@ -942,7 +947,8 @@ impl Cpu {
     make_sla!(sla_a, a);
     #[inline]
     fn sla_deref_hl(&mut self, ram: &mut Ram) {
-        let val = sla_n!(self, ram[self.hl() as usize]);
+        let val = ram.read_u8(self.hl()).unwrap();
+        let val = sla_n!(self, val);
         self.set_hl(val as u16);
         self.cycles += 16;
     }
@@ -956,7 +962,8 @@ impl Cpu {
     make_sra!(sra_a, a);
     #[inline]
     fn sra_deref_hl(&mut self, ram: &mut Ram) {
-        let val = sra_n!(self, ram[self.hl() as usize]);
+        let val = ram.read_u8(self.hl()).unwrap();
+        let val = sra_n!(self, val);
         self.set_hl(val as u16);
         self.cycles += 16;
     }
@@ -970,7 +977,8 @@ impl Cpu {
     make_swap!(swap_a, a);
     #[inline]
     fn swap_deref_hl(&mut self, ram: &mut Ram) {
-        let val = swap_n!(self, ram[self.hl() as usize]);
+        let val = ram.read_u8(self.hl()).unwrap();
+        let val = swap_n!(self, val);
         self.set_hl(val as u16);
         self.cycles += 16;
     }
@@ -984,7 +992,8 @@ impl Cpu {
     make_srl!(srl_a, a);
     #[inline]
     fn srl_deref_hl(&mut self, ram: &mut Ram) {
-        let val = srl_n!(self, ram[self.hl() as usize]);
+        let val = ram.read_u8(self.hl()).unwrap();
+        let val = srl_n!(self, val);
         self.set_hl(val as u16);
         self.cycles += 16;
     }
