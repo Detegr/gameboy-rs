@@ -1,4 +1,8 @@
+use std::fs;
+use std::io;
+use std::io::Read;
 use std::ops::{Index, IndexMut, Range};
+use std::path::Path;
 
 const RESERVED_ADDRESSES: &'static [(u16, u16, &'static str)] = &[
     (0x0, 0x7, "RST $00"),
@@ -37,6 +41,11 @@ impl Ram {
         Ram {
             memory: vec![0; 65536].into_boxed_slice(),
         }
+    }
+    pub fn load_cartridge<P: AsRef<Path>>(&mut self, path: P) -> io::Result<()> {
+        let mut file = fs::File::open(path)?;
+        file.read(&mut self.memory)?;
+        Ok(())
     }
     #[cfg(test)]
     pub fn set_bytes(&mut self, bytes: &[u8]) {
