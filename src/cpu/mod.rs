@@ -35,7 +35,7 @@ impl Default for InterruptState {
     }
 }
 
-#[derive(Default)]
+#[derive(Default, Debug)]
 pub struct Cpu {
     a: u8,
     b: u8,
@@ -108,6 +108,7 @@ impl Cpu {
             InterruptState::WillDisable => InterruptState::Disabled,
             state => state,
         };
+        println!("{}", opcodes::MNEMONICS[opcode as usize]);
         opcodes::OPCODES[opcode as usize](self, ram);
         if self.interrupts == old_interrupts_state {
             // The instruction did not modify interrupts flag,

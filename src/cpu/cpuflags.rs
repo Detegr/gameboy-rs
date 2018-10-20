@@ -1,4 +1,4 @@
-#[derive(Default)]
+#[derive(Default, Debug)]
 pub struct CpuFlags(pub u8);
 impl CpuFlags {
     #[inline(always)]
