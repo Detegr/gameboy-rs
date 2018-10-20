@@ -10,8 +10,8 @@ macro_rules! test_push_r_r {
 
         test(&mut cpu, &mut ram, 16, $func);
 
-        assert_eq!(ram[cpu.sp as usize + 1], 0x34);
-        assert_eq!(ram[cpu.sp as usize + 2], 0x12);
+        assert_eq!(ram[cpu.sp + 1], 0x34);
+        assert_eq!(ram[cpu.sp + 2], 0x12);
         assert_eq!(cpu.sp, 0xFFFE - 2);
     };
 }
@@ -30,7 +30,7 @@ fn test_push() {
 
     test(&mut cpu, &mut ram, 16, opcode(0xF5));
 
-    assert_eq!(ram[cpu.sp as usize + 1], 0x34);
-    assert_eq!(ram[cpu.sp as usize + 2], 0x12);
+    assert_eq!(ram[cpu.sp + 1], 0x34);
+    assert_eq!(ram[cpu.sp + 2], 0x12);
     assert_eq!(cpu.sp, 0xFFFE - 2);
 }

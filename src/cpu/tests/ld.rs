@@ -119,7 +119,7 @@ fn test_ld_rr_r() {
             cpu.$rr_2 = 0x22;
             test(&mut cpu, &mut ram, 8, $func);
             assert!(cpu.$rr() == 0x1122);
-            let value = ram[cpu.$rr() as usize];
+            let value = ram[cpu.$rr() ];
             assert!(value == 123,
                     format!("ld ({}), {}: Expected {}, got {}", stringify!($rr), stringify!($r), 123, value));
         }}
@@ -135,7 +135,7 @@ fn test_ld_rr_r() {
     cpu.h = 0x11;
     cpu.l = 0x22;
     test(&mut cpu, &mut ram, 8, opcode(0x74));
-    let value = ram[cpu.hl() as usize];
+    let value = ram[cpu.hl()];
     assert!(
         value == 0x11,
         format!("ld (hl), h: Expected {}, got {}", 0x11, value)
@@ -146,7 +146,7 @@ fn test_ld_rr_r() {
     cpu.h = 0x11;
     cpu.l = 0x22;
     test(&mut cpu, &mut ram, 8, opcode(0x75));
-    let value = ram[cpu.hl() as usize];
+    let value = ram[cpu.hl()];
     assert!(
         value == 0x22,
         format!("ld (hl), l: Expected {}, got {}", 0x22, value)
@@ -157,7 +157,7 @@ fn test_ld_rr_r() {
     cpu.h = 0x11;
     cpu.l = 0x22;
     test(&mut cpu, &mut ram, 12, opcode(0x36));
-    let value = ram[cpu.hl() as usize];
+    let value = ram[cpu.hl()];
     assert!(
         value == 123,
         format!("ld (hl), n: Expected {}, got {}", 123, value)
@@ -262,17 +262,17 @@ fn test_ld_addr_c_a() {
 #[test]
 fn test_ld_deref_a16_sp() {
     use byteorder::{ByteOrder, LittleEndian};
-    let (mut cpu, mut ram) = init(Some(&[0; 0x1000]));
+    let (mut cpu, mut ram) = init(None);
     cpu.reset();
-    LittleEndian::write_u16(&mut ram[cpu.pc as usize..], 0x800);
+    LittleEndian::write_u16(&mut ram[cpu.pc..cpu.pc + 2], 0x800);
     test(&mut cpu, &mut ram, 20, opcode(0x8));
-    let sp_from_ram = LittleEndian::read_u16(&ram[0x800..]);
+    let sp_from_ram = LittleEndian::read_u16(&ram[0x800..0x802]);
     assert_eq!(cpu.sp, sp_from_ram);
 
     cpu.sp = 0x1234;
-    LittleEndian::write_u16(&mut ram[cpu.pc as usize..], 0x400);
+    LittleEndian::write_u16(&mut ram[cpu.pc..cpu.pc + 2], 0x400);
     test(&mut cpu, &mut ram, 20, opcode(0x8));
-    let sp_from_ram = LittleEndian::read_u16(&ram[0x400..]);
+    let sp_from_ram = LittleEndian::read_u16(&ram[0x400..0x402]);
     assert_eq!(cpu.sp, sp_from_ram);
 }
 
@@ -327,12 +327,6 @@ fn test_ld_hld_a() {
     test(&mut cpu, &mut ram, 8, opcode(0x32));
     assert_eq!(ram[0x1122], 0xFF);
     assert_eq!(cpu.hl(), 0x1121);
-
-    cpu.h = 0x0;
-    cpu.l = 0x0;
-    test(&mut cpu, &mut ram, 8, opcode(0x32));
-    assert_eq!(ram[0x0], 0xFF);
-    assert_eq!(cpu.hl(), 0xFFFF);
 }
 
 #[test]
@@ -360,7 +354,7 @@ fn test_ld_hl_sp_plus_n() {
     cpu.reset();
 
     cpu.sp = 0x1000;
-    ram[cpu.pc as usize] = 0x10;
+    ram[cpu.pc] = 0x10;
     test(&mut cpu, &mut ram, 12, opcode(0xF8));
     assert_eq!(cpu.hl(), 0x1010);
     assert!(!cpu.f.z());
@@ -369,7 +363,7 @@ fn test_ld_hl_sp_plus_n() {
     assert!(!cpu.f.c());
 
     cpu.sp = 0x10FF;
-    ram[cpu.pc as usize] = 0x1;
+    ram[cpu.pc] = 0x1;
     test(&mut cpu, &mut ram, 12, opcode(0xF8));
     assert_eq!(cpu.hl(), 0x1100);
     assert!(!cpu.f.z());
@@ -378,7 +372,7 @@ fn test_ld_hl_sp_plus_n() {
     assert!(cpu.f.c());
 
     cpu.sp = 0x101F;
-    ram[cpu.pc as usize] = 0x1;
+    ram[cpu.pc] = 0x1;
     test(&mut cpu, &mut ram, 12, opcode(0xF8));
     assert_eq!(cpu.hl(), 0x1020);
     assert!(!cpu.f.z());
@@ -387,7 +381,7 @@ fn test_ld_hl_sp_plus_n() {
     assert!(!cpu.f.c());
 
     cpu.sp = 0x1020;
-    ram[cpu.pc as usize] = -1i8 as u8;
+    ram[cpu.pc] = -1i8 as u8;
     test(&mut cpu, &mut ram, 12, opcode(0xF8));
     assert_eq!(cpu.hl(), 0x101F);
     assert!(!cpu.f.z());
@@ -396,7 +390,7 @@ fn test_ld_hl_sp_plus_n() {
     assert!(!cpu.f.c());
 
     cpu.sp = 0x1000;
-    ram[cpu.pc as usize] = -1i8 as u8;
+    ram[cpu.pc] = -1i8 as u8;
     test(&mut cpu, &mut ram, 12, opcode(0xF8));
     assert_eq!(cpu.hl(), 0xFFF);
     assert!(!cpu.f.z());

@@ -18,8 +18,8 @@ fn test_rst() {
         cpu.reset();
         cpu.pc = 0x1122;
         test(&mut cpu, &mut ram, 16, opcode(*op));
-        assert_eq!(ram[cpu.sp as usize + 1], 0x11);
-        assert_eq!(ram[cpu.sp as usize + 2], 0x22);
+        assert_eq!(ram[cpu.sp + 1], 0x11);
+        assert_eq!(ram[cpu.sp + 2], 0x22);
         assert_eq!(cpu.pc, *jump_dst);
     }
 }

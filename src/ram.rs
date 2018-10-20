@@ -1,6 +1,4 @@
-use std::io;
-use std::io::{Error, ErrorKind, Read, Seek, SeekFrom, Write};
-use std::ops::{Deref, DerefMut};
+use std::ops::{Index, IndexMut, Range};
 
 const RESERVED_ADDRESSES: &'static [(u16, u16, &'static str)] = &[
     (0x0, 0x7, "RST $00"),
@@ -32,61 +30,14 @@ fn is_reserved(addr: u16) -> Option<&'static str> {
 }
 
 pub struct Ram {
-    i: u64,
     memory: Box<[u8]>,
 }
 impl Ram {
     pub fn new() -> Ram {
         Ram {
-            i: 0,
             memory: vec![0; 65536].into_boxed_slice(),
         }
     }
-
-    pub fn read_u8(&mut self, pos: u16) -> io::Result<u8> {
-        self.seek(SeekFrom::Start(pos as u64))?;
-        let mut buf = [0u8];
-        self.read(&mut buf)?;
-        Ok(buf[0])
-    }
-
-    pub fn read_u16(&mut self, pos: u16) -> io::Result<u16> {
-        self.seek(SeekFrom::Start(pos as u64))?;
-        let mut buf = [0u8, 0u8];
-        self.read(&mut buf)?;
-        Ok((buf[0] as u16) << 8 | buf[1] as u16)
-    }
-
-    pub fn write_u8(&mut self, pos: u16, value: u8) -> io::Result<usize> {
-        self.seek(SeekFrom::Start(pos as u64))?;
-        if let Some(area) = is_reserved(pos) {
-            return Err(Error::new(
-                ErrorKind::Other,
-                format!("cannot write to {:2x}: {}", pos, area),
-            ));
-        } else {
-            if pos >= 0xe000 && pos <= 0xfe00 {
-                // 0xe000 - 0xfe00
-                // are reflected to
-                // 0xc000 - 0xde00
-                // and vice versa
-                self.memory[pos as usize - 0x2000] = value;
-            } else if pos >= 0xc000 && pos <= 0xde00 {
-                self.memory[pos as usize + 0x2000] = value;
-            }
-            self.memory[pos as usize] = value;
-            self.i += 1;
-            Ok(1)
-        }
-    }
-
-    pub fn write_u16(&mut self, pos: u16, value: u16) -> io::Result<usize> {
-        let low = (value & 0xFF) as u8;
-        let high = (value >> 8) as u8;
-        self.write_u8(pos, high)?;
-        self.write_u8(pos, low)
-    }
-
     #[cfg(test)]
     pub fn set_bytes(&mut self, bytes: &[u8]) {
         for (i, b) in bytes.iter().enumerate() {
@@ -94,74 +45,60 @@ impl Ram {
         }
     }
 }
-impl Read for Ram {
-    fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
-        for i in 0..buf.len() {
-            buf[i] = self.memory[self.i as usize + i]
+impl Index<Range<u16>> for Ram {
+    type Output = [u8];
+    fn index(&self, index: Range<u16>) -> &Self::Output {
+        if (index.start >= 0xE000 && index.start <= 0xFE00)
+            || (index.start >= 0xC000 && index.start <= 0xDE00)
+        {
+            panic!("Cannot index echo ram area");
         }
-        self.i += buf.len() as u64;
-        Ok(buf.len())
-    }
-}
-impl Write for Ram {
-    fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
-        // TODO: This is horribly wasteful
-        for byte in buf {
-            let i = self.i;
-            self.write_u8(i as u16, *byte)?;
+        if (index.end >= 0xE000 && index.end <= 0xFE00)
+            || (index.end >= 0xC000 && index.end <= 0xDE00)
+        {
+            panic!("Cannot index echo ram area");
         }
-        Ok(buf.len())
-    }
-    fn flush(&mut self) -> io::Result<()> {
-        Ok(())
+        &self.memory[index.start as usize..index.end as usize]
     }
 }
-impl Seek for Ram {
-    fn seek(&mut self, pos: SeekFrom) -> io::Result<u64> {
-        match pos {
-            SeekFrom::Start(pos) => {
-                self.i = pos;
-            }
-            SeekFrom::End(pos) => {
-                if pos < -65535 {
-                    return Err(Error::new(
-                        ErrorKind::InvalidInput,
-                        "Cannot seek before byte 0",
-                    ));
-                } else if pos > 0 {
-                    self.i = 65535;
-                } else {
-                    self.i = (65535 + pos) as u64;
-                }
-            }
-            SeekFrom::Current(pos) => {
-                if pos < self.i as i64 {
-                    return Err(Error::new(
-                        ErrorKind::InvalidInput,
-                        "Cannot seek before byte 0",
-                    ));
-                }
-                self.i = (self.i as i64 + pos) as u64;
-                if self.i > 65535 {
-                    self.i = 65535;
-                }
-            }
+impl IndexMut<Range<u16>> for Ram {
+    fn index_mut(&mut self, index: Range<u16>) -> &mut Self::Output {
+        if (index.start >= 0xE000 && index.start <= 0xFE00)
+            || (index.start >= 0xC000 && index.start <= 0xDE00)
+        {
+            panic!("Cannot mutably index echo ram area");
         }
-        Ok(self.i)
+        if (index.end >= 0xE000 && index.end <= 0xFE00)
+            || (index.end >= 0xC000 && index.end <= 0xDE00)
+        {
+            panic!("Cannot mutably index echo ram area");
+        }
+        &mut self.memory[index.start as usize..index.end as usize]
     }
 }
-
-#[cfg(test)]
-impl Deref for Ram {
-    type Target = [u8];
-    fn deref(&self) -> &Self::Target {
-        &self.memory
+impl Index<u16> for Ram {
+    type Output = u8;
+    fn index(&self, index: u16) -> &Self::Output {
+        // 0xC000 - 0xDE00 is mapped to
+        // 0xE000 - 0xFE00 also
+        let i = if index >= 0xE000 && index <= 0xFE00 {
+            index - 0x2000
+        } else {
+            index
+        };
+        &self.memory[i as usize]
     }
 }
-
-#[cfg(test)]
-impl DerefMut for Ram {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.memory
+impl IndexMut<u16> for Ram {
+    fn index_mut(&mut self, index: u16) -> &mut Self::Output {
+        let i = if index >= 0xE000 && index <= 0xFE00 {
+            index - 0x2000
+        } else {
+            index
+        };
+        if let Some(msg) = is_reserved(i) {
+            panic!("Address {:2X} is reserved for {}", i, msg);
+        }
+        &mut self.memory[i as usize]
     }
 }

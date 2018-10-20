@@ -137,7 +137,7 @@ fn test_sub_a_r() {
         cpu.a = 0x10;
         cpu.h = 0x1F;
         cpu.l = 0x1;
-        let expected = cpu.a.wrapping_sub(ram[cpu.hl() as usize]);
+        let expected = cpu.a.wrapping_sub(ram[cpu.hl()]);
         test(&mut cpu, &mut ram, 8, opcode(0x96));
         assert!(
             cpu.a == expected,
@@ -153,7 +153,7 @@ fn test_sub_a_r() {
         cpu.a = 0x1F;
         cpu.h = 0x1F;
         cpu.l = 0x1;
-        let expected = cpu.a.wrapping_sub(ram[cpu.hl() as usize]);
+        let expected = cpu.a.wrapping_sub(ram[cpu.hl()]);
         test(&mut cpu, &mut ram, 8, opcode(0x96));
         assert!(
             cpu.a == expected,
@@ -169,7 +169,7 @@ fn test_sub_a_r() {
         cpu.a = 0x0;
         cpu.h = 0x1F;
         cpu.l = 0x1;
-        let expected = cpu.a.wrapping_sub(ram[cpu.hl() as usize]);
+        let expected = cpu.a.wrapping_sub(ram[cpu.hl()]);
         test(&mut cpu, &mut ram, 8, opcode(0x96));
         assert!(
             cpu.a == expected,
@@ -185,7 +185,7 @@ fn test_sub_a_r() {
         cpu.a = 0x11;
         cpu.h = 0x1F;
         cpu.l = 0x1;
-        let expected = cpu.a.wrapping_sub(ram[cpu.hl() as usize]);
+        let expected = cpu.a.wrapping_sub(ram[cpu.hl()]);
         test(&mut cpu, &mut ram, 8, opcode(0x96));
         assert!(
             cpu.a == expected,
@@ -200,9 +200,10 @@ fn test_sub_a_r() {
 
     fn test_sub_a_n() {
         let (mut cpu, mut ram) = init(None);
+        cpu.reset();
         let val = 0x1;
         cpu.a = 0x10;
-        ram[cpu.pc as usize] = val;
+        ram[cpu.pc] = val;
         let expected = cpu.a.wrapping_sub(val);
         test(&mut cpu, &mut ram, 8, opcode(0xD6));
         assert!(
@@ -220,7 +221,7 @@ fn test_sub_a_r() {
         assert!(!cpu.f.c());
 
         cpu.a = 0x1F;
-        ram[cpu.pc as usize] = val;
+        ram[cpu.pc] = val;
         let expected = cpu.a.wrapping_sub(val);
         test(&mut cpu, &mut ram, 8, opcode(0xD6));
         assert!(
@@ -238,7 +239,7 @@ fn test_sub_a_r() {
         assert!(!cpu.f.c());
 
         cpu.a = 0x0;
-        ram[cpu.pc as usize] = val;
+        ram[cpu.pc] = val;
         let expected = cpu.a.wrapping_sub(val);
         test(&mut cpu, &mut ram, 8, opcode(0xD6));
         assert!(
@@ -257,7 +258,7 @@ fn test_sub_a_r() {
 
         let val = 0x11;
         cpu.a = 0xF0;
-        ram[cpu.pc as usize] = val;
+        ram[cpu.pc] = val;
         let expected = cpu.a.wrapping_sub(val);
         test(&mut cpu, &mut ram, 8, opcode(0xD6));
         assert!(
@@ -276,7 +277,7 @@ fn test_sub_a_r() {
 
         let val = 0x10;
         cpu.a = 0x10;
-        ram[cpu.pc as usize] = val;
+        ram[cpu.pc] = val;
         let expected = cpu.a.wrapping_sub(val);
         test(&mut cpu, &mut ram, 8, opcode(0xD6));
         assert!(

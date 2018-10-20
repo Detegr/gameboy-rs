@@ -20,7 +20,7 @@ macro_rules! make_ld_r_r {
 macro_rules! make_ld_r_rr {
     ($name: ident, $r:ident, $rr:ident) => {
         fn $name(&mut self, ram: &mut Ram) {
-            self.$r = ram.read_u8(self.$rr()).unwrap();
+            self.$r = ram[self.$rr() ];
             self.cycles += 8;
         }
     }
@@ -28,7 +28,7 @@ macro_rules! make_ld_r_rr {
 macro_rules! make_ld_rr_r {
     ($name: ident, $rr:ident, $r:ident) => {
         fn $name(&mut self, ram: &mut Ram) {
-            ram.write_u8(self.$rr(), self.$r).unwrap();
+            ram[self.$rr() ] = self.$r;
             self.cycles += 8;
         }
     }
@@ -180,11 +180,11 @@ macro_rules! make_inc {
     ($name:ident, $reg: ident) => {
         #[inline]
         fn $name(&mut self, _ram: &mut Ram) {
-            self.$reg = inc_n!(self, self.$reg);
+            self.$reg = inc_r!(self, self.$reg);
         }
     }
 }
-macro_rules! inc_n {
+macro_rules! inc_r {
     ($cpu:expr, $value:expr) => {{
         if cpuflags::test_half_carry_addition($value, 1) {
             $cpu.f.set_h();
@@ -206,11 +206,11 @@ macro_rules! make_dec {
     ($name:ident, $reg: ident) => {
         #[inline]
         fn $name(&mut self, _ram: &mut Ram) {
-            self.$reg = dec_n!(self, self.$reg);
+            self.$reg = dec_r!(self, self.$reg);
         }
     }
 }
-macro_rules! dec_n {
+macro_rules! dec_r {
     ($cpu:expr, $value:expr) => {{
         if cpuflags::test_half_carry_subtraction($value, 1) {
             $cpu.f.set_h();
@@ -397,10 +397,10 @@ macro_rules! make_pop {
                 "less than 2 bytes of data in the stack"
             );
             self.sp += 1;
-            let byte = ram.read_u8(self.sp).unwrap();
+            let byte = ram[self.sp ];
             self.$r2 = byte;
             self.sp += 1;
-            let byte = ram.read_u8(self.sp).unwrap();
+            let byte = ram[self.sp ];
             self.$r1 = byte;
 
             self.cycles += 12;
@@ -779,8 +779,7 @@ macro_rules! make_bit_deref_hl {
     ($name:ident, $bit:expr) => {
         #[inline]
         fn $name(&mut self, ram: &mut Ram) {
-            let val = ram.read_u8(self.hl()).unwrap();
-            let val = sra_n!(self, val);
+            let val = sra_n!(self, ram[self.hl() ]);
             bit_n_n!(self, $bit, val);
             self.cycles += 16;
         }
@@ -809,9 +808,8 @@ macro_rules! make_res_deref_hl {
     ($name:ident, $bit:expr) => {
         #[inline]
         fn $name(&mut self, ram: &mut Ram) {
-            let val = ram.read_u8(self.hl()).unwrap();
-            let val = res_n_n!(self, $bit, val);
-            ram.write_u8(self.hl(), val).unwrap();
+            let val = res_n_n!(self, $bit, ram[self.hl() ]);
+            ram[self.hl() ] = val;
             self.cycles += 16;
         }
     }
@@ -837,9 +835,8 @@ macro_rules! make_set_deref_hl {
     ($name:ident, $bit:expr) => {
         #[inline]
         fn $name(&mut self, ram: &mut Ram) {
-            let val = ram.read_u8(self.hl()).unwrap();
-            let val = set_n_n!(self, $bit, val);
-            ram.write_u8(self.hl(), val).unwrap();
+            let val = set_n_n!(self, $bit, ram[self.hl() ]);
+            ram[self.hl() ] = val;
             self.cycles += 16;
         }
     }

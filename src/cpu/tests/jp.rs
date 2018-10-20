@@ -5,8 +5,8 @@ fn test_jp() {
     let (mut cpu, mut ram) = init(None);
     cpu.reset();
 
-    ram[cpu.pc as usize] = 0x22;
-    ram[cpu.pc as usize + 1] = 0x11;
+    ram[cpu.pc] = 0x22;
+    ram[cpu.pc + 1] = 0x11;
 
     assert_ne!(cpu.pc, 0x1122);
     test(&mut cpu, &mut ram, 16, opcode(0xC3));
@@ -18,9 +18,9 @@ fn test_jp_nz() {
     let (mut cpu, mut ram) = init(None);
     cpu.reset();
 
-    ram[cpu.pc as usize] = 0xC2;
-    ram[cpu.pc as usize + 1] = 0x22;
-    ram[cpu.pc as usize + 2] = 0x11;
+    ram[cpu.pc] = 0xC2;
+    ram[cpu.pc + 1] = 0x22;
+    ram[cpu.pc + 2] = 0x11;
 
     assert_eq!(cpu.pc, 0x100);
     cpu.f.set_z();
@@ -42,9 +42,9 @@ fn test_jp_z() {
     let (mut cpu, mut ram) = init(None);
     cpu.reset();
 
-    ram[cpu.pc as usize] = 0xCA;
-    ram[cpu.pc as usize + 1] = 0x22;
-    ram[cpu.pc as usize + 2] = 0x11;
+    ram[cpu.pc] = 0xCA;
+    ram[cpu.pc + 1] = 0x22;
+    ram[cpu.pc + 2] = 0x11;
 
     assert_eq!(cpu.pc, 0x100);
     cpu.f.unset_z();
@@ -66,9 +66,9 @@ fn test_jp_nc() {
     let (mut cpu, mut ram) = init(None);
     cpu.reset();
 
-    ram[cpu.pc as usize] = 0xD2;
-    ram[cpu.pc as usize + 1] = 0x22;
-    ram[cpu.pc as usize + 2] = 0x11;
+    ram[cpu.pc] = 0xD2;
+    ram[cpu.pc + 1] = 0x22;
+    ram[cpu.pc + 2] = 0x11;
 
     assert_eq!(cpu.pc, 0x100);
     cpu.f.set_c();
@@ -90,9 +90,9 @@ fn test_jp_c() {
     let (mut cpu, mut ram) = init(None);
     cpu.reset();
 
-    ram[cpu.pc as usize] = 0xDA;
-    ram[cpu.pc as usize + 1] = 0x22;
-    ram[cpu.pc as usize + 2] = 0x11;
+    ram[cpu.pc] = 0xDA;
+    ram[cpu.pc + 1] = 0x22;
+    ram[cpu.pc + 2] = 0x11;
 
     assert_eq!(cpu.pc, 0x100);
     cpu.f.unset_c();

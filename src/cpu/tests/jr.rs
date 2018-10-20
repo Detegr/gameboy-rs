@@ -5,8 +5,8 @@ fn test_jr_n() {
     let (mut cpu, mut ram) = init(None);
     cpu.reset();
 
-    ram[cpu.pc as usize] = 0x18;
-    ram[cpu.pc as usize + 1] = 0x5;
+    ram[cpu.pc] = 0x18;
+    ram[cpu.pc + 1] = 0x5;
 
     let expected = cpu.pc + 1 + 5;
     let expected_cycles = cpu.cycles + 12;
@@ -15,8 +15,8 @@ fn test_jr_n() {
     assert_eq!(cpu.pc, expected);
 
     cpu.pc = 0xFFFE;
-    ram[cpu.pc as usize] = 0x18;
-    ram[cpu.pc as usize + 1] = 0x1;
+    ram[cpu.pc] = 0x18;
+    ram[cpu.pc + 1] = 0x1;
     let expected = 0;
     let expected_cycles = cpu.cycles + 12;
     cpu.step(&mut ram);
@@ -24,8 +24,8 @@ fn test_jr_n() {
     assert_eq!(cpu.pc, expected);
 
     cpu.reset();
-    ram[cpu.pc as usize] = 0x18;
-    ram[cpu.pc as usize + 1] = -5i8 as u8;
+    ram[cpu.pc] = 0x18;
+    ram[cpu.pc + 1] = -5i8 as u8;
 
     let expected = cpu.pc + 1 - 5;
     let expected_cycles = cpu.cycles + 12;
@@ -39,8 +39,8 @@ fn test_jr_cc_n() {
     let (mut cpu, mut ram) = init(None);
     cpu.reset();
 
-    ram[cpu.pc as usize] = 0x20;
-    ram[cpu.pc as usize + 1] = 0x5;
+    ram[cpu.pc] = 0x20;
+    ram[cpu.pc + 1] = 0x5;
 
     let expected = cpu.pc + 2;
 
@@ -60,7 +60,7 @@ fn test_jr_cc_n() {
 
     cpu.reset();
     cpu.f.unset_z();
-    ram[cpu.pc as usize] = 0x28;
+    ram[cpu.pc] = 0x28;
     let expected = cpu.pc + 2;
     let expected_cycles = cpu.cycles + 8;
     cpu.step(&mut ram);
@@ -77,8 +77,8 @@ fn test_jr_cc_n() {
 
     cpu.reset();
 
-    ram[cpu.pc as usize] = 0x30;
-    ram[cpu.pc as usize + 1] = 0x5;
+    ram[cpu.pc] = 0x30;
+    ram[cpu.pc + 1] = 0x5;
 
     let expected = cpu.pc + 2;
 
@@ -98,7 +98,7 @@ fn test_jr_cc_n() {
 
     cpu.reset();
     cpu.f.unset_c();
-    ram[cpu.pc as usize] = 0x38;
+    ram[cpu.pc] = 0x38;
     let expected = cpu.pc + 2;
     let expected_cycles = cpu.cycles + 8;
     cpu.step(&mut ram);
