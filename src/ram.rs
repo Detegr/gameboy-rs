@@ -85,6 +85,7 @@ impl Index<Range<u16>> for Ram {
         {
             panic!("Cannot index echo ram area");
         }
+        trace!("READ: 0x{:X}-0x{:X}", index.start, index.end);
         &self.memory[index.start as usize..index.end as usize]
     }
 }
@@ -100,6 +101,7 @@ impl IndexMut<Range<u16>> for Ram {
         {
             panic!("Cannot mutably index echo ram area");
         }
+        trace!("READ: 0x{:X}-0x{:X}", index.start, index.end);
         &mut self.memory[index.start as usize..index.end as usize]
     }
 }
@@ -113,6 +115,7 @@ impl Index<u16> for Ram {
         } else {
             index
         };
+        trace!("READ: 0x{:X}", index);
         &self.memory[i as usize]
     }
 }
@@ -126,6 +129,7 @@ impl IndexMut<u16> for Ram {
         if let Some(msg) = is_reserved(i) {
             panic!("Address {:2X} is reserved for {}", i, msg);
         }
+        trace!("READ: 0x{:X}", index);
         &mut self.memory[i as usize]
     }
 }

@@ -55,6 +55,7 @@ pub struct Cpu {
 
 impl fmt::Display for Cpu {
     fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
+        write!(fmt, "\n")?;
         write!(fmt, "a: 0x{:X}, ", self.a)?;
         write!(fmt, "b: 0x{:X}, ", self.b)?;
         write!(fmt, "c: 0x{:X}, ", self.c)?;
@@ -111,7 +112,7 @@ impl Cpu {
     }
     #[inline]
     fn push_u16(&mut self, ram: &mut Ram, value: u16) {
-        self.push(ram, (value & 0xFF) as u8);
+        trace!("PUSHING 0x{:X}", value);
         self.push(ram, (value >> 8) as u8);
         self.push(ram, (value & 0xFF) as u8);
     }
@@ -150,7 +151,7 @@ impl Cpu {
             InterruptState::WillDisable => InterruptState::Disabled,
             state => state,
         };
-        println!("{}", opcodes::MNEMONICS[opcode]);
+        debug!("{}", opcodes::MNEMONICS[opcode]);
         opcodes::OPCODES[opcode](self, ram);
         if self.interrupts == old_interrupts_state {
             // The instruction did not modify interrupts flag,
