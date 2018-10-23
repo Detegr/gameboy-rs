@@ -13,8 +13,8 @@ fn test_call() {
     cpu.step(&mut ram);
     assert_eq!(cpu.cycles, old_cycles + 24);
     assert_eq!(cpu.pc, 0x1122);
-    assert_eq!(ram[cpu.sp + 1], ((0x103_u16 & 0xFF00) >> 8) as u8);
-    assert_eq!(ram[cpu.sp + 2], (0x103_u16 & 0xFF) as u8);
+    assert_eq!(ram[cpu.sp + 1], (0x103_u16 & 0xFF) as u8);
+    assert_eq!(ram[cpu.sp + 2], ((0x103_u16 & 0xFF00) >> 8) as u8);
 }
 
 #[test]
@@ -46,8 +46,8 @@ fn test_call_nz() {
     assert_eq!(cpu.cycles, old_cycles + 24);
     assert_eq!(cpu.pc, 0x1122);
     assert_ne!(cpu.sp, 0xFFFE);
-    assert_eq!(ram[cpu.sp + 1], ((0x103_u16 & 0xFF00) >> 8) as u8);
-    assert_eq!(ram[cpu.sp + 2], (0x103_u16 & 0xFF) as u8);
+    assert_eq!(ram[cpu.sp + 1], (0x103_u16 & 0xFF) as u8);
+    assert_eq!(ram[cpu.sp + 2], ((0x103_u16 & 0xFF00) >> 8) as u8);
 }
 
 #[test]
@@ -79,8 +79,8 @@ fn test_call_z() {
     assert_eq!(cpu.cycles, old_cycles + 24);
     assert_eq!(cpu.pc, 0x1122);
     assert_ne!(cpu.sp, 0xFFFE);
-    assert_eq!(ram[cpu.sp + 1], ((0x103_u16 & 0xFF00) >> 8) as u8);
-    assert_eq!(ram[cpu.sp + 2], (0x103_u16 & 0xFF) as u8);
+    assert_eq!(ram[cpu.sp + 1], (0x103_u16 & 0xFF) as u8);
+    assert_eq!(ram[cpu.sp + 2], ((0x103_u16 & 0xFF00) >> 8) as u8);
 }
 
 #[test]
@@ -112,8 +112,8 @@ fn test_call_nc() {
     assert_eq!(cpu.cycles, old_cycles + 24);
     assert_eq!(cpu.pc, 0x1122);
     assert_ne!(cpu.sp, 0xFFFE);
-    assert_eq!(ram[cpu.sp + 1], ((0x103_u16 & 0xFF00) >> 8) as u8);
-    assert_eq!(ram[cpu.sp + 2], (0x103_u16 & 0xFF) as u8);
+    assert_eq!(ram[cpu.sp + 1], (0x103_u16 & 0xFF) as u8);
+    assert_eq!(ram[cpu.sp + 2], ((0x103_u16 & 0xFF00) >> 8) as u8);
 }
 
 #[test]
@@ -145,6 +145,6 @@ fn test_call_c() {
     assert_eq!(cpu.cycles, old_cycles + 24);
     assert_eq!(cpu.pc, 0x1122);
     assert_ne!(cpu.sp, 0xFFFE);
-    assert_eq!(ram[cpu.sp + 1], ((0x103_u16 & 0xFF00) >> 8) as u8);
-    assert_eq!(ram[cpu.sp + 2], (0x103_u16 & 0xFF) as u8);
+    assert_eq!(ram[cpu.sp + 1], (0x103_u16 & 0xFF) as u8);
+    assert_eq!(ram[cpu.sp + 2], ((0x103_u16 & 0xFF00) >> 8) as u8);
 }

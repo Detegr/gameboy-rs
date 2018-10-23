@@ -4,6 +4,7 @@ mod tests;
 use byteorder::{ByteOrder, LittleEndian};
 use ram::Ram;
 use std::default::Default;
+use std::fmt;
 
 pub mod cpuflags;
 #[macro_use]
@@ -46,10 +47,42 @@ pub struct Cpu {
     l: u8,
     f: cpuflags::CpuFlags,
     pc: u16,
-    sp: u16,
+    pub sp: u16,
     run_state: RunState,
     interrupts: InterruptState,
-    cycles: usize,
+    pub cycles: usize,
+}
+
+impl fmt::Display for Cpu {
+    fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
+        write!(fmt, "a: 0x{:X}, ", self.a)?;
+        write!(fmt, "b: 0x{:X}, ", self.b)?;
+        write!(fmt, "c: 0x{:X}, ", self.c)?;
+        write!(fmt, "d: 0x{:X}, ", self.d)?;
+        write!(fmt, "e: 0x{:X}, ", self.e)?;
+        write!(fmt, "h: 0x{:X}, ", self.h)?;
+        write!(fmt, "l: 0x{:X}\n", self.l)?;
+        write!(fmt, "[ ")?;
+        if self.f.c() {
+            write!(fmt, "c ")?;
+        }
+        if self.f.h() {
+            write!(fmt, "h ")?;
+        }
+        if self.f.n() {
+            write!(fmt, "n ")?;
+        }
+        if self.f.z() {
+            write!(fmt, "z ")?;
+        }
+        write!(fmt, "] (0x{:X})\n", self.f.0)?;
+        write!(fmt, "pc: 0x{:X}\n", self.pc);
+        write!(fmt, "sp: 0x{:X}\n", self.sp);
+        write!(fmt, "{:?}, ", self.run_state);
+        write!(fmt, "interrupts {:?}\n", self.interrupts);
+        write!(fmt, "cycles: {}", self.cycles);
+        Ok(())
+    }
 }
 
 impl Cpu {
@@ -80,6 +113,7 @@ impl Cpu {
     fn push_u16(&mut self, ram: &mut Ram, value: u16) {
         self.push(ram, (value & 0xFF) as u8);
         self.push(ram, (value >> 8) as u8);
+        self.push(ram, (value & 0xFF) as u8);
     }
 }
 
@@ -89,15 +123,23 @@ impl Cpu {
     }
     #[inline]
     pub fn reset(&mut self) {
+        self.a = 0x01;
+        self.f.0 = 0xB0;
+        self.b = 0x00;
+        self.c = 0x13;
+        self.d = 0x00;
+        self.e = 0xD8;
+        self.h = 0x01;
+        self.l = 0x4D;
         self.sp = 0xFFFE;
         self.pc = 0x100;
         self.interrupts = InterruptState::Enabled; // TODO: This is just a guess
     }
     pub fn step(&mut self, ram: &mut Ram) {
         let opcode = {
-            let opcode = self.next_byte(ram);
+            let opcode = self.next_byte(ram) as usize;
             if opcode == 0xCB {
-                self.next_byte(ram) + 0xFF
+                self.next_byte(ram) as usize + 0xFF
             } else {
                 opcode
             }
@@ -108,8 +150,8 @@ impl Cpu {
             InterruptState::WillDisable => InterruptState::Disabled,
             state => state,
         };
-        println!("{}", opcodes::MNEMONICS[opcode as usize]);
-        opcodes::OPCODES[opcode as usize](self, ram);
+        println!("{}", opcodes::MNEMONICS[opcode]);
+        opcodes::OPCODES[opcode](self, ram);
         if self.interrupts == old_interrupts_state {
             // The instruction did not modify interrupts flag,
             // enable/disable if we were in WillEnable/WillDisable state
@@ -398,13 +440,7 @@ impl Cpu {
     #[inline]
     fn jr_n(&mut self, ram: &mut Ram) {
         let n = self.next_byte(ram);
-
-        // FIXME: How should pc behave? Is the addition done
-        // after increasing it when reading a byte, or is it
-        // relative to the position before reading the byte?
-        self.pc = self.pc.wrapping_sub(1);
         self.pc = self.pc.wrapping_add(n as i8 as u16);
-
         self.cycles += 12;
     }
 

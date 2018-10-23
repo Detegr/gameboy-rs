@@ -240,6 +240,7 @@ fn test_adc_a_r() {
         let (mut cpu, mut ram) = init(None);
         cpu.reset();
         let val = 0x1;
+        cpu.f.unset_c();
         cpu.a = 0x10;
         ram[cpu.pc] = val;
         let expected = cpu.a.wrapping_add(val);
