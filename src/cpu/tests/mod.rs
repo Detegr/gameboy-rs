@@ -32,11 +32,7 @@ where
     );
 }
 pub fn opcode(opcode: usize) -> opcodes::OpcodeFunction {
-    use cpu::opcodes::{OpcodeFunction, OPCODES};
-    let func = OPCODES[opcode];
-    if func as *const OpcodeFunction as usize == Cpu::nyi as *const OpcodeFunction as usize {
-        panic!(format!("Unimplemented opcode: 0x{:X}", opcode));
-    }
+    let func = ::cpu::opcodes::OPCODES[opcode];
     func
 }
 

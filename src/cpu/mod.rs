@@ -165,10 +165,6 @@ impl Cpu {
         ret
     }
 
-    fn nyi(&mut self, _: &mut Mmu) {
-        panic!("Instruction not yet implemented")
-    }
-
     fn na(&mut self, _: &mut Mmu) {
         panic!("Instruction not available. This is a bug.")
     }
