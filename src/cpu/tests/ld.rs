@@ -4,11 +4,11 @@ use cpu::tests::*;
 fn test_ld_rr_nn() {
     macro_rules! test_ld_rr_nn(
         ($reg1:ident, $reg2:ident, $func: expr) => {{
-            let (mut cpu, mut ram) = init(Some(&[0,0,1,2]));
+            let (mut cpu, mut mmu) = init(Some(&[0,0,1,2]));
             cpu.pc = 2;
-            test(&mut cpu, &mut ram, 12, $func);
-            assert!(cpu.$reg1 == ram[3], format!("Expected {}, got {}", ram[1], cpu.$reg1));
-            assert!(cpu.$reg2 == ram[2], format!("Expected {}, got {}", ram[0], cpu.$reg2));
+            test(&mut cpu, &mut mmu, 12, $func);
+            assert!(cpu.$reg1 == mmu.read_u8(3), format!("Expected {}, got {}", mmu.read_u8(1), cpu.$reg1));
+            assert!(cpu.$reg2 == mmu.read_u8(2), format!("Expected {}, got {}", mmu.read_u8(0), cpu.$reg2));
             assert!(cpu.pc == 4, format!("Expected pc=4, got pc={}", cpu.pc));
         }}
     );
@@ -17,9 +17,9 @@ fn test_ld_rr_nn() {
     test_ld_rr_nn!(d, e, opcode(0x11));
     test_ld_rr_nn!(h, l, opcode(0x21));
 
-    let (mut cpu, mut ram) = init(Some(&[0, 0, 1, 2]));
+    let (mut cpu, mut mmu) = init(Some(&[0, 0, 1, 2]));
     cpu.pc = 2;
-    test(&mut cpu, &mut ram, 12, opcode(0x31));
+    test(&mut cpu, &mut mmu, 12, opcode(0x31));
     assert!(cpu.sp == 513);
     assert!(cpu.pc == 4, format!("Expected pc=4, got pc={}", cpu.pc));
 }
@@ -28,20 +28,20 @@ fn test_ld_rr_nn() {
 fn test_ld_r1_r2() {
     macro_rules! test_ld_r1_r2(
         ($r1:ident, $r2:ident, $func:expr) => {{
-            let (mut cpu, mut ram) = init(None);
+            let (mut cpu, mut mmu) = init(None);
             cpu.$r2 = 123;
-            test(&mut cpu, &mut ram, 4, $func);
+            test(&mut cpu, &mut mmu, 4, $func);
             assert!(cpu.$r1 == cpu.$r2,
                     format!("ld {}, {}: Expected {}, got {}", stringify!($r1), stringify!($r2), cpu.$r2, cpu.$r1));
         }}
     );
     macro_rules! test_ld_r_hl(
         ($r:ident, $func: expr) => {{
-            let (mut cpu, mut ram) = init(None);
+            let (mut cpu, mut mmu) = init(None);
             cpu.h = 0x11;
             cpu.l = 0x22;
-            ram[0x1122] = 0x33;
-            test(&mut cpu, &mut ram, 8, $func);
+            mmu.write_u8(0x1122, 0x33);
+            test(&mut cpu, &mut mmu, 8, $func);
             assert!(cpu.$r == 0x33, format!("ld {}, (hl): Expected {}, got {}", stringify!($r), 0x33, cpu.$r));
         }}
     );
@@ -113,13 +113,13 @@ fn test_ld_r1_r2() {
 fn test_ld_rr_r() {
     macro_rules! test_ld_rr_r(
         ($rr_1:ident, $rr_2:ident, $rr:ident, $r:ident, $func: expr) => {{
-            let (mut cpu, mut ram) = init(None);
+            let (mut cpu, mut mmu) = init(None);
             cpu.$r = 123;
             cpu.$rr_1 = 0x11;
             cpu.$rr_2 = 0x22;
-            test(&mut cpu, &mut ram, 8, $func);
+            test(&mut cpu, &mut mmu, 8, $func);
             assert!(cpu.$rr() == 0x1122);
-            let value = ram[cpu.$rr() ];
+            let value = mmu.read_u8(cpu.$rr());
             assert!(value == 123,
                     format!("ld ({}), {}: Expected {}, got {}", stringify!($rr), stringify!($r), 123, value));
         }}
@@ -131,33 +131,33 @@ fn test_ld_rr_r() {
     test_ld_rr_r!(h, l, hl, e, opcode(0x73));
 
     // ld_hl_h
-    let (mut cpu, mut ram) = init(None);
+    let (mut cpu, mut mmu) = init(None);
     cpu.h = 0x11;
     cpu.l = 0x22;
-    test(&mut cpu, &mut ram, 8, opcode(0x74));
-    let value = ram[cpu.hl()];
+    test(&mut cpu, &mut mmu, 8, opcode(0x74));
+    let value = mmu.read_u8(cpu.hl());
     assert!(
         value == 0x11,
         format!("ld (hl), h: Expected {}, got {}", 0x11, value)
     );
 
     // ld_hl_l
-    let (mut cpu, mut ram) = init(None);
+    let (mut cpu, mut mmu) = init(None);
     cpu.h = 0x11;
     cpu.l = 0x22;
-    test(&mut cpu, &mut ram, 8, opcode(0x75));
-    let value = ram[cpu.hl()];
+    test(&mut cpu, &mut mmu, 8, opcode(0x75));
+    let value = mmu.read_u8(cpu.hl());
     assert!(
         value == 0x22,
         format!("ld (hl), l: Expected {}, got {}", 0x22, value)
     );
 
     // ld_hl_n
-    let (mut cpu, mut ram) = init(Some(&[123]));
+    let (mut cpu, mut mmu) = init(Some(&[123]));
     cpu.h = 0x11;
     cpu.l = 0x22;
-    test(&mut cpu, &mut ram, 12, opcode(0x36));
-    let value = ram[cpu.hl()];
+    test(&mut cpu, &mut mmu, 12, opcode(0x36));
+    let value = mmu.read_u8(cpu.hl());
     assert!(
         value == 123,
         format!("ld (hl), n: Expected {}, got {}", 123, value)
@@ -171,9 +171,9 @@ fn test_ld_rr_r() {
 fn test_ld_r_n() {
     macro_rules! test_ld_r_n {
         ($r:ident, $func:expr) => {{
-            let (mut cpu, mut ram) = init(Some(&[0, 0, 123]));
+            let (mut cpu, mut mmu) = init(Some(&[0, 0, 123]));
             cpu.pc = 2;
-            test(&mut cpu, &mut ram, 8, $func);
+            test(&mut cpu, &mut mmu, 8, $func);
             assert!(
                 cpu.$r == 123,
                 format!("ld {}, n: Expected {}, got {}", stringify!($r), 123, cpu.$r)
@@ -191,23 +191,23 @@ fn test_ld_r_n() {
 
 #[test]
 fn test_ld_nn_a() {
-    let (mut cpu, mut ram) = init(Some(&[0x0, 0x0, 0x22, 0x11]));
+    let (mut cpu, mut mmu) = init(Some(&[0x0, 0x0, 0x22, 0x11]));
     cpu.pc = 2;
     cpu.a = 123;
-    test(&mut cpu, &mut ram, 16, opcode(0xEA));
+    test(&mut cpu, &mut mmu, 16, opcode(0xEA));
     assert!(
-        ram[0x1122] == 123,
-        format!("ld (nn), a: Expected {}, got {}", 123, ram[0x1122])
+        mmu.read_u8(0x1122) == 123,
+        format!("ld (nn), a: Expected {}, got {}", 123, mmu.read_u8(0x1122))
     );
 }
 
 #[test]
 fn test_ld_a_bc() {
-    let (mut cpu, mut ram) = init(None);
-    ram[0x1122] = 123;
+    let (mut cpu, mut mmu) = init(None);
+    mmu.write_u8(0x1122, 123);
     cpu.b = 0x11;
     cpu.c = 0x22;
-    test(&mut cpu, &mut ram, 8, opcode(0x0A));
+    test(&mut cpu, &mut mmu, 8, opcode(0x0A));
     assert!(
         cpu.a == 123,
         format!("ld a, (bc): Expected {}, got {}", 123, cpu.a)
@@ -216,11 +216,11 @@ fn test_ld_a_bc() {
 
 #[test]
 fn test_ld_a_de() {
-    let (mut cpu, mut ram) = init(None);
-    ram[0x1122] = 123;
+    let (mut cpu, mut mmu) = init(None);
+    mmu.write_u8(0x1122, 123);
     cpu.d = 0x11;
     cpu.e = 0x22;
-    test(&mut cpu, &mut ram, 8, opcode(0x1A));
+    test(&mut cpu, &mut mmu, 8, opcode(0x1A));
     assert!(
         cpu.a == 123,
         format!("ld a, (de): Expected {}, got {}", 123, cpu.a)
@@ -228,10 +228,10 @@ fn test_ld_a_de() {
 }
 #[test]
 fn test_ld_a_nn() {
-    let (mut cpu, mut ram) = init(Some(&[0, 0, 0x22, 0x11]));
+    let (mut cpu, mut mmu) = init(Some(&[0, 0, 0x22, 0x11]));
     cpu.pc = 2;
-    ram[0x1122] = 123;
-    test(&mut cpu, &mut ram, 16, opcode(0xFA));
+    mmu.write_u8(0x1122, 123);
+    test(&mut cpu, &mut mmu, 16, opcode(0xFA));
     assert!(
         cpu.a == 123,
         format!("ld a, (nn): Expected 123, got {}", cpu.a)
@@ -239,10 +239,10 @@ fn test_ld_a_nn() {
 }
 #[test]
 fn test_ld_a_addr_c() {
-    let (mut cpu, mut ram) = init(None);
+    let (mut cpu, mut mmu) = init(None);
     cpu.c = 0x05;
-    ram[0xFF05] = 123;
-    test(&mut cpu, &mut ram, 8, opcode(0xF2));
+    mmu.write_u8(0xFF05, 123);
+    test(&mut cpu, &mut mmu, 8, opcode(0xF2));
     assert!(
         cpu.a == 123,
         format!("ld a, (c): Expected 123, got {}", cpu.a)
@@ -250,112 +250,111 @@ fn test_ld_a_addr_c() {
 }
 #[test]
 fn test_ld_addr_c_a() {
-    let (mut cpu, mut ram) = init(None);
+    let (mut cpu, mut mmu) = init(None);
     cpu.a = 123;
     cpu.c = 0x05;
-    test(&mut cpu, &mut ram, 8, opcode(0xE2));
+    test(&mut cpu, &mut mmu, 8, opcode(0xE2));
     assert!(
-        ram[0xFF05] == 123,
-        format!("ld (c), a: Expected 123, got {}", ram[0xFF05])
+        mmu.read_u8(0xFF05) == 123,
+        format!("ld (c), a: Expected 123, got {}", mmu.read_u8(0xFF05))
     );
 }
 #[test]
 fn test_ld_deref_a16_sp() {
-    use byteorder::{ByteOrder, LittleEndian};
-    let (mut cpu, mut ram) = init(None);
+    let (mut cpu, mut mmu) = init(None);
     cpu.reset();
-    LittleEndian::write_u16(&mut ram[cpu.pc..cpu.pc + 2], 0x800);
-    test(&mut cpu, &mut ram, 20, opcode(0x8));
-    let sp_from_ram = LittleEndian::read_u16(&ram[0x800..0x802]);
-    assert_eq!(cpu.sp, sp_from_ram);
+    mmu.write_u16(cpu.pc, 0x800);
+    test(&mut cpu, &mut mmu, 20, opcode(0x8));
+    let sp_from_mmu = mmu.read_u16(0x800);
+    assert_eq!(cpu.sp, sp_from_mmu);
 
     cpu.sp = 0x1234;
-    LittleEndian::write_u16(&mut ram[cpu.pc..cpu.pc + 2], 0x400);
-    test(&mut cpu, &mut ram, 20, opcode(0x8));
-    let sp_from_ram = LittleEndian::read_u16(&ram[0x400..0x402]);
-    assert_eq!(cpu.sp, sp_from_ram);
+    mmu.write_u16(cpu.pc, 0x400);
+    test(&mut cpu, &mut mmu, 20, opcode(0x8));
+    let sp_from_mmu = mmu.read_u16(0x400);
+    assert_eq!(cpu.sp, sp_from_mmu);
 }
 
 #[test]
 fn test_ld_hli_a() {
-    let (mut cpu, mut ram) = init(None);
+    let (mut cpu, mut mmu) = init(None);
     cpu.h = 0x11;
     cpu.l = 0x22;
     cpu.a = 0xFF;
-    ram[0x1122] = 0x1;
+    mmu.write_u8(0x1122, 0x1);
 
-    assert_eq!(ram[0x1122], 0x1);
-    test(&mut cpu, &mut ram, 8, opcode(0x22));
-    assert_eq!(ram[0x1122], 0xFF);
+    assert_eq!(mmu.read_u8(0x1122), 0x1);
+    test(&mut cpu, &mut mmu, 8, opcode(0x22));
+    assert_eq!(mmu.read_u8(0x1122), 0xFF);
     assert_eq!(cpu.hl(), 0x1123);
 
     cpu.h = 0xFF;
     cpu.l = 0xFF;
-    test(&mut cpu, &mut ram, 8, opcode(0x22));
-    assert_eq!(ram[0xFFFF], 0xFF);
+    test(&mut cpu, &mut mmu, 8, opcode(0x22));
+    assert_eq!(mmu.read_u8(0xFFFF), 0xFF);
     assert_eq!(cpu.hl(), 0x0);
 }
 
 #[test]
 fn test_ld_a_hli() {
-    let (mut cpu, mut ram) = init(None);
+    let (mut cpu, mut mmu) = init(None);
     cpu.h = 0x11;
     cpu.l = 0x22;
     cpu.a = 0x0;
-    ram[0x1122] = 0xAB;
+    mmu.write_u8(0x1122, 0xAB);
 
-    test(&mut cpu, &mut ram, 8, opcode(0x2A));
+    test(&mut cpu, &mut mmu, 8, opcode(0x2A));
     assert_eq!(cpu.a, 0xAB);
     assert_eq!(cpu.hl(), 0x1123);
 
     cpu.h = 0xFF;
     cpu.l = 0xFF;
-    test(&mut cpu, &mut ram, 8, opcode(0x2A));
+    test(&mut cpu, &mut mmu, 8, opcode(0x2A));
     assert_eq!(cpu.a, 0x0);
     assert_eq!(cpu.hl(), 0x0);
 }
 
 #[test]
 fn test_ld_hld_a() {
-    let (mut cpu, mut ram) = init(None);
+    let (mut cpu, mut mmu) = init(None);
     cpu.h = 0x11;
     cpu.l = 0x22;
     cpu.a = 0xFF;
-    ram[0x1122] = 0x1;
+    mmu.write_u8(0x1122, 0x1);
 
-    assert_eq!(ram[0x1122], 0x1);
-    test(&mut cpu, &mut ram, 8, opcode(0x32));
-    assert_eq!(ram[0x1122], 0xFF);
+    assert_eq!(mmu.read_u8(0x1122), 0x1);
+    test(&mut cpu, &mut mmu, 8, opcode(0x32));
+    assert_eq!(mmu.read_u8(0x1122), 0xFF);
     assert_eq!(cpu.hl(), 0x1121);
 }
 
 #[test]
 fn test_ld_a_hld() {
-    let (mut cpu, mut ram) = init(None);
+    let (mut cpu, mut mmu) = init(None);
     cpu.h = 0x11;
     cpu.l = 0x22;
     cpu.a = 0x0;
-    ram[0x1122] = 0xAB;
+    mmu.write_u8(0x1122, 0xAB);
 
-    test(&mut cpu, &mut ram, 8, opcode(0x3A));
+    test(&mut cpu, &mut mmu, 8, opcode(0x3A));
     assert_eq!(cpu.a, 0xAB);
     assert_eq!(cpu.hl(), 0x1121);
 
     cpu.h = 0x0;
     cpu.l = 0x0;
-    test(&mut cpu, &mut ram, 8, opcode(0x3A));
+    test(&mut cpu, &mut mmu, 8, opcode(0x3A));
     assert_eq!(cpu.a, 0x0);
     assert_eq!(cpu.hl(), 0xFFFF);
 }
 
 #[test]
 fn test_ld_hl_sp_plus_n() {
-    let (mut cpu, mut ram) = init(None);
+    let (mut cpu, mut mmu) = init(None);
     cpu.reset();
 
     cpu.sp = 0x1000;
-    ram[cpu.pc] = 0x10;
-    test(&mut cpu, &mut ram, 12, opcode(0xF8));
+    mmu.write_u8(cpu.pc, 0x10);
+    test(&mut cpu, &mut mmu, 12, opcode(0xF8));
     assert_eq!(cpu.hl(), 0x1010);
     assert!(!cpu.f.z());
     assert!(!cpu.f.n());
@@ -363,8 +362,8 @@ fn test_ld_hl_sp_plus_n() {
     assert!(!cpu.f.c());
 
     cpu.sp = 0x10FF;
-    ram[cpu.pc] = 0x1;
-    test(&mut cpu, &mut ram, 12, opcode(0xF8));
+    mmu.write_u8(cpu.pc, 0x1);
+    test(&mut cpu, &mut mmu, 12, opcode(0xF8));
     assert_eq!(cpu.hl(), 0x1100);
     assert!(!cpu.f.z());
     assert!(!cpu.f.n());
@@ -372,8 +371,8 @@ fn test_ld_hl_sp_plus_n() {
     assert!(cpu.f.c());
 
     cpu.sp = 0x101F;
-    ram[cpu.pc] = 0x1;
-    test(&mut cpu, &mut ram, 12, opcode(0xF8));
+    mmu.write_u8(cpu.pc, 0x1);
+    test(&mut cpu, &mut mmu, 12, opcode(0xF8));
     assert_eq!(cpu.hl(), 0x1020);
     assert!(!cpu.f.z());
     assert!(!cpu.f.n());
@@ -381,8 +380,8 @@ fn test_ld_hl_sp_plus_n() {
     assert!(!cpu.f.c());
 
     cpu.sp = 0x1020;
-    ram[cpu.pc] = -1i8 as u8;
-    test(&mut cpu, &mut ram, 12, opcode(0xF8));
+    mmu.write_u8(cpu.pc, -1i8 as u8);
+    test(&mut cpu, &mut mmu, 12, opcode(0xF8));
     assert_eq!(cpu.hl(), 0x101F);
     assert!(!cpu.f.z());
     assert!(!cpu.f.n());
@@ -390,8 +389,8 @@ fn test_ld_hl_sp_plus_n() {
     assert!(!cpu.f.c());
 
     cpu.sp = 0x1000;
-    ram[cpu.pc] = -1i8 as u8;
-    test(&mut cpu, &mut ram, 12, opcode(0xF8));
+    mmu.write_u8(cpu.pc, -1i8 as u8);
+    test(&mut cpu, &mut mmu, 12, opcode(0xF8));
     assert_eq!(cpu.hl(), 0xFFF);
     assert!(!cpu.f.z());
     assert!(!cpu.f.n());

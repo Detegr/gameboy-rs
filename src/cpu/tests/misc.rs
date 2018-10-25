@@ -2,7 +2,7 @@ use cpu::tests::*;
 
 #[test]
 fn test_cpl() {
-    let (mut cpu, mut ram) = init(None);
+    let (mut cpu, mut mmu) = init(None);
     cpu.a = 0x13;
     let expected = 0xEC;
 
@@ -10,7 +10,7 @@ fn test_cpl() {
     assert!(!cpu.f.c());
     assert!(!cpu.f.n());
     assert!(!cpu.f.h());
-    test(&mut cpu, &mut ram, 4, opcode(0x2F));
+    test(&mut cpu, &mut mmu, 4, opcode(0x2F));
     assert!(!cpu.f.z());
     assert!(!cpu.f.c());
     assert!(cpu.f.n());
@@ -20,12 +20,12 @@ fn test_cpl() {
 
 #[test]
 fn test_scf() {
-    let (mut cpu, mut ram) = init(None);
+    let (mut cpu, mut mmu) = init(None);
     assert!(!cpu.f.z());
     assert!(!cpu.f.c());
     assert!(!cpu.f.n());
     assert!(!cpu.f.h());
-    test(&mut cpu, &mut ram, 4, opcode(0x37));
+    test(&mut cpu, &mut mmu, 4, opcode(0x37));
     assert!(!cpu.f.z());
     assert!(cpu.f.c());
     assert!(!cpu.f.n());
@@ -34,22 +34,22 @@ fn test_scf() {
 
 #[test]
 fn test_ccf() {
-    let (mut cpu, mut ram) = init(None);
+    let (mut cpu, mut mmu) = init(None);
     assert!(!cpu.f.z());
     assert!(!cpu.f.c());
     assert!(!cpu.f.n());
     assert!(!cpu.f.h());
-    test(&mut cpu, &mut ram, 4, opcode(0x3F));
+    test(&mut cpu, &mut mmu, 4, opcode(0x3F));
     assert!(!cpu.f.z());
     assert!(cpu.f.c());
     assert!(!cpu.f.n());
     assert!(!cpu.f.h());
-    test(&mut cpu, &mut ram, 4, opcode(0x3F));
+    test(&mut cpu, &mut mmu, 4, opcode(0x3F));
     assert!(!cpu.f.z());
     assert!(!cpu.f.c());
     assert!(!cpu.f.n());
     assert!(!cpu.f.h());
-    test(&mut cpu, &mut ram, 4, opcode(0x3F));
+    test(&mut cpu, &mut mmu, 4, opcode(0x3F));
     assert!(!cpu.f.z());
     assert!(cpu.f.c());
     assert!(!cpu.f.n());

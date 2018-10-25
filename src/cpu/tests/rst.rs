@@ -13,13 +13,13 @@ fn test_rst() {
         (0xFF, 0x38),
     ];
 
-    let (mut cpu, mut ram) = init(None);
+    let (mut cpu, mut mmu) = init(None);
     for (op, jump_dst) in rst_opcodes.into_iter() {
         cpu.reset();
         cpu.pc = 0x1122;
-        test(&mut cpu, &mut ram, 16, opcode(*op));
-        assert_eq!(ram[cpu.sp + 1], 0x22);
-        assert_eq!(ram[cpu.sp + 2], 0x11);
+        test(&mut cpu, &mut mmu, 16, opcode(*op));
+        assert_eq!(mmu.read_u8(cpu.sp + 1), 0x22);
+        assert_eq!(mmu.read_u8(cpu.sp + 2), 0x11);
         assert_eq!(cpu.pc, *jump_dst);
     }
 }

@@ -1,8 +1,7 @@
 #[cfg(test)]
 mod tests;
 
-use byteorder::{ByteOrder, LittleEndian};
-use ram::Ram;
+use mmu::Mmu;
 use std::default::Default;
 use std::fmt;
 
@@ -105,16 +104,16 @@ impl Cpu {
         self.l = (val & 0xFF) as u8;
     }
     #[inline]
-    fn push(&mut self, ram: &mut Ram, value: u8) {
+    fn push(&mut self, mmu: &mut Mmu, value: u8) {
         assert!(self.sp > 0);
-        ram[self.sp] = value;
+        mmu.write_u8(self.sp, value);
         self.sp -= 1;
     }
     #[inline]
-    fn push_u16(&mut self, ram: &mut Ram, value: u16) {
+    fn push_u16(&mut self, mmu: &mut Mmu, value: u16) {
         trace!("PUSHING 0x{:X}", value);
-        self.push(ram, (value >> 8) as u8);
-        self.push(ram, (value & 0xFF) as u8);
+        self.push(mmu, (value >> 8) as u8);
+        self.push(mmu, (value & 0xFF) as u8);
     }
 }
 
@@ -136,11 +135,11 @@ impl Cpu {
         self.pc = 0x100;
         self.interrupts = InterruptState::Enabled; // TODO: This is just a guess
     }
-    pub fn step(&mut self, ram: &mut Ram) {
+    pub fn step(&mut self, mmu: &mut Mmu) {
         let opcode = {
-            let opcode = self.next_byte(ram) as usize;
+            let opcode = self.next_byte(mmu) as usize;
             if opcode == 0xCB {
-                self.next_byte(ram) as usize + 0xFF
+                self.next_byte(mmu) as usize + 0xFF
             } else {
                 opcode
             }
@@ -152,7 +151,7 @@ impl Cpu {
             state => state,
         };
         debug!("{}", opcodes::MNEMONICS[opcode]);
-        opcodes::OPCODES[opcode](self, ram);
+        opcodes::OPCODES[opcode](self, mmu);
         if self.interrupts == old_interrupts_state {
             // The instruction did not modify interrupts flag,
             // enable/disable if we were in WillEnable/WillDisable state
@@ -160,22 +159,22 @@ impl Cpu {
         }
     }
     #[inline]
-    fn next_byte(&mut self, ram: &mut Ram) -> u8 {
-        let ret = ram[self.pc];
+    fn next_byte(&mut self, mmu: &mut Mmu) -> u8 {
+        let ret = mmu.read_u8(self.pc);
         self.pc = self.pc.wrapping_add(1);
         ret
     }
 
-    fn nyi(&mut self, _: &mut Ram) {
+    fn nyi(&mut self, _: &mut Mmu) {
         panic!("Instruction not yet implemented")
     }
 
-    fn na(&mut self, _: &mut Ram) {
+    fn na(&mut self, _: &mut Mmu) {
         panic!("Instruction not available. This is a bug.")
     }
 
     #[inline]
-    fn nop(&mut self, _: &mut Ram) {
+    fn nop(&mut self, _: &mut Mmu) {
         self.cycles += 8;
     }
 
@@ -188,8 +187,8 @@ impl Cpu {
     make_add!(add_a_l, l);
 
     #[inline]
-    fn add_a_deref_hl(&mut self, ram: &mut Ram) {
-        add_a_n!(self, ram[self.hl()]);
+    fn add_a_deref_hl(&mut self, mmu: &mut Mmu) {
+        add_a_n!(self, mmu.read_u8(self.hl()));
         self.cycles += 4;
     }
 
@@ -202,8 +201,9 @@ impl Cpu {
     make_inc!(inc_l, l);
 
     #[inline]
-    fn inc_deref_hl(&mut self, ram: &mut Ram) {
-        ram[self.hl()] = inc_r!(self, ram[self.hl()]);
+    fn inc_deref_hl(&mut self, mmu: &mut Mmu) {
+        let val = mmu.read_u8(self.hl());
+        mmu.write_u8(self.hl(), inc_r!(self, val));
         self.cycles += 8;
     }
 
@@ -216,8 +216,9 @@ impl Cpu {
     make_dec!(dec_l, l);
 
     #[inline]
-    fn dec_deref_hl(&mut self, ram: &mut Ram) {
-        ram[self.hl()] = dec_r!(self, ram[self.hl()]);
+    fn dec_deref_hl(&mut self, mmu: &mut Mmu) {
+        let val = mmu.read_u8(self.hl());
+        mmu.write_u8(self.hl(), dec_r!(self, val));
         self.cycles += 8;
     }
 
@@ -225,7 +226,7 @@ impl Cpu {
     make_dec_rr!(dec_de, d, e);
     make_dec_rr!(dec_hl, h, l);
     #[inline]
-    fn dec_sp(&mut self, _ram: &mut Ram) {
+    fn dec_sp(&mut self, _mmu: &mut Mmu) {
         self.sp = self.sp.wrapping_sub(1);
         self.cycles += 8;
     }
@@ -233,7 +234,7 @@ impl Cpu {
     make_inc_rr!(inc_de, d, e);
     make_inc_rr!(inc_hl, h, l);
     #[inline]
-    fn inc_sp(&mut self, _ram: &mut Ram) {
+    fn inc_sp(&mut self, _mmu: &mut Mmu) {
         self.sp = self.sp.wrapping_add(1);
         self.cycles += 8;
     }
@@ -243,17 +244,17 @@ impl Cpu {
     make_ld_rr_r!(ld_de_a, de, a);
     make_ld_rr_nn!(ld_de_nn, d, e);
     #[inline]
-    fn ld_nn_a(&mut self, ram: &mut Ram) {
+    fn ld_nn_a(&mut self, mmu: &mut Mmu) {
         let mut addr = 0u16;
-        addr |= self.next_byte(ram) as u16;
-        addr |= (self.next_byte(ram) as u16) << 8;
-        ram[addr] = self.a;
+        addr |= self.next_byte(mmu) as u16;
+        addr |= (self.next_byte(mmu) as u16) << 8;
+        mmu.write_u8(addr, self.a);
         self.cycles += 16;
     }
     make_ld_rr_nn!(ld_hl_nn, h, l);
     #[inline]
-    fn ld_sp_nn(&mut self, ram: &mut Ram) {
-        self.sp = LittleEndian::read_u16(&ram[self.pc..self.pc + 2]);
+    fn ld_sp_nn(&mut self, mmu: &mut Mmu) {
+        self.sp = mmu.read_u16(self.pc);
         self.pc += 2;
         self.cycles += 12;
     }
@@ -271,21 +272,21 @@ impl Cpu {
     make_ld_r_rr!(ld_a_deref_de, a, de);
 
     #[inline]
-    fn ld_a_nn(&mut self, ram: &mut Ram) {
+    fn ld_a_nn(&mut self, mmu: &mut Mmu) {
         let mut addr = 0u16;
-        addr |= self.next_byte(ram) as u16;
-        addr |= (self.next_byte(ram) as u16) << 8;
-        self.a = ram[addr];
+        addr |= self.next_byte(mmu) as u16;
+        addr |= (self.next_byte(mmu) as u16) << 8;
+        self.a = mmu.read_u8(addr);
         self.cycles += 16;
     }
     #[inline]
-    fn ld_a_addr_c(&mut self, ram: &mut Ram) {
-        self.a = ram[0xFF00 | self.c as u16];
+    fn ld_a_addr_c(&mut self, mmu: &mut Mmu) {
+        self.a = mmu.read_u8(0xFF00 | self.c as u16);
         self.cycles += 8;
     }
     #[inline]
-    fn ld_addr_c_a(&mut self, ram: &mut Ram) {
-        ram[0xFF00 | self.c as u16] = self.a;
+    fn ld_addr_c_a(&mut self, mmu: &mut Mmu) {
+        mmu.write_u8(0xFF00 | self.c as u16, self.a);
         self.cycles += 8;
     }
 
@@ -358,8 +359,9 @@ impl Cpu {
     make_ld_rr_r!(ld_hl_l, hl, l);
 
     #[inline]
-    fn ld_deref_hl_n(&mut self, ram: &mut Ram) {
-        ram[self.hl()] = self.next_byte(ram);
+    fn ld_deref_hl_n(&mut self, mmu: &mut Mmu) {
+        let val = self.next_byte(mmu);
+        mmu.write_u8(self.hl(), val);
         self.cycles += 12;
     }
 
@@ -372,38 +374,38 @@ impl Cpu {
     make_ld_r_n!(ld_l_n, l);
 
     #[inline]
-    fn rlca(&mut self, _ram: &mut Ram) {
+    fn rlca(&mut self, _mmu: &mut Mmu) {
         self.a = rlc_n!(self, self.a);
         self.f.unset_z();
         self.cycles += 4;
     }
 
     #[inline]
-    fn rla(&mut self, _ram: &mut Ram) {
+    fn rla(&mut self, _mmu: &mut Mmu) {
         self.a = rl_n!(self, self.a);
         self.f.unset_z();
         self.cycles += 4;
     }
 
     #[inline]
-    fn rrca(&mut self, _ram: &mut Ram) {
+    fn rrca(&mut self, _mmu: &mut Mmu) {
         self.a = rrc_n!(self, self.a);
         self.f.unset_z();
         self.cycles += 4;
     }
 
     #[inline]
-    fn rra(&mut self, _ram: &mut Ram) {
+    fn rra(&mut self, _mmu: &mut Mmu) {
         self.a = rr_n!(self, self.a);
         self.f.unset_z();
         self.cycles += 4;
     }
 
     #[inline]
-    fn ld_deref_a16_sp(&mut self, ram: &mut Ram) {
-        let a16 = LittleEndian::read_u16(&ram[self.pc..self.pc + 2]);
+    fn ld_deref_a16_sp(&mut self, mmu: &mut Mmu) {
+        let a16 = mmu.read_u16(self.pc);
         self.pc += 2;
-        LittleEndian::write_u16(&mut ram[a16..a16 + 2], self.sp);
+        mmu.write_u16(a16, self.sp);
         self.cycles += 20;
     }
 
@@ -411,7 +413,7 @@ impl Cpu {
     make_add_rr_rr!(add_hl_de, h, l, d, e);
     make_add_rr_rr!(add_hl_hl, h, l, h, l);
     #[inline]
-    fn add_hl_sp(&mut self, _ram: &mut Ram) {
+    fn add_hl_sp(&mut self, _mmu: &mut Mmu) {
         let val32_lhs = ((self.h as u32) << 8) & 0xFF00 | self.l as u32 & 0xFF;
         let s = ((self.sp & 0xFF00) >> 8) as u8;
         let p = (self.sp & 0xFF) as u8;
@@ -439,8 +441,8 @@ impl Cpu {
     }
 
     #[inline]
-    fn jr_n(&mut self, ram: &mut Ram) {
-        let n = self.next_byte(ram);
+    fn jr_n(&mut self, mmu: &mut Mmu) {
+        let n = self.next_byte(mmu);
         self.pc = self.pc.wrapping_add(n as i8 as u16);
         self.cycles += 12;
     }
@@ -451,45 +453,45 @@ impl Cpu {
     make_jr_cc_n!(jr_c_n, c set);
 
     #[inline]
-    fn stop(&mut self, _ram: &mut Ram) {
+    fn stop(&mut self, _mmu: &mut Mmu) {
         self.run_state = RunState::Stopped;
         self.cycles += 4;
         // TODO: Wake up to a button press
     }
 
     #[inline]
-    fn ld_hli_a(&mut self, ram: &mut Ram) {
-        ram[self.hl()] = self.a;
+    fn ld_hli_a(&mut self, mmu: &mut Mmu) {
+        mmu.write_u8(self.hl(), self.a);
         let hl = self.hl().wrapping_add(1);
         self.set_hl(hl);
         self.cycles += 8;
     }
 
     #[inline]
-    fn ld_hld_a(&mut self, ram: &mut Ram) {
-        ram[self.hl()] = self.a;
+    fn ld_hld_a(&mut self, mmu: &mut Mmu) {
+        mmu.write_u8(self.hl(), self.a);
         let hl = self.hl().wrapping_sub(1);
         self.set_hl(hl);
         self.cycles += 8;
     }
 
     #[inline]
-    fn ld_a_hli(&mut self, ram: &mut Ram) {
-        self.a = ram[self.hl()];
+    fn ld_a_hli(&mut self, mmu: &mut Mmu) {
+        self.a = mmu.read_u8(self.hl());
         let hl = self.hl().wrapping_add(1);
         self.set_hl(hl);
         self.cycles += 8;
     }
 
     #[inline]
-    fn ld_a_hld(&mut self, ram: &mut Ram) {
-        self.a = ram[self.hl()];
+    fn ld_a_hld(&mut self, mmu: &mut Mmu) {
+        self.a = mmu.read_u8(self.hl());
         let hl = self.hl().wrapping_sub(1);
         self.set_hl(hl);
         self.cycles += 8;
     }
 
-    fn daa(&mut self, _ram: &mut Ram) {
+    fn daa(&mut self, _mmu: &mut Mmu) {
         if !self.f.n() {
             // Last operation was addition
             if self.f.c() || self.a > 0x99 {
@@ -515,7 +517,7 @@ impl Cpu {
         self.cycles += 4;
     }
 
-    fn cpl(&mut self, _ram: &mut Ram) {
+    fn cpl(&mut self, _mmu: &mut Mmu) {
         self.a = !self.a;
         self.f.set_n();
         self.f.set_h();
@@ -523,7 +525,7 @@ impl Cpu {
         self.cycles += 4;
     }
 
-    fn scf(&mut self, _ram: &mut Ram) {
+    fn scf(&mut self, _mmu: &mut Mmu) {
         self.f.unset_n();
         self.f.unset_h();
         self.f.set_c();
@@ -531,7 +533,7 @@ impl Cpu {
         self.cycles += 4;
     }
 
-    fn ccf(&mut self, _ram: &mut Ram) {
+    fn ccf(&mut self, _mmu: &mut Mmu) {
         self.f.unset_n();
         self.f.unset_h();
         if self.f.c() {
@@ -543,7 +545,7 @@ impl Cpu {
         self.cycles += 4;
     }
 
-    fn halt(&mut self, _ram: &mut Ram) {
+    fn halt(&mut self, _mmu: &mut Mmu) {
         self.run_state = RunState::Halted;
         self.cycles += 4;
         // TODO: Wake up to an interrupt
@@ -557,9 +559,9 @@ impl Cpu {
     make_adc!(adc_a_l, l);
 
     #[inline]
-    fn adc_a_deref_hl(&mut self, ram: &mut Ram) {
+    fn adc_a_deref_hl(&mut self, mmu: &mut Mmu) {
         let c = if self.f.c() { 1 } else { 0 };
-        add_a_n!(self, ram[self.hl()].wrapping_add(c));
+        add_a_n!(self, mmu.read_u8(self.hl()).wrapping_add(c));
         self.cycles += 4;
     }
 
@@ -574,8 +576,8 @@ impl Cpu {
     make_sub!(sub_a_a, a);
 
     #[inline]
-    fn sub_a_deref_hl(&mut self, ram: &mut Ram) {
-        sub_a_n!(self, ram[self.hl()]);
+    fn sub_a_deref_hl(&mut self, mmu: &mut Mmu) {
+        sub_a_n!(self, mmu.read_u8(self.hl()));
         self.cycles += 4;
     }
 
@@ -588,9 +590,9 @@ impl Cpu {
     make_sbc!(sbc_a_a, a);
 
     #[inline]
-    fn sbc_a_deref_hl(&mut self, ram: &mut Ram) {
+    fn sbc_a_deref_hl(&mut self, mmu: &mut Mmu) {
         let c = if self.f.c() { 1 } else { 0 };
-        sub_a_n!(self, ram[self.hl()].wrapping_add(c));
+        sub_a_n!(self, mmu.read_u8(self.hl()).wrapping_add(c));
         self.cycles += 4;
     }
 
@@ -603,8 +605,8 @@ impl Cpu {
     make_and!(and_a_a, a);
 
     #[inline]
-    fn and_a_deref_hl(&mut self, ram: &mut Ram) {
-        let value = ram[self.hl()];
+    fn and_a_deref_hl(&mut self, mmu: &mut Mmu) {
+        let value = mmu.read_u8(self.hl());
         self.f.set_h();
         self.f.unset_n();
         self.f.unset_c();
@@ -624,7 +626,7 @@ impl Cpu {
     make_xor!(xor_a_h, h);
     make_xor!(xor_a_l, l);
     #[inline]
-    fn xor_a_a(&mut self, _ram: &mut Ram) {
+    fn xor_a_a(&mut self, _mmu: &mut Mmu) {
         self.f.unset_h();
         self.f.unset_n();
         self.f.unset_c();
@@ -634,8 +636,8 @@ impl Cpu {
     }
 
     #[inline]
-    fn xor_a_deref_hl(&mut self, ram: &mut Ram) {
-        let value = ram[self.hl()];
+    fn xor_a_deref_hl(&mut self, mmu: &mut Mmu) {
+        let value = mmu.read_u8(self.hl());
         self.f.unset_h();
         self.f.unset_n();
         self.f.unset_c();
@@ -657,8 +659,8 @@ impl Cpu {
     make_or!(or_a_a, a);
 
     #[inline]
-    fn or_a_deref_hl(&mut self, ram: &mut Ram) {
-        let value = ram[self.hl()];
+    fn or_a_deref_hl(&mut self, mmu: &mut Mmu) {
+        let value = mmu.read_u8(self.hl());
         self.f.unset_h();
         self.f.unset_n();
         self.f.unset_c();
@@ -680,13 +682,13 @@ impl Cpu {
     make_cp!(cp_a_a, a);
 
     #[inline]
-    fn cp_a_deref_hl(&mut self, ram: &mut Ram) {
-        cp_a_n!(self, ram[self.hl()]);
+    fn cp_a_deref_hl(&mut self, mmu: &mut Mmu) {
+        cp_a_n!(self, mmu.read_u8(self.hl()));
         self.cycles += 4;
     }
 
     #[inline]
-    fn ret(&mut self, ram: &mut Ram) {
+    fn ret(&mut self, mmu: &mut Mmu) {
         // TODO: Should popping from empty stack
         // result in a zero or is it an error?
         assert!(
@@ -694,9 +696,9 @@ impl Cpu {
             "less than 2 bytes of data in the stack"
         );
         self.sp += 1;
-        let byte1 = ram[self.sp];
+        let byte1 = mmu.read_u8(self.sp);
         self.sp += 1;
-        let byte2 = ram[self.sp];
+        let byte2 = mmu.read_u8(self.sp);
 
         let addr = ((byte2 as u16) << 8) | byte1 as u16;
         self.pc = addr;
@@ -710,19 +712,19 @@ impl Cpu {
     make_ret!(ret_nc, c not set);
 
     #[inline]
-    fn reti(&mut self, ram: &mut Ram) {
-        self.ret(ram);
+    fn reti(&mut self, mmu: &mut Mmu) {
+        self.ret(mmu);
         self.interrupts = InterruptState::Enabled;
     }
 
     #[inline]
-    fn di(&mut self, _ram: &mut Ram) {
+    fn di(&mut self, _mmu: &mut Mmu) {
         // Disable interrupts after executing the next instruction
         self.interrupts = InterruptState::WillDisable;
     }
 
     #[inline]
-    fn ei(&mut self, _ram: &mut Ram) {
+    fn ei(&mut self, _mmu: &mut Mmu) {
         // Enable interrupts after executing the next instruction
         self.interrupts = InterruptState::WillEnable;
     }
@@ -732,25 +734,25 @@ impl Cpu {
     make_pop!(pop_hl, h, l);
 
     #[inline]
-    fn pop_af(&mut self, ram: &mut Ram) {
+    fn pop_af(&mut self, mmu: &mut Mmu) {
         assert!(
             self.sp.wrapping_add(2) > self.sp,
             "less than 2 bytes of data in the stack"
         );
         self.sp += 1;
-        let byte = ram[self.sp];
+        let byte = mmu.read_u8(self.sp);
         self.f.0 = byte;
         self.sp += 1;
-        let byte = ram[self.sp];
+        let byte = mmu.read_u8(self.sp);
         self.a = byte;
 
         self.cycles += 12;
     }
 
     #[inline]
-    fn jp(&mut self, ram: &mut Ram) {
-        let l = self.next_byte(ram);
-        let h = self.next_byte(ram);
+    fn jp(&mut self, mmu: &mut Mmu) {
+        let l = self.next_byte(mmu);
+        let h = self.next_byte(mmu);
         self.pc = ((h as u16) << 8) | l as u16;
         self.cycles += 16;
     }
@@ -761,20 +763,20 @@ impl Cpu {
     make_jp!(jp_c, c set);
 
     #[inline]
-    fn jp_hl(&mut self, _ram: &mut Ram) {
+    fn jp_hl(&mut self, _mmu: &mut Mmu) {
         self.pc = self.hl();
         self.cycles += 4;
     }
 
     #[inline]
-    fn call(&mut self, ram: &mut Ram) {
+    fn call(&mut self, mmu: &mut Mmu) {
         // Address of next instruction is 2 bytes away
         // from this instruction, as this instruction is
         // 3 bytes long but the first byte has been already
         // read when the execution ends up here.
         let addr = self.pc + 2;
-        self.push_u16(ram, addr);
-        self.jp(ram);
+        self.push_u16(mmu, addr);
+        self.jp(mmu);
         self.cycles += 8;
     }
 
@@ -788,12 +790,12 @@ impl Cpu {
     make_push!(push_hl, h, l);
 
     #[inline]
-    fn push_af(&mut self, ram: &mut Ram) {
+    fn push_af(&mut self, mmu: &mut Mmu) {
         let v1 = self.a;
         let v2 = self.f.0;
 
-        self.push(ram, v1);
-        self.push(ram, v2);
+        self.push(mmu, v1);
+        self.push(mmu, v2);
         self.cycles += 16;
     }
 
@@ -807,108 +809,108 @@ impl Cpu {
     make_rst!(rst_38h, 0x38);
 
     #[inline]
-    fn add_a_n(&mut self, ram: &mut Ram) {
-        let n = self.next_byte(ram);
+    fn add_a_n(&mut self, mmu: &mut Mmu) {
+        let n = self.next_byte(mmu);
         add_a_n!(self, n);
         self.cycles += 4;
     }
 
     #[inline]
-    fn adc_a_n(&mut self, ram: &mut Ram) {
+    fn adc_a_n(&mut self, mmu: &mut Mmu) {
         let n = if self.f.c() {
-            self.next_byte(ram) + 1
+            self.next_byte(mmu) + 1
         } else {
-            self.next_byte(ram)
+            self.next_byte(mmu)
         };
         add_a_n!(self, n);
         self.cycles += 4;
     }
 
     #[inline]
-    fn sub_a_n(&mut self, ram: &mut Ram) {
-        let n = self.next_byte(ram);
+    fn sub_a_n(&mut self, mmu: &mut Mmu) {
+        let n = self.next_byte(mmu);
         sub_a_n!(self, n);
         self.cycles += 4;
     }
 
     #[inline]
-    fn sbc_a_n(&mut self, ram: &mut Ram) {
+    fn sbc_a_n(&mut self, mmu: &mut Mmu) {
         // TODO: Tests
         let n = if self.f.c() {
-            self.next_byte(ram) + 1
+            self.next_byte(mmu) + 1
         } else {
-            self.next_byte(ram)
+            self.next_byte(mmu)
         };
         sub_a_n!(self, n);
         self.cycles += 4;
     }
 
     #[inline]
-    fn and_a_n(&mut self, ram: &mut Ram) {
+    fn and_a_n(&mut self, mmu: &mut Mmu) {
         // TODO: Tests
-        let n = self.next_byte(ram);
+        let n = self.next_byte(mmu);
         and_a_n!(self, n);
         self.cycles += 4;
     }
 
     #[inline]
-    fn xor_a_n(&mut self, ram: &mut Ram) {
+    fn xor_a_n(&mut self, mmu: &mut Mmu) {
         // TODO: Tests
-        let n = self.next_byte(ram);
+        let n = self.next_byte(mmu);
         xor_a_n!(self, n);
         self.cycles += 4;
     }
 
     #[inline]
-    fn or_a_n(&mut self, ram: &mut Ram) {
+    fn or_a_n(&mut self, mmu: &mut Mmu) {
         // TODO: Tests
-        let n = self.next_byte(ram);
+        let n = self.next_byte(mmu);
         or_a_n!(self, n);
         self.cycles += 4;
     }
 
     #[inline]
-    fn cp_a_n(&mut self, ram: &mut Ram) {
+    fn cp_a_n(&mut self, mmu: &mut Mmu) {
         // TODO: Tests
-        let n = self.next_byte(ram);
+        let n = self.next_byte(mmu);
         cp_a_n!(self, n);
         self.cycles += 4;
     }
 
     #[inline]
-    fn ldh_deref_n_a(&mut self, ram: &mut Ram) {
+    fn ldh_deref_n_a(&mut self, mmu: &mut Mmu) {
         // TODO: Tests
-        let n = self.next_byte(ram);
+        let n = self.next_byte(mmu);
         let addr = 0xFF00_u16 | n as u16;
-        ram[addr] = self.a;
+        mmu.write_u8(addr, self.a);
         self.cycles += 12;
     }
 
     #[inline]
-    fn ldh_a_deref_n(&mut self, ram: &mut Ram) {
+    fn ldh_a_deref_n(&mut self, mmu: &mut Mmu) {
         // TODO: Tests
-        let n = self.next_byte(ram);
+        let n = self.next_byte(mmu);
         let addr = 0xFF00_u16 | n as u16;
-        self.a = ram[addr];
+        self.a = mmu.read_u8(addr);
         self.cycles += 12;
     }
 
     #[inline]
-    fn ld_sp_hl(&mut self, _ram: &mut Ram) {
+    fn ld_sp_hl(&mut self, _mmu: &mut Mmu) {
         self.sp = self.hl();
     }
 
     #[inline]
-    fn add_sp_n(&mut self, ram: &mut Ram) {
-        let n = self.next_byte(ram);
+    fn add_sp_n(&mut self, mmu: &mut Mmu) {
+        let n = self.next_byte(mmu);
         set_flags_u16_plus_i8!(self, self.sp, n as i8);
         self.sp = self.sp.wrapping_add(n as i8 as u16);
         self.cycles += 16;
     }
 
     #[inline]
-    fn ld_hl_sp_plus_n(&mut self, ram: &mut Ram) {
-        let n = self.next_byte(ram);
+    fn ld_hl_sp_plus_n(&mut self, mmu: &mut Mmu) {
+        let n = self.next_byte(mmu);
         set_flags_u16_plus_i8!(self, self.sp, n as i8);
         let hl = self.sp.wrapping_add(n as i8 as u16);
         self.set_hl(hl);
@@ -923,8 +925,8 @@ impl Cpu {
     make_rlc_r!(rlc_l, l);
     make_rlc_r!(rlc_a, a);
     #[inline]
-    fn rlc_deref_hl(&mut self, ram: &mut Ram) {
-        let val = rlc_n!(self, ram[self.hl()]);
+    fn rlc_deref_hl(&mut self, mmu: &mut Mmu) {
+        let val = rlc_n!(self, mmu.read_u8(self.hl()));
         self.set_hl(val as u16);
         self.cycles += 16;
     }
@@ -937,8 +939,8 @@ impl Cpu {
     make_rrc_r!(rrc_l, l);
     make_rrc_r!(rrc_a, a);
     #[inline]
-    fn rrc_deref_hl(&mut self, ram: &mut Ram) {
-        let val = rrc_n!(self, ram[self.hl()]);
+    fn rrc_deref_hl(&mut self, mmu: &mut Mmu) {
+        let val = rrc_n!(self, mmu.read_u8(self.hl()));
         self.set_hl(val as u16);
         self.cycles += 16;
     }
@@ -951,8 +953,8 @@ impl Cpu {
     make_rl_r!(rl_l, l);
     make_rl_r!(rl_a, a);
     #[inline]
-    fn rl_deref_hl(&mut self, ram: &mut Ram) {
-        let val = rl_n!(self, ram[self.hl()]);
+    fn rl_deref_hl(&mut self, mmu: &mut Mmu) {
+        let val = rl_n!(self, mmu.read_u8(self.hl()));
         self.set_hl(val as u16);
         self.cycles += 16;
     }
@@ -965,8 +967,8 @@ impl Cpu {
     make_rr_r!(rr_l, l);
     make_rr_r!(rr_a, a);
     #[inline]
-    fn rr_deref_hl(&mut self, ram: &mut Ram) {
-        let val = rr_n!(self, ram[self.hl()]);
+    fn rr_deref_hl(&mut self, mmu: &mut Mmu) {
+        let val = rr_n!(self, mmu.read_u8(self.hl()));
         self.set_hl(val as u16);
         self.cycles += 16;
     }
@@ -979,8 +981,8 @@ impl Cpu {
     make_sla!(sla_l, l);
     make_sla!(sla_a, a);
     #[inline]
-    fn sla_deref_hl(&mut self, ram: &mut Ram) {
-        let val = sla_n!(self, ram[self.hl()]);
+    fn sla_deref_hl(&mut self, mmu: &mut Mmu) {
+        let val = sla_n!(self, mmu.read_u8(self.hl()));
         self.set_hl(val as u16);
         self.cycles += 16;
     }
@@ -993,8 +995,8 @@ impl Cpu {
     make_sra!(sra_l, l);
     make_sra!(sra_a, a);
     #[inline]
-    fn sra_deref_hl(&mut self, ram: &mut Ram) {
-        let val = sra_n!(self, ram[self.hl()]);
+    fn sra_deref_hl(&mut self, mmu: &mut Mmu) {
+        let val = sra_n!(self, mmu.read_u8(self.hl()));
         self.set_hl(val as u16);
         self.cycles += 16;
     }
@@ -1007,8 +1009,8 @@ impl Cpu {
     make_swap!(swap_l, l);
     make_swap!(swap_a, a);
     #[inline]
-    fn swap_deref_hl(&mut self, ram: &mut Ram) {
-        let val = swap_n!(self, ram[self.hl()]);
+    fn swap_deref_hl(&mut self, mmu: &mut Mmu) {
+        let val = swap_n!(self, mmu.read_u8(self.hl()));
         self.set_hl(val as u16);
         self.cycles += 16;
     }
@@ -1021,8 +1023,8 @@ impl Cpu {
     make_srl!(srl_l, l);
     make_srl!(srl_a, a);
     #[inline]
-    fn srl_deref_hl(&mut self, ram: &mut Ram) {
-        let val = srl_n!(self, ram[self.hl()]);
+    fn srl_deref_hl(&mut self, mmu: &mut Mmu) {
+        let val = srl_n!(self, mmu.read_u8(self.hl()));
         self.set_hl(val as u16);
         self.cycles += 16;
     }

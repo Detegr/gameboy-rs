@@ -4,10 +4,10 @@ use cpu::tests::*;
 fn test_dec_r() {
     macro_rules! test_dec_r(
         ($r:ident, $func:expr) => {{
-            let (mut cpu, mut ram) = init(None);
+            let (mut cpu, mut mmu) = init(None);
             cpu.$r = 0x11;
             let expected = cpu.$r.wrapping_sub(0x1);
-            test(&mut cpu, &mut ram, 4, $func);
+            test(&mut cpu, &mut mmu, 4, $func);
             assert!(cpu.$r == expected, format!("dec {}: Expected 0x{:X}, got 0x{:X}", stringify!($r), expected, cpu.$r));
             assert!(!cpu.f.z());
             assert!(cpu.f.n());
@@ -15,7 +15,7 @@ fn test_dec_r() {
 
             cpu.$r = 0x10;
             let expected = cpu.$r.wrapping_sub(0x1);
-            test(&mut cpu, &mut ram, 4, $func);
+            test(&mut cpu, &mut mmu, 4, $func);
             assert!(cpu.$r == expected, format!("dec {}: Expected 0x{:X}, got 0x{:X}", stringify!($r), expected, cpu.$r));
             assert!(!cpu.f.z());
             assert!(cpu.f.n());
@@ -23,7 +23,7 @@ fn test_dec_r() {
 
             cpu.$r = 0x1;
             let expected = cpu.$r.wrapping_sub(0x1);
-            test(&mut cpu, &mut ram, 4, $func);
+            test(&mut cpu, &mut mmu, 4, $func);
             assert!(cpu.$r == expected, format!("dec {}: Expected 0x{:X}, got 0x{:X}", stringify!($r), expected, cpu.$r));
             assert!(cpu.f.z());
             assert!(cpu.f.n());
@@ -31,7 +31,7 @@ fn test_dec_r() {
 
             cpu.$r = 0x0;
             let expected = cpu.$r.wrapping_sub(0x1);
-            test(&mut cpu, &mut ram, 4, $func);
+            test(&mut cpu, &mut mmu, 4, $func);
             assert!(cpu.$r == expected, format!("dec {}: Expected 0x{:X}, got 0x{:X}", stringify!($r), expected, cpu.$r));
             assert!(!cpu.f.z());
             assert!(cpu.f.n());
@@ -46,72 +46,72 @@ fn test_dec_r() {
     test_dec_r!(h, opcode(0x25));
     test_dec_r!(l, opcode(0x2D));
     fn test_dec_hl() {
-        let (mut cpu, mut ram) = init(None);
-        ram[0x1F01] = 0x15;
+        let (mut cpu, mut mmu) = init(None);
+        mmu.write_u8(0x1F01, 0x15);
         cpu.h = 0x1F;
         cpu.l = 0x1;
-        let expected = ram[0x1F01] - 1;
-        test(&mut cpu, &mut ram, 12, opcode(0x35));
+        let expected = mmu.read_u8(0x1F01) - 1;
+        test(&mut cpu, &mut mmu, 12, opcode(0x35));
         assert!(
-            ram[cpu.hl()] == expected,
+            mmu.read_u8(cpu.hl()) == expected,
             format!(
                 "dec (hl): Expected 0x{:X}, got 0x{:X}",
                 expected,
-                ram[cpu.hl()]
+                mmu.read_u8(cpu.hl())
             )
         );
         assert!(!cpu.f.z());
         assert!(cpu.f.n());
         assert!(!cpu.f.h());
 
-        let (mut cpu, mut ram) = init(None);
-        ram[0x1F01] = 0x10;
+        let (mut cpu, mut mmu) = init(None);
+        mmu.write_u8(0x1F01, 0x10);
         cpu.h = 0x1F;
         cpu.l = 0x1;
-        let expected = ram[0x1F01] - 1;
-        test(&mut cpu, &mut ram, 12, opcode(0x35));
+        let expected = mmu.read_u8(0x1F01) - 1;
+        test(&mut cpu, &mut mmu, 12, opcode(0x35));
         assert!(
-            ram[cpu.hl()] == expected,
+            mmu.read_u8(cpu.hl()) == expected,
             format!(
                 "dec (hl): Expected 0x{:X}, got 0x{:X}",
                 expected,
-                ram[cpu.hl()]
+                mmu.read_u8(cpu.hl())
             )
         );
         assert!(!cpu.f.z());
         assert!(cpu.f.n());
         assert!(cpu.f.h());
 
-        let (mut cpu, mut ram) = init(None);
-        ram[0x1F01] = 0x1;
+        let (mut cpu, mut mmu) = init(None);
+        mmu.write_u8(0x1F01, 0x1);
         cpu.h = 0x1F;
         cpu.l = 0x1;
-        let expected = ram[0x1F01] - 1;
-        test(&mut cpu, &mut ram, 12, opcode(0x35));
+        let expected = mmu.read_u8(0x1F01) - 1;
+        test(&mut cpu, &mut mmu, 12, opcode(0x35));
         assert!(
-            ram[cpu.hl()] == expected,
+            mmu.read_u8(cpu.hl()) == expected,
             format!(
                 "dec (hl): Expected 0x{:X}, got 0x{:X}",
                 expected,
-                ram[cpu.hl()]
+                mmu.read_u8(cpu.hl())
             )
         );
         assert!(cpu.f.z());
         assert!(cpu.f.n());
         assert!(!cpu.f.h());
 
-        let (mut cpu, mut ram) = init(None);
-        ram[0x1F01] = 0x0;
+        let (mut cpu, mut mmu) = init(None);
+        mmu.write_u8(0x1F01, 0x0);
         cpu.h = 0x1F;
         cpu.l = 0x1;
-        let expected = ram[0x1F01].wrapping_sub(1);
-        test(&mut cpu, &mut ram, 12, opcode(0x35));
+        let expected = mmu.read_u8(0x1F01).wrapping_sub(1);
+        test(&mut cpu, &mut mmu, 12, opcode(0x35));
         assert!(
-            ram[cpu.hl()] == expected,
+            mmu.read_u8(cpu.hl()) == expected,
             format!(
                 "dec (hl): Expected 0x{:X}, got 0x{:X}",
                 expected,
-                ram[cpu.hl()]
+                mmu.read_u8(cpu.hl())
             )
         );
         assert!(!cpu.f.z());
@@ -125,22 +125,22 @@ fn test_dec_r() {
 fn test_dec_rr() {
     macro_rules! test_dec_rr(
         ($r1:ident, $r2:ident, $func:expr) => {{
-            let (mut cpu, mut ram) = init(None);
+            let (mut cpu, mut mmu) = init(None);
             cpu.$r1 = 0x0;
             cpu.$r2 = 0x0;
-            test(&mut cpu, &mut ram, 8, $func);
+            test(&mut cpu, &mut mmu, 8, $func);
             assert!(cpu.$r1 == 0xFF, format!("dec {}{}: Expected {}, got {}", stringify!($r1), stringify!($r2), 0xFF, cpu.$r1));
             assert!(cpu.$r2 == 0xFF, format!("dec {}{}: Expected {}, got {}", stringify!($r1), stringify!($r2), 0xFF, cpu.$r2));
 
             cpu.$r1 = 0xFF;
             cpu.$r2 = 0x1;
-            test(&mut cpu, &mut ram, 8, $func);
+            test(&mut cpu, &mut mmu, 8, $func);
             assert!(cpu.$r1 == 0xFF, format!("dec {}{}: Expected {}, got {}", stringify!($r1), stringify!($r2), 0xFF, cpu.$r1));
             assert!(cpu.$r2 == 0x0, format!("dec {}{}: Expected {}, got {}", stringify!($r1), stringify!($r2), 0x0, cpu.$r2));
 
             cpu.$r1 = 0x1;
             cpu.$r2 = 0x6;
-            test(&mut cpu, &mut ram, 8, $func);
+            test(&mut cpu, &mut mmu, 8, $func);
             assert!(cpu.$r1 == 0x1, format!("dec {}{}: Expected {}, got {}", stringify!($r1), stringify!($r2), 0x1, cpu.$r1));
             assert!(cpu.$r2 == 0x5, format!("dec {}{}: Expected {}, got {}", stringify!($r1), stringify!($r2), 0x5, cpu.$r2));
         }}
@@ -152,12 +152,12 @@ fn test_dec_rr() {
 
 #[test]
 fn test_dec_sp() {
-    let (mut cpu, mut ram) = init(None);
+    let (mut cpu, mut mmu) = init(None);
     cpu.sp = 1;
-    test(&mut cpu, &mut ram, 8, opcode(0x3B));
+    test(&mut cpu, &mut mmu, 8, opcode(0x3B));
     assert!(cpu.sp == 0x0);
-    test(&mut cpu, &mut ram, 8, opcode(0x3B));
+    test(&mut cpu, &mut mmu, 8, opcode(0x3B));
     assert!(cpu.sp == 0xFFFF);
-    test(&mut cpu, &mut ram, 8, opcode(0x3B));
+    test(&mut cpu, &mut mmu, 8, opcode(0x3B));
     assert!(cpu.sp == 0xFFFE);
 }

@@ -4,11 +4,11 @@ use cpu::tests::*;
 fn test_sbc_a_r() {
     macro_rules! test_sbc_a_r {
         ($r:ident, $func:expr) => {{
-            let (mut cpu, mut ram) = init(None);
+            let (mut cpu, mut mmu) = init(None);
             cpu.a = 0x10;
             cpu.$r = 0x1;
             let expected = cpu.a.wrapping_sub(cpu.$r);
-            test(&mut cpu, &mut ram, 4, $func);
+            test(&mut cpu, &mut mmu, 4, $func);
             assert!(
                 cpu.a == expected,
                 format!(
@@ -26,7 +26,7 @@ fn test_sbc_a_r() {
             cpu.a = 0x1F;
             cpu.$r = 0x1;
             let expected = cpu.a.wrapping_sub(cpu.$r);
-            test(&mut cpu, &mut ram, 4, $func);
+            test(&mut cpu, &mut mmu, 4, $func);
             assert!(
                 cpu.a == expected,
                 format!(
@@ -44,7 +44,7 @@ fn test_sbc_a_r() {
             cpu.a = 0x0;
             cpu.$r = 0x1;
             let expected = cpu.a.wrapping_sub(cpu.$r);
-            test(&mut cpu, &mut ram, 4, $func);
+            test(&mut cpu, &mut mmu, 4, $func);
             assert!(
                 cpu.a == expected,
                 format!(
@@ -63,7 +63,7 @@ fn test_sbc_a_r() {
             cpu.$r = 0x11;
             let carry = 1;
             let expected = cpu.a.wrapping_sub(cpu.$r).wrapping_sub(carry);
-            test(&mut cpu, &mut ram, 4, $func);
+            test(&mut cpu, &mut mmu, 4, $func);
             assert!(
                 cpu.a == expected,
                 format!(
@@ -81,7 +81,7 @@ fn test_sbc_a_r() {
             cpu.a = 0x10;
             cpu.$r = 0x10;
             let expected = cpu.a.wrapping_sub(cpu.$r);
-            test(&mut cpu, &mut ram, 4, $func);
+            test(&mut cpu, &mut mmu, 4, $func);
             assert!(
                 cpu.a == expected,
                 format!(
@@ -98,10 +98,10 @@ fn test_sbc_a_r() {
         }};
     }
     fn test_sbc_a_a() {
-        let (mut cpu, mut ram) = init(None);
+        let (mut cpu, mut mmu) = init(None);
         cpu.a = 0x4;
         let expected = cpu.a.wrapping_sub(cpu.a);
-        test(&mut cpu, &mut ram, 4, opcode(0x9F));
+        test(&mut cpu, &mut mmu, 4, opcode(0x9F));
         assert!(
             cpu.a == expected,
             format!("sbc a, a: Expected 0x{:X}, got 0x{:X}", expected, cpu.a)
@@ -111,10 +111,10 @@ fn test_sbc_a_r() {
         assert!(!cpu.f.h());
         assert!(!cpu.f.c());
 
-        let (mut cpu, mut ram) = init(None);
+        let (mut cpu, mut mmu) = init(None);
         cpu.a = 0x0;
         let expected = cpu.a.wrapping_sub(cpu.a);
-        test(&mut cpu, &mut ram, 4, opcode(0x9F));
+        test(&mut cpu, &mut mmu, 4, opcode(0x9F));
         assert!(
             cpu.a == expected,
             format!("sbc a, a: Expected 0x{:X}, got 0x{:X}", expected, cpu.a)
@@ -133,13 +133,13 @@ fn test_sbc_a_r() {
     test_sbc_a_r!(l, opcode(0x9D));
 
     fn test_sbc_a_hl() {
-        let (mut cpu, mut ram) = init(None);
-        ram[0x1F01] = 0x1;
+        let (mut cpu, mut mmu) = init(None);
+        mmu.write_u8(0x1F01, 0x1);
         cpu.a = 0x10;
         cpu.h = 0x1F;
         cpu.l = 0x1;
-        let expected = cpu.a.wrapping_sub(ram[cpu.hl()]);
-        test(&mut cpu, &mut ram, 8, opcode(0x9E));
+        let expected = cpu.a.wrapping_sub(mmu.read_u8(cpu.hl()));
+        test(&mut cpu, &mut mmu, 8, opcode(0x9E));
         assert!(
             cpu.a == expected,
             format!("sbc a, (hl): Expected 0x{:X}, got 0x{:X}", expected, cpu.a)
@@ -149,13 +149,13 @@ fn test_sbc_a_r() {
         assert!(cpu.f.h());
         assert!(!cpu.f.c());
 
-        let (mut cpu, mut ram) = init(None);
-        ram[0x1F01] = 0x1;
+        let (mut cpu, mut mmu) = init(None);
+        mmu.write_u8(0x1F01, 0x1);
         cpu.a = 0x1F;
         cpu.h = 0x1F;
         cpu.l = 0x1;
-        let expected = cpu.a.wrapping_sub(ram[cpu.hl()]);
-        test(&mut cpu, &mut ram, 8, opcode(0x9E));
+        let expected = cpu.a.wrapping_sub(mmu.read_u8(cpu.hl()));
+        test(&mut cpu, &mut mmu, 8, opcode(0x9E));
         assert!(
             cpu.a == expected,
             format!("sbc a, (hl): Expected 0x{:X}, got 0x{:X}", expected, cpu.a)
@@ -165,13 +165,13 @@ fn test_sbc_a_r() {
         assert!(!cpu.f.h());
         assert!(!cpu.f.c());
 
-        let (mut cpu, mut ram) = init(None);
-        ram[0x1F01] = 0x1;
+        let (mut cpu, mut mmu) = init(None);
+        mmu.write_u8(0x1F01, 0x1);
         cpu.a = 0x0;
         cpu.h = 0x1F;
         cpu.l = 0x1;
-        let expected = cpu.a.wrapping_sub(ram[cpu.hl()]);
-        test(&mut cpu, &mut ram, 8, opcode(0x9E));
+        let expected = cpu.a.wrapping_sub(mmu.read_u8(cpu.hl()));
+        test(&mut cpu, &mut mmu, 8, opcode(0x9E));
         assert!(
             cpu.a == expected,
             format!("sbc a, (hl): Expected 0x{:X}, got 0x{:X}", expected, cpu.a)
@@ -181,12 +181,12 @@ fn test_sbc_a_r() {
         assert!(cpu.f.h());
         assert!(cpu.f.c());
 
-        ram[0x1F01] = 0x11;
+        mmu.write_u8(0x1F01, 0x11);
         cpu.a = 0x12;
         cpu.h = 0x1F;
         cpu.l = 0x1;
-        let expected = cpu.a.wrapping_sub(ram[cpu.hl()] + 1);
-        test(&mut cpu, &mut ram, 8, opcode(0x9E));
+        let expected = cpu.a.wrapping_sub(mmu.read_u8(cpu.hl()) + 1);
+        test(&mut cpu, &mut mmu, 8, opcode(0x9E));
         assert!(
             cpu.a == expected,
             format!("sbc a, (hl): Expected 0x{:X}, got 0x{:X}", expected, cpu.a)

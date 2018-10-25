@@ -4,11 +4,11 @@ use cpu::tests::*;
 fn test_adc_a_r() {
     macro_rules! test_adc_a_r {
         ($r:ident, $func:expr) => {{
-            let (mut cpu, mut ram) = init(None);
+            let (mut cpu, mut mmu) = init(None);
             cpu.a = 0x10;
             cpu.$r = 0x1;
             let expected = cpu.a.wrapping_add(cpu.$r);
-            test(&mut cpu, &mut ram, 4, $func);
+            test(&mut cpu, &mut mmu, 4, $func);
             assert!(
                 cpu.a == expected,
                 format!(
@@ -26,7 +26,7 @@ fn test_adc_a_r() {
             cpu.a = 0x1F;
             cpu.$r = 0x1;
             let expected = cpu.a.wrapping_add(cpu.$r);
-            test(&mut cpu, &mut ram, 4, $func);
+            test(&mut cpu, &mut mmu, 4, $func);
             assert!(
                 cpu.a == expected,
                 format!(
@@ -44,7 +44,7 @@ fn test_adc_a_r() {
             cpu.a = 0xFF;
             cpu.$r = 0x1;
             let expected = cpu.a.wrapping_add(cpu.$r);
-            test(&mut cpu, &mut ram, 4, $func);
+            test(&mut cpu, &mut mmu, 4, $func);
             assert!(
                 cpu.a == expected,
                 format!(
@@ -63,7 +63,7 @@ fn test_adc_a_r() {
             cpu.$r = 0x11;
             let carry = 1;
             let expected = cpu.a.wrapping_add(cpu.$r).wrapping_add(carry);
-            test(&mut cpu, &mut ram, 4, $func);
+            test(&mut cpu, &mut mmu, 4, $func);
             assert!(
                 cpu.a == expected,
                 format!(
@@ -81,7 +81,7 @@ fn test_adc_a_r() {
             cpu.a = 0x10;
             cpu.$r = 0x1;
             let expected = cpu.a.wrapping_add(cpu.$r).wrapping_add(carry);
-            test(&mut cpu, &mut ram, 4, $func);
+            test(&mut cpu, &mut mmu, 4, $func);
             assert!(
                 cpu.a == expected,
                 format!(
@@ -98,10 +98,10 @@ fn test_adc_a_r() {
         }};
     }
     fn test_adc_a_a() {
-        let (mut cpu, mut ram) = init(None);
+        let (mut cpu, mut mmu) = init(None);
         cpu.a = 0x4;
         let expected = cpu.a.wrapping_add(cpu.a);
-        test(&mut cpu, &mut ram, 4, opcode(0x8F));
+        test(&mut cpu, &mut mmu, 4, opcode(0x8F));
         assert!(
             cpu.a == expected,
             format!("adc a, a: Expected 0x{:X}, got 0x{:X}", expected, cpu.a)
@@ -111,10 +111,10 @@ fn test_adc_a_r() {
         assert!(!cpu.f.h());
         assert!(!cpu.f.c());
 
-        let (mut cpu, mut ram) = init(None);
+        let (mut cpu, mut mmu) = init(None);
         cpu.a = 0x8;
         let expected = cpu.a.wrapping_add(cpu.a);
-        test(&mut cpu, &mut ram, 4, opcode(0x8F));
+        test(&mut cpu, &mut mmu, 4, opcode(0x8F));
         assert!(
             cpu.a == expected,
             format!("adc a, a: Expected 0x{:X}, got 0x{:X}", expected, cpu.a)
@@ -124,10 +124,10 @@ fn test_adc_a_r() {
         assert!(cpu.f.h());
         assert!(!cpu.f.c());
 
-        let (mut cpu, mut ram) = init(None);
+        let (mut cpu, mut mmu) = init(None);
         cpu.a = 0x0;
         let expected = cpu.a.wrapping_add(cpu.a);
-        test(&mut cpu, &mut ram, 4, opcode(0x8F));
+        test(&mut cpu, &mut mmu, 4, opcode(0x8F));
         assert!(
             cpu.a == expected,
             format!("adc a, a: Expected 0x{:X}, got 0x{:X}", expected, cpu.a)
@@ -137,10 +137,10 @@ fn test_adc_a_r() {
         assert!(!cpu.f.h());
         assert!(!cpu.f.c());
 
-        let (mut cpu, mut ram) = init(None);
+        let (mut cpu, mut mmu) = init(None);
         cpu.a = 0xF0;
         let expected = cpu.a.wrapping_add(cpu.a);
-        test(&mut cpu, &mut ram, 4, opcode(0x8F));
+        test(&mut cpu, &mut mmu, 4, opcode(0x8F));
         assert!(
             cpu.a == expected,
             format!("adc a, a: Expected 0x{:X}, got 0x{:X}", expected, cpu.a)
@@ -152,7 +152,7 @@ fn test_adc_a_r() {
 
         cpu.a = 0xF0;
         let expected = cpu.a.wrapping_add(cpu.a) + 1;
-        test(&mut cpu, &mut ram, 4, opcode(0x8F));
+        test(&mut cpu, &mut mmu, 4, opcode(0x8F));
         assert!(
             cpu.a == expected,
             format!("adc a, a: Expected 0x{:X}, got 0x{:X}", expected, cpu.a)
@@ -171,13 +171,13 @@ fn test_adc_a_r() {
     test_adc_a_r!(l, opcode(0x8D));
 
     fn test_adc_a_hl() {
-        let (mut cpu, mut ram) = init(None);
-        ram[0x1F01] = 0x1;
+        let (mut cpu, mut mmu) = init(None);
+        mmu.write_u8(0x1F01, 0x1);
         cpu.a = 0x10;
         cpu.h = 0x1F;
         cpu.l = 0x1;
-        let expected = cpu.a.wrapping_add(ram[cpu.hl()]);
-        test(&mut cpu, &mut ram, 8, opcode(0x8E));
+        let expected = cpu.a.wrapping_add(mmu.read_u8(cpu.hl()));
+        test(&mut cpu, &mut mmu, 8, opcode(0x8E));
         assert!(
             cpu.a == expected,
             format!("adc a, (hl): Expected 0x{:X}, got 0x{:X}", expected, cpu.a)
@@ -187,13 +187,13 @@ fn test_adc_a_r() {
         assert!(!cpu.f.h());
         assert!(!cpu.f.c());
 
-        let (mut cpu, mut ram) = init(None);
-        ram[0x1F01] = 0x1;
+        let (mut cpu, mut mmu) = init(None);
+        mmu.write_u8(0x1F01, 0x1);
         cpu.a = 0x1F;
         cpu.h = 0x1F;
         cpu.l = 0x1;
-        let expected = cpu.a.wrapping_add(ram[cpu.hl()]);
-        test(&mut cpu, &mut ram, 8, opcode(0x8E));
+        let expected = cpu.a.wrapping_add(mmu.read_u8(cpu.hl()));
+        test(&mut cpu, &mut mmu, 8, opcode(0x8E));
         assert!(
             cpu.a == expected,
             format!("adc a, (hl): Expected 0x{:X}, got 0x{:X}", expected, cpu.a)
@@ -203,13 +203,13 @@ fn test_adc_a_r() {
         assert!(cpu.f.h());
         assert!(!cpu.f.c());
 
-        let (mut cpu, mut ram) = init(None);
-        ram[0x1F01] = 0x1;
+        let (mut cpu, mut mmu) = init(None);
+        mmu.write_u8(0x1F01, 0x1);
         cpu.a = 0xFF;
         cpu.h = 0x1F;
         cpu.l = 0x1;
-        let expected = cpu.a.wrapping_add(ram[cpu.hl()]);
-        test(&mut cpu, &mut ram, 8, opcode(0x8E));
+        let expected = cpu.a.wrapping_add(mmu.read_u8(cpu.hl()));
+        test(&mut cpu, &mut mmu, 8, opcode(0x8E));
         assert!(
             cpu.a == expected,
             format!("adc a, (hl): Expected 0x{:X}, got 0x{:X}", expected, cpu.a)
@@ -219,12 +219,12 @@ fn test_adc_a_r() {
         assert!(cpu.f.h());
         assert!(cpu.f.c());
 
-        ram[0x1F01] = 0x11;
+        mmu.write_u8(0x1F01, 0x11);
         cpu.a = 0xF0;
         cpu.h = 0x1F;
         cpu.l = 0x1;
-        let expected = cpu.a.wrapping_add(ram[cpu.hl()] + 1);
-        test(&mut cpu, &mut ram, 8, opcode(0x8E));
+        let expected = cpu.a.wrapping_add(mmu.read_u8(cpu.hl()) + 1);
+        test(&mut cpu, &mut mmu, 8, opcode(0x8E));
         assert!(
             cpu.a == expected,
             format!("adc a, (hl): Expected 0x{:X}, got 0x{:X}", expected, cpu.a)
@@ -237,14 +237,14 @@ fn test_adc_a_r() {
     test_adc_a_hl();
 
     fn test_adc_a_n() {
-        let (mut cpu, mut ram) = init(None);
+        let (mut cpu, mut mmu) = init(None);
         cpu.reset();
         let val = 0x1;
         cpu.f.unset_c();
         cpu.a = 0x10;
-        ram[cpu.pc] = val;
+        mmu.write_u8(cpu.pc, val);
         let expected = cpu.a.wrapping_add(val);
-        test(&mut cpu, &mut ram, 8, opcode(0xCE));
+        test(&mut cpu, &mut mmu, 8, opcode(0xCE));
         assert!(
             cpu.a == expected,
             format!(
@@ -260,9 +260,9 @@ fn test_adc_a_r() {
         assert!(!cpu.f.c());
 
         cpu.a = 0x1F;
-        ram[cpu.pc] = val;
+        mmu.write_u8(cpu.pc, val);
         let expected = cpu.a.wrapping_add(val);
-        test(&mut cpu, &mut ram, 8, opcode(0xCE));
+        test(&mut cpu, &mut mmu, 8, opcode(0xCE));
         assert!(
             cpu.a == expected,
             format!(
@@ -278,9 +278,9 @@ fn test_adc_a_r() {
         assert!(!cpu.f.c());
 
         cpu.a = 0xFF;
-        ram[cpu.pc] = val;
+        mmu.write_u8(cpu.pc, val);
         let expected = cpu.a.wrapping_add(val);
-        test(&mut cpu, &mut ram, 8, opcode(0xCE));
+        test(&mut cpu, &mut mmu, 8, opcode(0xCE));
         assert!(
             cpu.a == expected,
             format!(
@@ -297,10 +297,10 @@ fn test_adc_a_r() {
 
         let val = 0x11;
         cpu.a = 0xF0;
-        ram[cpu.pc] = val;
+        mmu.write_u8(cpu.pc, val);
         let carry = 1;
         let expected = cpu.a.wrapping_add(val).wrapping_add(carry);
-        test(&mut cpu, &mut ram, 8, opcode(0xCE));
+        test(&mut cpu, &mut mmu, 8, opcode(0xCE));
         assert!(
             cpu.a == expected,
             format!(
@@ -317,9 +317,9 @@ fn test_adc_a_r() {
 
         let val = 0x1;
         cpu.a = 0x10;
-        ram[cpu.pc] = val;
+        mmu.write_u8(cpu.pc, val);
         let expected = cpu.a.wrapping_add(val).wrapping_add(carry);
-        test(&mut cpu, &mut ram, 8, opcode(0xCE));
+        test(&mut cpu, &mut mmu, 8, opcode(0xCE));
         assert!(
             cpu.a == expected,
             format!(

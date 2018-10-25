@@ -1,27 +1,27 @@
 use cpu::*;
-use ram::Ram;
+use mmu::Mmu;
 
-pub fn init(memory: Option<&[u8]>) -> (Cpu, Ram) {
+pub fn init(memory: Option<&[u8]>) -> (Cpu, Mmu) {
     let cpu = Cpu::new();
-    let mut ram = Ram::new();
+    let mut mmu = Mmu::new();
     if memory.is_some() {
-        ram.set_bytes(memory.unwrap());
+        mmu.set_bytes(memory.unwrap());
     }
-    (cpu, ram)
+    (cpu, mmu)
 }
 pub fn cycles<F>(cycles: usize, closure: F)
 where
-    F: Fn(&mut Cpu, &mut Ram),
+    F: Fn(&mut Cpu, &mut Mmu),
 {
-    let (mut cpu, mut ram) = init(None);
-    test(&mut cpu, &mut ram, cycles, closure);
+    let (mut cpu, mut mmu) = init(None);
+    test(&mut cpu, &mut mmu, cycles, closure);
 }
-pub fn test<F>(cpu: &mut Cpu, ram: &mut Ram, cycles: usize, closure: F)
+pub fn test<F>(cpu: &mut Cpu, mmu: &mut Mmu, cycles: usize, closure: F)
 where
-    F: Fn(&mut Cpu, &mut Ram),
+    F: Fn(&mut Cpu, &mut Mmu),
 {
     let prev_cycles = cpu.cycles;
-    closure(cpu, ram);
+    closure(cpu, mmu);
     assert!(
         cpu.cycles == prev_cycles + cycles,
         format!(

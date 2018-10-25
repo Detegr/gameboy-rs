@@ -2,10 +2,10 @@ use cpu::tests::*;
 
 macro_rules! test_swap_r {
     ($r:ident, $func: expr) => {
-        let (mut cpu, mut ram) = init(None);
+        let (mut cpu, mut mmu) = init(None);
 
         cpu.$r = 0xF0;
-        test(&mut cpu, &mut ram, 8, $func);
+        test(&mut cpu, &mut mmu, 8, $func);
         assert_eq!(cpu.$r, 0xF);
         assert!(!cpu.f.z());
         assert!(!cpu.f.n());
@@ -13,7 +13,7 @@ macro_rules! test_swap_r {
         assert!(!cpu.f.c());
 
         cpu.$r = 0xF;
-        test(&mut cpu, &mut ram, 8, $func);
+        test(&mut cpu, &mut mmu, 8, $func);
         assert_eq!(cpu.$r, 0xF0);
         assert!(!cpu.f.z());
         assert!(!cpu.f.n());
@@ -21,7 +21,7 @@ macro_rules! test_swap_r {
         assert!(!cpu.f.c());
 
         cpu.$r = 0x12;
-        test(&mut cpu, &mut ram, 8, $func);
+        test(&mut cpu, &mut mmu, 8, $func);
         assert_eq!(cpu.$r, 0x21);
         assert!(!cpu.f.z());
         assert!(!cpu.f.n());
@@ -29,7 +29,7 @@ macro_rules! test_swap_r {
         assert!(!cpu.f.c());
 
         cpu.$r = 0x0;
-        test(&mut cpu, &mut ram, 8, $func);
+        test(&mut cpu, &mut mmu, 8, $func);
         assert_eq!(cpu.$r, 0x0);
         assert!(cpu.f.z());
         assert!(!cpu.f.n());

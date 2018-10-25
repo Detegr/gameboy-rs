@@ -1,9 +1,9 @@
 macro_rules! make_ld_rr_nn {
     ($name: ident, $r1:ident, $r2:ident) => {
         #[inline]
-        fn $name(&mut self, ram: &mut Ram) {
-            self.$r2 = self.next_byte(ram);
-            self.$r1 = self.next_byte(ram);
+        fn $name(&mut self, mmu: &mut Mmu) {
+            self.$r2 = self.next_byte(mmu);
+            self.$r1 = self.next_byte(mmu);
             self.cycles += 12;
         }
     }
@@ -11,7 +11,7 @@ macro_rules! make_ld_rr_nn {
 macro_rules! make_ld_r_r {
     ($name:ident, $r1:ident, $r2:ident) => {
         #[inline]
-        fn $name(&mut self, _ram: &mut Ram) {
+        fn $name(&mut self, _mmu: &mut Mmu) {
             self.$r1 = self.$r2;
             self.cycles += 4;
         }
@@ -19,16 +19,16 @@ macro_rules! make_ld_r_r {
 }
 macro_rules! make_ld_r_rr {
     ($name: ident, $r:ident, $rr:ident) => {
-        fn $name(&mut self, ram: &mut Ram) {
-            self.$r = ram[self.$rr() ];
+        fn $name(&mut self, mmu: &mut Mmu) {
+            self.$r = mmu.read_u8(self.$rr());
             self.cycles += 8;
         }
     }
 }
 macro_rules! make_ld_rr_r {
     ($name: ident, $rr:ident, $r:ident) => {
-        fn $name(&mut self, ram: &mut Ram) {
-            ram[self.$rr() ] = self.$r;
+        fn $name(&mut self, mmu: &mut Mmu) {
+            mmu.write_u8(self.$rr(), self.$r);
             self.cycles += 8;
         }
     }
@@ -36,8 +36,8 @@ macro_rules! make_ld_rr_r {
 macro_rules! make_ld_r_n {
     ($name: ident, $r:ident) => {
         #[inline]
-        fn $name(&mut self, ram: &mut Ram) {
-            self.$r = self.next_byte(ram);
+        fn $name(&mut self, mmu: &mut Mmu) {
+            self.$r = self.next_byte(mmu);
             self.cycles += 8;
         }
     }
@@ -45,7 +45,7 @@ macro_rules! make_ld_r_n {
 macro_rules! make_add {
     ($name:ident, $reg: ident) => {
         #[inline]
-        fn $name(&mut self, _ram: &mut Ram) {
+        fn $name(&mut self, _mmu: &mut Mmu) {
             add_a_n!(self, self.$reg);
         }
     }
@@ -53,7 +53,7 @@ macro_rules! make_add {
 macro_rules! make_adc {
     ($name:ident, $reg: ident) => {
         #[inline]
-        fn $name(&mut self, _ram: &mut Ram) {
+        fn $name(&mut self, _mmu: &mut Mmu) {
             if self.f.c() {
                 add_a_n!(self, self.$reg.wrapping_add(1));
             } else {
@@ -65,7 +65,7 @@ macro_rules! make_adc {
 macro_rules! make_add_rr_rr {
     ($name:ident, $r1: ident, $r2:ident, $r3:ident, $r4:ident) => {
         #[inline]
-        fn $name(&mut self, _ram: &mut Ram) {
+        fn $name(&mut self, _mmu: &mut Mmu) {
             let val32_lhs = ((self.$r1 as u32) << 8) & 0xFF00 | self.$r2 as u32 & 0xFF;
             let val32_rhs = ((self.$r3 as u32) << 8) & 0xFF00 | self.$r4 as u32 & 0xFF;
             let mut r2 = self.$r2;
@@ -120,7 +120,7 @@ macro_rules! add_a_n {
 macro_rules! make_sub {
     ($name:ident, $reg: ident) => {
         #[inline]
-        fn $name(&mut self, _ram: &mut Ram) {
+        fn $name(&mut self, _mmu: &mut Mmu) {
             sub_a_n!(self, self.$reg);
         }
     }
@@ -128,7 +128,7 @@ macro_rules! make_sub {
 macro_rules! make_sbc {
     ($name:ident, $reg: ident) => {
         #[inline]
-        fn $name(&mut self, _ram: &mut Ram) {
+        fn $name(&mut self, _mmu: &mut Mmu) {
             if self.f.c() {
                 sub_a_n!(self, self.$reg.wrapping_add(1));
             } else {
@@ -165,7 +165,7 @@ macro_rules! sub_a_n {
 macro_rules! make_inc_rr {
     ($name:ident, $r1:ident, $r2:ident) => {
         #[inline]
-        fn $name(&mut self, _ram: &mut Ram) {
+        fn $name(&mut self, _mmu: &mut Mmu) {
             if self.$r2 == 0xFF {
                 self.$r1 = self.$r1.wrapping_add(1);
                 self.$r2 = self.$r2.wrapping_add(1);
@@ -179,59 +179,61 @@ macro_rules! make_inc_rr {
 macro_rules! make_inc {
     ($name:ident, $reg: ident) => {
         #[inline]
-        fn $name(&mut self, _ram: &mut Ram) {
+        fn $name(&mut self, _mmu: &mut Mmu) {
             self.$reg = inc_r!(self, self.$reg);
         }
     }
 }
 macro_rules! inc_r {
     ($cpu:expr, $value:expr) => {{
-        if cpuflags::test_half_carry_addition($value, 1) {
+        let mut val = $value;
+        if cpuflags::test_half_carry_addition(val, 1) {
             $cpu.f.set_h();
         } else {
             $cpu.f.unset_h();
         }
-        $value = $value.wrapping_add(1);
-        if $value == 0x0 {
+        val = val.wrapping_add(1);
+        if val == 0x0 {
             $cpu.f.set_z();
         } else {
             $cpu.f.unset_z();
         }
         $cpu.f.unset_n();
         $cpu.cycles += 4;
-        $value
+        val
     }};
 }
 macro_rules! make_dec {
     ($name:ident, $reg: ident) => {
         #[inline]
-        fn $name(&mut self, _ram: &mut Ram) {
+        fn $name(&mut self, _mmu: &mut Mmu) {
             self.$reg = dec_r!(self, self.$reg);
         }
     }
 }
 macro_rules! dec_r {
     ($cpu:expr, $value:expr) => {{
-        if cpuflags::test_half_carry_subtraction($value, 1) {
+        let mut val = $value;
+        if cpuflags::test_half_carry_subtraction(val, 1) {
             $cpu.f.set_h();
         } else {
             $cpu.f.unset_h();
         }
-        $value = $value.wrapping_sub(1);
-        if $value == 0x0 {
+        val = val.wrapping_sub(1);
+        if val == 0x0 {
             $cpu.f.set_z();
         } else {
             $cpu.f.unset_z();
         }
         $cpu.f.set_n();
         $cpu.cycles += 4;
-        $value
+        val
     }};
 }
 macro_rules! make_dec_rr {
     ($name:ident, $r1:ident, $r2:ident) => {
         #[inline]
-        fn $name(&mut self, _ram: &mut Ram) {
+        fn $name(&mut self, _mmu: &mut Mmu) {
             if self.$r2 == 0x0 {
                 self.$r1 = self.$r1.wrapping_sub(1);
                 self.$r2 = self.$r2.wrapping_sub(1);
@@ -245,9 +247,9 @@ macro_rules! make_dec_rr {
 macro_rules! make_jr_cc_n {
     ($name:ident, $flag:ident set) => {
         #[inline]
-        fn $name(&mut self, ram: &mut Ram) {
+        fn $name(&mut self, mmu: &mut Mmu) {
             if self.f.$flag() {
-                self.jr_n(ram);
+                self.jr_n(mmu);
             } else {
                 self.pc += 1;
                 self.cycles += 8;
@@ -256,9 +258,9 @@ macro_rules! make_jr_cc_n {
     };
     ($name:ident, $flag:ident not set) => {
         #[inline]
-        fn $name(&mut self, ram: &mut Ram) {
+        fn $name(&mut self, mmu: &mut Mmu) {
             if !self.f.$flag() {
-                self.jr_n(ram);
+                self.jr_n(mmu);
             } else {
                 self.pc += 1;
                 self.cycles += 8;
@@ -283,7 +285,7 @@ macro_rules! and_a_n {
 macro_rules! make_and {
     ($name:ident, $r:ident) => {
         #[inline]
-        fn $name(&mut self, _ram: &mut Ram) {
+        fn $name(&mut self, _mmu: &mut Mmu) {
             and_a_n!(self, self.$r);
         }
     }
@@ -305,7 +307,7 @@ macro_rules! or_a_n {
 macro_rules! make_or {
     ($name:ident, $r:ident) => {
         #[inline]
-        fn $name(&mut self, _ram: &mut Ram) {
+        fn $name(&mut self, _mmu: &mut Mmu) {
             or_a_n!(self, self.$r);
         }
     }
@@ -327,7 +329,7 @@ macro_rules! xor_a_n {
 macro_rules! make_xor {
     ($name:ident, $r:ident) => {
         #[inline]
-        fn $name(&mut self, _ram: &mut Ram) {
+        fn $name(&mut self, _mmu: &mut Mmu) {
             xor_a_n!(self, self.$r);
         }
     }
@@ -359,7 +361,7 @@ macro_rules! cp_a_n {
 macro_rules! make_cp {
     ($name:ident, $r:ident) => {
         #[inline]
-        fn $name(&mut self, _ram: &mut Ram) {
+        fn $name(&mut self, _mmu: &mut Mmu) {
             cp_a_n!(self, self.$r)
         }
     }
@@ -367,9 +369,9 @@ macro_rules! make_cp {
 macro_rules! make_ret {
     ($name:ident, $flag:ident set) => {
         #[inline]
-        fn $name(&mut self, ram: &mut Ram) {
+        fn $name(&mut self, mmu: &mut Mmu) {
             if self.f.$flag() {
-                self.ret(ram);
+                self.ret(mmu);
                 self.cycles += 4;
             } else {
                 self.cycles += 8;
@@ -378,9 +380,9 @@ macro_rules! make_ret {
     };
     ($name:ident, $flag:ident not set) => {
         #[inline]
-        fn $name(&mut self, ram: &mut Ram) {
+        fn $name(&mut self, mmu: &mut Mmu) {
             if !self.f.$flag() {
-                self.ret(ram);
+                self.ret(mmu);
                 self.cycles += 4;
             } else {
                 self.cycles += 8;
@@ -391,16 +393,16 @@ macro_rules! make_ret {
 macro_rules! make_pop {
     ($name:ident, $r1:ident, $r2:ident) => {
         #[inline]
-        fn $name(&mut self, ram: &mut Ram) {
+        fn $name(&mut self, mmu: &mut Mmu) {
             assert!(
                 self.sp.wrapping_add(2) > self.sp,
                 "less than 2 bytes of data in the stack"
             );
             self.sp += 1;
-            let byte = ram[self.sp ];
+            let byte = mmu.read_u8(self.sp);
             self.$r2 = byte;
             self.sp += 1;
-            let byte = ram[self.sp ];
+            let byte = mmu.read_u8(self.sp);
             self.$r1 = byte;
 
             self.cycles += 12;
@@ -410,9 +412,9 @@ macro_rules! make_pop {
 macro_rules! make_jp {
     ($name:ident, $flag:ident set) => {
         #[inline]
-        fn $name(&mut self, ram: &mut Ram) {
+        fn $name(&mut self, mmu: &mut Mmu) {
             if self.f.$flag() {
-                self.jp(ram);
+                self.jp(mmu);
             } else {
                 self.cycles += 12;
                 self.pc += 2;
@@ -421,9 +423,9 @@ macro_rules! make_jp {
     };
     ($name:ident, $flag:ident not set) => {
         #[inline]
-        fn $name(&mut self, ram: &mut Ram) {
+        fn $name(&mut self, mmu: &mut Mmu) {
             if !self.f.$flag() {
-                self.jp(ram);
+                self.jp(mmu);
             } else {
                 self.cycles += 12;
                 self.pc += 2;
@@ -434,9 +436,9 @@ macro_rules! make_jp {
 macro_rules! make_call {
     ($name:ident, $flag:ident set) => {
         #[inline]
-        fn $name(&mut self, ram: &mut Ram) {
+        fn $name(&mut self, mmu: &mut Mmu) {
             if self.f.$flag() {
-                self.call(ram);
+                self.call(mmu);
             } else {
                 self.pc += 2;
                 self.cycles += 12;
@@ -445,9 +447,9 @@ macro_rules! make_call {
     };
     ($name:ident, $flag:ident not set) => {
         #[inline]
-        fn $name(&mut self, ram: &mut Ram) {
+        fn $name(&mut self, mmu: &mut Mmu) {
             if !self.f.$flag() {
-                self.call(ram);
+                self.call(mmu);
             } else {
                 self.pc += 2;
                 self.cycles += 12;
@@ -458,7 +460,7 @@ macro_rules! make_call {
 macro_rules! make_push {
     ($name:ident, $r1:ident, $r2:ident) => {
         #[inline]
-        fn $name(&mut self, ram: &mut Ram) {
+        fn $name(&mut self, mmu: &mut Mmu) {
             assert!(
                 self.sp.wrapping_sub(2) < self.sp,
                 "stack overflow"
@@ -467,8 +469,8 @@ macro_rules! make_push {
             let v1 = self.$r1;
             let v2 = self.$r2;
 
-            self.push(ram, v1);
-            self.push(ram, v2);
+            self.push(mmu, v1);
+            self.push(mmu, v2);
 
             self.cycles += 16;
         }
@@ -477,9 +479,9 @@ macro_rules! make_push {
 macro_rules! make_rst {
     ($name:ident, $to:expr) => {
         #[inline]
-        fn $name(&mut self, ram: &mut Ram) {
+        fn $name(&mut self, mmu: &mut Mmu) {
             let val = self.pc;
-            self.push_u16(ram, val);
+            self.push_u16(mmu, val);
             self.pc = $to;
             self.cycles += 16;
         }
@@ -516,29 +518,31 @@ macro_rules! set_flags_u16_plus_i8 {
 }
 macro_rules! rlc_n {
     ($cpu:expr, $value:expr) => {{
+        let mut val = $value;
+
         $cpu.f.unset_n();
         $cpu.f.unset_h();
-        if ($value & 0x80) != 0 {
+        if (val & 0x80) != 0 {
             $cpu.f.set_c();
         } else {
             $cpu.f.unset_c();
         }
 
-        $value = $value.rotate_left(1);
+        val = val.rotate_left(1);
 
-        if $value == 0 {
+        if val == 0 {
             $cpu.f.set_z();
         } else {
             $cpu.f.unset_z();
         }
 
-        $value
+        val
     }};
 }
 macro_rules! make_rlc_r {
     ($name:ident, $r:ident) => {
         #[inline]
-        fn $name(&mut self, _ram: &mut Ram) {
+        fn $name(&mut self, _mmu: &mut Mmu) {
             self.$r = rlc_n!(self, self.$r);
             self.cycles += 8;
         }
@@ -567,7 +571,7 @@ macro_rules! rrc_n {
 macro_rules! make_rrc_r {
     ($name:ident, $r:ident) => {
         #[inline]
-        fn $name(&mut self, _ram: &mut Ram) {
+        fn $name(&mut self, _mmu: &mut Mmu) {
             self.$r = rrc_n!(self, self.$r);
             self.cycles += 8;
         }
@@ -576,30 +580,32 @@ macro_rules! make_rrc_r {
 
 macro_rules! rl_n {
     ($cpu:expr, $value:expr) => {{
+        let mut val = $value;
+
         $cpu.f.unset_n();
         $cpu.f.unset_h();
         let old_carry = $cpu.f.c();
-        if ($value & 0x80) != 0 {
+        if (val & 0x80) != 0 {
             $cpu.f.set_c();
         } else {
             $cpu.f.unset_c();
         }
-        $value <<= 1;
+        val <<= 1;
         if old_carry {
-            $value |= 0x1;
+            val |= 0x1;
         }
-        if $value == 0 {
+        if val == 0 {
             $cpu.f.set_z();
         } else {
             $cpu.f.unset_z();
         }
-        $value
+        val
     }};
 }
 macro_rules! make_rl_r {
     ($name:ident, $r:ident) => {
         #[inline]
-        fn $name(&mut self, _ram: &mut Ram) {
+        fn $name(&mut self, _mmu: &mut Mmu) {
             self.$r = rl_n!(self, self.$r);
             self.cycles += 8;
         }
@@ -607,30 +613,32 @@ macro_rules! make_rl_r {
 }
 macro_rules! rr_n {
     ($cpu:expr, $value:expr) => {{
+        let mut val = $value;
+
         $cpu.f.unset_n();
         $cpu.f.unset_h();
         let old_carry = $cpu.f.c();
-        if ($value & 0x1) != 0 {
+        if (val & 0x1) != 0 {
             $cpu.f.set_c();
         } else {
             $cpu.f.unset_c();
         }
-        $value >>= 1;
+        val >>= 1;
         if old_carry {
-            $value |= 0x80;
+            val |= 0x80;
         }
-        if $value == 0 {
+        if val == 0 {
             $cpu.f.set_z();
         } else {
             $cpu.f.unset_z();
         }
-        $value
+        val
     }};
 }
 macro_rules! make_rr_r {
     ($name:ident, $r:ident) => {
         #[inline]
-        fn $name(&mut self, _ram: &mut Ram) {
+        fn $name(&mut self, _mmu: &mut Mmu) {
             self.$r = rr_n!(self, self.$r);
             self.cycles += 8;
         }
@@ -638,26 +646,28 @@ macro_rules! make_rr_r {
 }
 macro_rules! sla_n {
     ($cpu:expr, $value:expr) => {{
+        let mut val = $value;
+
         $cpu.f.unset_n();
         $cpu.f.unset_h();
-        if ($value & 0x80) != 0 {
+        if (val & 0x80) != 0 {
             $cpu.f.set_c();
         } else {
             $cpu.f.unset_c();
         }
-        $value <<= 1;
-        if $value == 0 {
+        val <<= 1;
+        if val == 0 {
             $cpu.f.set_z();
         } else {
             $cpu.f.unset_z();
         }
-        $value
+        val
     }};
 }
 macro_rules! make_sla {
     ($name:ident, $r:ident) => {
         #[inline]
-        fn $name(&mut self, _ram: &mut Ram) {
+        fn $name(&mut self, _mmu: &mut Mmu) {
             self.$r = sla_n!(self, self.$r);
             self.cycles += 8;
         }
@@ -665,30 +675,31 @@ macro_rules! make_sla {
 }
 macro_rules! sra_n {
     ($cpu:expr, $value:expr) => {{
+        let mut val = $value;
         $cpu.f.unset_n();
         $cpu.f.unset_h();
-        if ($value & 0x1) != 0 {
+        if (val & 0x1) != 0 {
             $cpu.f.set_c();
         } else {
             $cpu.f.unset_c();
         }
-        let bit7 = ($value & 0x80) != 0;
-        $value >>= 1;
+        let bit7 = (val & 0x80) != 0;
+        val >>= 1;
         if bit7 {
-            $value |= 0x80;
+            val |= 0x80;
         }
-        if $value == 0 {
+        if val == 0 {
             $cpu.f.set_z();
         } else {
             $cpu.f.unset_z();
         }
-        $value
+        val
     }};
 }
 macro_rules! make_sra {
     ($name:ident, $r:ident) => {
         #[inline]
-        fn $name(&mut self, _ram: &mut Ram) {
+        fn $name(&mut self, _mmu: &mut Mmu) {
             self.$r = sra_n!(self, self.$r);
             self.cycles += 8;
         }
@@ -697,28 +708,30 @@ macro_rules! make_sra {
 
 macro_rules! swap_n {
     ($cpu:expr, $value:expr) => {{
+        let mut val = $value;
+
         $cpu.f.unset_c();
         $cpu.f.unset_n();
         $cpu.f.unset_h();
 
-        let upper = $value & 0xF0;
-        let lower = $value & 0xF;
+        let upper = val & 0xF0;
+        let lower = val & 0xF;
 
-        $value = (lower << 4) | (upper >> 4);
+        val = (lower << 4) | (upper >> 4);
 
-        if $value == 0 {
+        if val == 0 {
             $cpu.f.set_z();
         } else {
             $cpu.f.unset_z();
         }
 
-        $value
+        val
     }};
 }
 macro_rules! make_swap {
     ($name:ident, $r:ident) => {
         #[inline]
-        fn $name(&mut self, _ram: &mut Ram) {
+        fn $name(&mut self, _mmu: &mut Mmu) {
             self.$r = swap_n!(self, self.$r);
             self.cycles += 8;
         }
@@ -726,26 +739,28 @@ macro_rules! make_swap {
 }
 macro_rules! srl_n {
     ($cpu:expr, $value:expr) => {{
+        let mut val = $value;
+
         $cpu.f.unset_n();
         $cpu.f.unset_h();
-        if ($value & 0x1) != 0 {
+        if (val & 0x1) != 0 {
             $cpu.f.set_c();
         } else {
             $cpu.f.unset_c();
         }
-        $value >>= 1;
-        if $value == 0 {
+        val >>= 1;
+        if val == 0 {
             $cpu.f.set_z();
         } else {
             $cpu.f.unset_z();
         }
-        $value
+        val
     }};
 }
 macro_rules! make_srl {
     ($name:ident, $r:ident) => {
         #[inline]
-        fn $name(&mut self, _ram: &mut Ram) {
+        fn $name(&mut self, _mmu: &mut Mmu) {
             self.$r = srl_n!(self, self.$r);
             self.cycles += 8;
         }
@@ -768,7 +783,7 @@ macro_rules! bit_n_n {
 macro_rules! make_bit {
     ($name:ident, $bit:expr, $r:ident) => {
         #[inline]
-        fn $name(&mut self, _ram: &mut Ram) {
+        fn $name(&mut self, _mmu: &mut Mmu) {
             bit_n_n!(self, $bit, self.$r);
             self.cycles += 8;
         }
@@ -778,8 +793,8 @@ macro_rules! make_bit {
 macro_rules! make_bit_deref_hl {
     ($name:ident, $bit:expr) => {
         #[inline]
-        fn $name(&mut self, ram: &mut Ram) {
-            let val = sra_n!(self, ram[self.hl() ]);
+        fn $name(&mut self, mmu: &mut Mmu) {
+            let val = sra_n!(self, mmu.read_u8(self.hl()));
             bit_n_n!(self, $bit, val);
             self.cycles += 16;
         }
@@ -788,16 +803,17 @@ macro_rules! make_bit_deref_hl {
 
 macro_rules! res_n_n {
     ($cpu:expr, $bit:expr, $value: expr) => {{
+        let mut val = $value;
         let mask = 0x1u8 << $bit;
-        $value &= !mask;
-        $value
+        val &= !mask;
+        val
     }};
 }
 
 macro_rules! make_res {
     ($name:ident, $bit:expr, $r:ident) => {
         #[inline]
-        fn $name(&mut self, _ram: &mut Ram) {
+        fn $name(&mut self, _mmu: &mut Mmu) {
             self.$r = res_n_n!(self, $bit, self.$r);
             self.cycles += 8;
         }
@@ -807,9 +823,9 @@ macro_rules! make_res {
 macro_rules! make_res_deref_hl {
     ($name:ident, $bit:expr) => {
         #[inline]
-        fn $name(&mut self, ram: &mut Ram) {
-            let val = res_n_n!(self, $bit, ram[self.hl() ]);
-            ram[self.hl() ] = val;
+        fn $name(&mut self, mmu: &mut Mmu) {
+            let val = res_n_n!(self, $bit, mmu.read_u8(self.hl()));
+            mmu.write_u8(self.hl(), val);
             self.cycles += 16;
         }
     }
@@ -817,15 +833,16 @@ macro_rules! make_res_deref_hl {
 
 macro_rules! set_n_n {
     ($cpu:expr, $bit:expr, $value: expr) => {{
+        let mut val = $value;
         let mask = 0x1u8 << $bit;
-        $value |= mask;
-        $value
+        val |= mask;
+        val
     }};
 }
 macro_rules! make_set {
     ($name:ident, $bit:expr, $r:ident) => {
         #[inline]
-        fn $name(&mut self, _ram: &mut Ram) {
+        fn $name(&mut self, _mmu: &mut Mmu) {
             self.$r = set_n_n!(self, $bit, self.$r);
             self.cycles += 8;
         }
@@ -834,9 +851,9 @@ macro_rules! make_set {
 macro_rules! make_set_deref_hl {
     ($name:ident, $bit:expr) => {
         #[inline]
-        fn $name(&mut self, ram: &mut Ram) {
-            let val = set_n_n!(self, $bit, ram[self.hl() ]);
-            ram[self.hl() ] = val;
+        fn $name(&mut self, mmu: &mut Mmu) {
+            let val = set_n_n!(self, $bit, mmu.read_u8(self.hl()));
+            mmu.write_u8(self.hl(), val);
             self.cycles += 16;
         }
     }

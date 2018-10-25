@@ -2,13 +2,13 @@ use cpu::tests::*;
 
 macro_rules! test_pop_r_r {
     ($r1:ident, $r2:ident, $func:expr) => {
-        let (mut cpu, mut ram) = init(None);
+        let (mut cpu, mut mmu) = init(None);
         cpu.reset();
-        ram[0xFFFF] = 0x11;
-        ram[0xFFFE] = 0x22;
+        mmu.write_u8(0xFFFF, 0x11);
+        mmu.write_u8(0xFFFE, 0x22);
         cpu.sp = 0xFFFD;
 
-        test(&mut cpu, &mut ram, 12, $func);
+        test(&mut cpu, &mut mmu, 12, $func);
 
         assert_eq!(cpu.$r1, 0x11);
         assert_eq!(cpu.$r2, 0x22);
@@ -23,13 +23,13 @@ fn test_pop() {
     test_pop_r_r!(h, l, opcode(0xE1));
 
     fn test_pop_a_f() {
-        let (mut cpu, mut ram) = init(None);
+        let (mut cpu, mut mmu) = init(None);
         cpu.reset();
-        ram[0xFFFF] = 0x11;
-        ram[0xFFFE] = 0xF0;
+        mmu.write_u8(0xFFFF, 0x11);
+        mmu.write_u8(0xFFFE, 0xF0);
         cpu.sp = 0xFFFD;
 
-        test(&mut cpu, &mut ram, 12, opcode(0xF1));
+        test(&mut cpu, &mut mmu, 12, opcode(0xF1));
 
         assert_eq!(cpu.a, 0x11);
         assert!(cpu.f.z());
@@ -38,11 +38,11 @@ fn test_pop() {
         assert!(cpu.f.c());
         assert_eq!(cpu.sp, 0xFFFF);
 
-        ram[0xFFFF] = 0x11;
-        ram[0xFFFE] = 0x70;
+        mmu.write_u8(0xFFFF, 0x11);
+        mmu.write_u8(0xFFFE, 0x70);
         cpu.sp = 0xFFFD;
 
-        test(&mut cpu, &mut ram, 12, opcode(0xF1));
+        test(&mut cpu, &mut mmu, 12, opcode(0xF1));
 
         assert_eq!(cpu.a, 0x11);
         assert!(!cpu.f.z());
@@ -51,11 +51,11 @@ fn test_pop() {
         assert!(cpu.f.c());
         assert_eq!(cpu.sp, 0xFFFF);
 
-        ram[0xFFFF] = 0x11;
-        ram[0xFFFE] = 0x30;
+        mmu.write_u8(0xFFFF, 0x11);
+        mmu.write_u8(0xFFFE, 0x30);
         cpu.sp = 0xFFFD;
 
-        test(&mut cpu, &mut ram, 12, opcode(0xF1));
+        test(&mut cpu, &mut mmu, 12, opcode(0xF1));
 
         assert_eq!(cpu.a, 0x11);
         assert!(!cpu.f.z());
@@ -64,11 +64,11 @@ fn test_pop() {
         assert!(cpu.f.c());
         assert_eq!(cpu.sp, 0xFFFF);
 
-        ram[0xFFFF] = 0x11;
-        ram[0xFFFE] = 0x10;
+        mmu.write_u8(0xFFFF, 0x11);
+        mmu.write_u8(0xFFFE, 0x10);
         cpu.sp = 0xFFFD;
 
-        test(&mut cpu, &mut ram, 12, opcode(0xF1));
+        test(&mut cpu, &mut mmu, 12, opcode(0xF1));
 
         assert_eq!(cpu.a, 0x11);
         assert!(!cpu.f.z());
@@ -77,11 +77,11 @@ fn test_pop() {
         assert!(cpu.f.c());
         assert_eq!(cpu.sp, 0xFFFF);
 
-        ram[0xFFFF] = 0x11;
-        ram[0xFFFE] = 0x0;
+        mmu.write_u8(0xFFFF, 0x11);
+        mmu.write_u8(0xFFFE, 0x0);
         cpu.sp = 0xFFFD;
 
-        test(&mut cpu, &mut ram, 12, opcode(0xF1));
+        test(&mut cpu, &mut mmu, 12, opcode(0xF1));
 
         assert_eq!(cpu.a, 0x11);
         assert!(!cpu.f.z());

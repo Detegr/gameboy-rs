@@ -4,11 +4,11 @@ use cpu::tests::*;
 fn test_or_r() {
     macro_rules! test_or_r(
         ($r:ident, $func:expr) => {{
-            let (mut cpu, mut ram) = init(None);
+            let (mut cpu, mut mmu) = init(None);
             cpu.a = 0xA3;
             cpu.$r = 0x11;
             let expected = cpu.a | cpu.$r;
-            test(&mut cpu, &mut ram, 4, $func);
+            test(&mut cpu, &mut mmu, 4, $func);
             assert!(cpu.a == expected, format!("or a, {}: Expected 0x{:X}, got 0x{:X}", stringify!($r), expected, cpu.$r));
             assert_eq!(cpu.f.z(), expected == 0);
             assert!(!cpu.f.n());
@@ -18,7 +18,7 @@ fn test_or_r() {
             cpu.a = 0x0;
             cpu.$r = 0x0;
             let expected = cpu.a | cpu.$r;
-            test(&mut cpu, &mut ram, 4, $func);
+            test(&mut cpu, &mut mmu, 4, $func);
             assert!(cpu.a == expected, format!("or a, {}: Expected 0x{:X}, got 0x{:X}", stringify!($r), expected, cpu.$r));
             assert_eq!(cpu.f.z(), expected == 0);
             assert!(!cpu.f.n());
@@ -37,18 +37,19 @@ fn test_or_r() {
 
 #[test]
 fn test_or_a_deref_hl() {
-    let (mut cpu, mut ram) = init(None);
-    ram[0x1F01] = 0x11;
+    let (mut cpu, mut mmu) = init(None);
+    mmu.write_u8(0x1F01, 0x11);
     cpu.h = 0x1F;
     cpu.l = 0x1;
     cpu.a = 0xA3;
-    let expected = cpu.a | ram[0x1F01];
-    test(&mut cpu, &mut ram, 8, opcode(0xB6));
+    let expected = cpu.a | mmu.read_u8(0x1F01);
+    test(&mut cpu, &mut mmu, 8, opcode(0xB6));
     assert!(
         cpu.a == expected,
         format!(
             "or a, (hl): Expected 0x{:X}, got 0x{:X}",
-            expected, ram[0x1F01]
+            expected,
+            mmu.read_u8(0x1F01)
         )
     );
     assert_eq!(cpu.f.z(), expected == 0);
@@ -57,14 +58,15 @@ fn test_or_a_deref_hl() {
     assert!(!cpu.f.c());
 
     cpu.a = 0x0;
-    ram[0x1F01] = 0x0;
-    let expected = cpu.a | ram[0x1F01];
-    test(&mut cpu, &mut ram, 8, opcode(0xB6));
+    mmu.write_u8(0x1F01, 0x0);
+    let expected = cpu.a | mmu.read_u8(0x1F01);
+    test(&mut cpu, &mut mmu, 8, opcode(0xB6));
     assert!(
         cpu.a == expected,
         format!(
             "or a, (hl): Expected 0x{:X}, got 0x{:X}",
-            expected, ram[0x1F01]
+            expected,
+            mmu.read_u8(0x1F01)
         )
     );
     assert_eq!(cpu.f.z(), expected == 0);
