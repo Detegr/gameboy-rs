@@ -1,3 +1,4 @@
+use cartridge::{Cartridge, MBC1};
 use std::fs;
 use std::io;
 use std::io::Read;
@@ -19,6 +20,18 @@ const RESERVED_ADDRESSES: &'static [(u16, u16, &'static str)] = &[
     (0x60, 0x0FF, "High-to-low of P10-P13 interrupt"),
 ];
 
+fn is_in_cartridge_area(addr: u16) -> bool {
+    addr <= 0x3FFF
+}
+
+fn is_in_lower_echo_ram_area(addr: u16) -> bool {
+    addr >= 0xC000 && addr <= 0xDE00
+}
+
+fn is_in_upper_echo_ram_area(addr: u16) -> bool {
+    addr >= 0xE000 && addr <= 0xFE00
+}
+
 fn is_reserved(addr: u16) -> Option<&'static str> {
     RESERVED_ADDRESSES
         .into_iter()
@@ -34,6 +47,7 @@ fn is_reserved(addr: u16) -> Option<&'static str> {
 
 pub struct Mmu {
     memory: Box<[u8]>,
+    cartridge: Option<Box<Cartridge>>,
 }
 
 impl Mmu {
@@ -58,11 +72,23 @@ impl Mmu {
         memory[0xFF47] = 0xFC;
         memory[0xFF48] = 0xFF;
         memory[0xFF49] = 0xFF;
-        Mmu { memory }
+        Mmu {
+            memory,
+            cartridge: None,
+        }
     }
     pub fn load_cartridge<P: AsRef<Path>>(&mut self, path: P) -> io::Result<()> {
         let mut file = fs::File::open(path)?;
         file.read(&mut self.memory)?;
+        const CARTRIDGE_TYPE_LOCATION: u16 = 0x147;
+        match self.read_u8(CARTRIDGE_TYPE_LOCATION) {
+            1 => {
+                self.cartridge = Some(Box::new(MBC1::new(&self.memory)));
+            }
+            ct => {
+                panic!("Cartridge type {} not supported yet", ct);
+            }
+        }
         Ok(())
     }
     #[cfg(test)]
@@ -72,8 +98,19 @@ impl Mmu {
         }
     }
     pub fn write_u8(&mut self, addr: u16, value: u8) {
+        if is_in_lower_echo_ram_area(addr) {
+            self.memory[addr as usize + 0x2000] = value;
+        } else if is_in_upper_echo_ram_area(addr) {
+            self.memory[addr as usize - 0x2000] = value;
+        }
         if let Some(msg) = is_reserved(addr) {
             panic!("Address {:2X} is reserved for {}", addr, msg);
+        }
+        if let Some(ref mut cartridge) = self.cartridge {
+            if is_in_cartridge_area(addr) {
+                cartridge.write_u8(addr, value);
+                return;
+            }
         }
         self.memory[addr as usize] = value;
     }
@@ -81,15 +118,20 @@ impl Mmu {
         if let Some(msg) = is_reserved(addr) {
             panic!("Address {:2X} is reserved for {}", addr, msg);
         }
-        self.memory[addr as usize] = (value & 0xFF) as u8;
-        self.memory[addr as usize + 1] = ((value >> 8) & 0xFF) as u8;
+        self.write_u8(addr, (value & 0xFF) as u8);
+        self.write_u8(addr + 1, ((value >> 8) & 0xFF) as u8);
     }
     pub fn read_u8(&self, addr: u16) -> u8 {
+        if let Some(ref cartridge) = self.cartridge {
+            if is_in_cartridge_area(addr) {
+                return cartridge.read_u8(addr);
+            }
+        }
         self.memory[addr as usize]
     }
     pub fn read_u16(&self, addr: u16) -> u16 {
-        let l = self.memory[addr as usize];
-        let h = self.memory[addr as usize + 1];
+        let l = self.read_u8(addr);
+        let h = self.read_u8(addr + 1);
         ((h as u16) << 8) | l as u16
     }
 }

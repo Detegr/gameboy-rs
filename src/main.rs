@@ -3,6 +3,7 @@ extern crate byteorder;
 extern crate log;
 extern crate simplelog;
 
+mod cartridge;
 mod cpu;
 mod mmu;
 
@@ -24,7 +25,6 @@ fn main() {
     let mut mmu = Mmu::new();
     mmu.load_cartridge("cpu_instrs/cpu_instrs.gb").unwrap();
     cpu.reset();
-    info!("Cartridge type: 0x{:X}", mmu.read_u8(0x147));
     loop {
         debug!("{}", cpu);
         cpu.step(&mut mmu);
