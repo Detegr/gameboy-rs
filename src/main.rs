@@ -5,9 +5,11 @@ extern crate simplelog;
 
 mod cartridge;
 mod cpu;
+mod gpu;
 mod mmu;
 
 use cpu::Cpu;
+use gpu::Gpu;
 use mmu::Mmu;
 
 fn main() {
@@ -21,12 +23,17 @@ fn main() {
         },
     )
     .unwrap();
+
     let mut cpu = Cpu::new();
+    let mut gpu = Gpu::new();
     let mut mmu = Mmu::new();
+
     mmu.load_cartridge("cpu_instrs/cpu_instrs.gb").unwrap();
     cpu.reset();
     loop {
         debug!("{}", cpu);
+        debug!("{:?}", gpu);
         cpu.step(&mut mmu);
+        gpu.step(&mut mmu, cpu.cycles());
     }
 }

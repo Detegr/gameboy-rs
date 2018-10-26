@@ -49,7 +49,7 @@ pub struct Cpu {
     pub sp: u16,
     run_state: RunState,
     interrupts: InterruptState,
-    pub cycles: usize,
+    cycles: usize,
 }
 
 impl fmt::Display for Cpu {
@@ -86,6 +86,10 @@ impl fmt::Display for Cpu {
 }
 
 impl Cpu {
+    #[inline(always)]
+    pub fn cycles(&self) -> usize {
+        self.cycles
+    }
     #[inline(always)]
     fn bc(&self) -> u16 {
         (self.b as u16) << 8 | self.c as u16
@@ -150,14 +154,17 @@ impl Cpu {
             InterruptState::WillDisable => InterruptState::Disabled,
             state => state,
         };
+
         debug!("{}", opcodes::MNEMONICS[opcode]);
         opcodes::OPCODES[opcode](self, mmu);
+
         if self.interrupts == old_interrupts_state {
             // The instruction did not modify interrupts flag,
             // enable/disable if we were in WillEnable/WillDisable state
             self.interrupts = new_interrupts_state;
         }
     }
+
     #[inline]
     fn next_byte(&mut self, mmu: &mut Mmu) -> u8 {
         let ret = mmu.read_u8(self.pc);
