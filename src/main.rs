@@ -3,8 +3,12 @@ extern crate byteorder;
 extern crate log;
 extern crate simplelog;
 
+#[cfg(feature = "glfb")]
+mod gl_display;
+
 mod cartridge;
 mod cpu;
+mod display;
 mod gpu;
 mod mmu;
 
@@ -12,9 +16,20 @@ use cpu::Cpu;
 use gpu::Gpu;
 use mmu::Mmu;
 
+#[cfg(not(feature = "glfb"))]
+fn get_display() -> display::DebugDisplay {
+    display::DebugDisplay
+}
+
+#[cfg(feature = "glfb")]
+fn get_display() -> gl_display::GlDisplay {
+    gl_display::GlDisplay::new()
+}
+
 fn main() {
+    /*
     simplelog::TermLogger::init(
-        simplelog::LevelFilter::Trace,
+        simplelog::LevelFilter::Debug,
         simplelog::Config {
             time: None,
             target: None,
@@ -22,18 +37,20 @@ fn main() {
             ..Default::default()
         },
     )
-    .unwrap();
+    .unwrap();*/
 
     let mut cpu = Cpu::new();
     let mut gpu = Gpu::new();
     let mut mmu = Mmu::new();
+    let mut display = get_display();
 
-    mmu.load_cartridge("cpu_instrs/cpu_instrs.gb").unwrap();
+    //mmu.load_cartridge("cpu_instrs/cpu_instrs.gb").unwrap();
+    mmu.load_cartridge("cpu_instrs/06.gb").unwrap();
     cpu.reset();
     loop {
         debug!("{}", cpu);
         debug!("{:?}", gpu);
         cpu.step(&mut mmu);
-        gpu.step(&mut mmu, cpu.cycles());
+        gpu.step(&mut display, &mut mmu, cpu.cycles());
     }
 }

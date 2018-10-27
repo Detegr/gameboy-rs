@@ -98,7 +98,7 @@ impl Mmu {
         }
     }
     pub fn write_u8(&mut self, addr: u16, value: u8) {
-        trace!("WRITE[0x{:2X}] = 0x{:02X}", addr, value);
+        debug!("WRITE[0x{:2X}] = 0x{:02X}", addr, value);
         if is_in_lower_echo_ram_area(addr) {
             self.memory[addr as usize + 0x2000] = value;
         } else if is_in_upper_echo_ram_area(addr) {
@@ -123,13 +123,16 @@ impl Mmu {
         self.write_u8(addr + 1, ((value >> 8) & 0xFF) as u8);
     }
     pub fn read_u8(&self, addr: u16) -> u8 {
-        trace!("READ[0x{:2X}]", addr);
         if let Some(ref cartridge) = self.cartridge {
             if is_in_cartridge_area(addr) {
-                return cartridge.read_u8(addr);
+                let ret = cartridge.read_u8(addr);
+                trace!("READ[0x{:2X}], {:2X}", addr, ret);
+                return ret;
             }
         }
-        self.memory[addr as usize]
+        let ret = self.memory[addr as usize];
+        debug!("READ[0x{:2X}], {:2X}", addr, ret);
+        ret
     }
     pub fn read_u16(&self, addr: u16) -> u16 {
         let l = self.read_u8(addr);
