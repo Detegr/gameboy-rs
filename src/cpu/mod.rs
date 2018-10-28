@@ -155,7 +155,7 @@ impl Cpu {
             state => state,
         };
 
-        debug!("{}", opcodes::MNEMONICS[opcode]);
+        info!("{}", opcodes::MNEMONICS[opcode]);
         opcodes::OPCODES[opcode](self, mmu);
 
         if self.interrupts == old_interrupts_state {
@@ -744,7 +744,7 @@ impl Cpu {
         );
         self.sp += 1;
         let byte = mmu.read_u8(self.sp);
-        self.f.0 = byte;
+        self.f.0 = byte & 0xF0; // Only high 4 bits should be written
         self.sp += 1;
         let byte = mmu.read_u8(self.sp);
         self.a = byte;
