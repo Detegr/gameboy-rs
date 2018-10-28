@@ -27,9 +27,11 @@ fn get_display() -> gl_display::GlDisplay {
 }
 
 fn main() {
+    let mut args = std::env::args();
+    let filename = args.nth(1);
     /*
     simplelog::TermLogger::init(
-        simplelog::LevelFilter::Debug,
+        simplelog::LevelFilter::Info,
         simplelog::Config {
             time: None,
             target: None,
@@ -37,7 +39,8 @@ fn main() {
             ..Default::default()
         },
     )
-    .unwrap();*/
+    .unwrap();
+    */
 
     let mut cpu = Cpu::new();
     let mut gpu = Gpu::new();
@@ -45,10 +48,14 @@ fn main() {
     let mut display = get_display();
 
     //mmu.load_cartridge("cpu_instrs/cpu_instrs.gb").unwrap();
-    mmu.load_cartridge("cpu_instrs/06.gb").unwrap();
+    if let Some(filename) = filename {
+        mmu.load_cartridge(&filename).unwrap();
+    } else {
+        mmu.load_cartridge("cpu_instrs/cpu_instrs.gb").unwrap();
+    }
     cpu.reset();
     loop {
-        debug!("{}", cpu);
+        info!("{}", cpu);
         debug!("{:?}", gpu);
         cpu.step(&mut mmu);
         gpu.step(&mut display, &mut mmu, cpu.cycles());
