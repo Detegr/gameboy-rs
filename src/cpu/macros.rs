@@ -551,21 +551,25 @@ macro_rules! make_rlc_r {
 
 macro_rules! rrc_n {
     ($cpu:expr, $value:expr) => {{
+        let mut val = $value;
+
         $cpu.f.unset_n();
         $cpu.f.unset_h();
-        if ($value & 0x1) != 0 {
+        if (val & 0x1) != 0 {
             $cpu.f.set_c();
         } else {
             $cpu.f.unset_c();
         }
 
-        if $value == 0 {
+        val = val.rotate_right(1);
+
+        if val == 0 {
             $cpu.f.set_z();
         } else {
             $cpu.f.unset_z();
         }
 
-        $value.rotate_right(1)
+        val
     }};
 }
 macro_rules! make_rrc_r {

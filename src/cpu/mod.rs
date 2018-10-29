@@ -143,7 +143,7 @@ impl Cpu {
         let opcode = {
             let opcode = self.next_byte(mmu) as usize;
             if opcode == 0xCB {
-                self.next_byte(mmu) as usize + 0xFF
+                self.next_byte(mmu) as usize + 0x100
             } else {
                 opcode
             }
@@ -884,7 +884,7 @@ impl Cpu {
     fn ldh_deref_n_a(&mut self, mmu: &mut Mmu) {
         // TODO: Tests
         let n = self.next_byte(mmu);
-        let addr = 0xFF00_u16 | n as u16;
+        let addr = 0xFF00_u16 + n as u16;
         mmu.write_u8(addr, self.a);
         self.cycles += 12;
     }
@@ -893,7 +893,7 @@ impl Cpu {
     fn ldh_a_deref_n(&mut self, mmu: &mut Mmu) {
         // TODO: Tests
         let n = self.next_byte(mmu);
-        let addr = 0xFF00_u16 | n as u16;
+        let addr = 0xFF00_u16 + n as u16;
         self.a = mmu.read_u8(addr);
         self.cycles += 12;
     }
