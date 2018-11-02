@@ -1,27 +1,29 @@
-extern crate mini_gl_fb;
-
-use self::mini_gl_fb::MiniGlFb;
+use debug_log::log;
 use display::Display;
-use std::thread;
 
-pub struct GlDisplay {
+pub struct WasmDisplay {
+    dirty: bool,
     buffer: Box<[u8]>,
     output_buf: [u8; 160 * 144],
-    fb: MiniGlFb,
 }
-impl GlDisplay {
-    pub fn new() -> GlDisplay {
-        let mut fb = mini_gl_fb::gotta_go_fast("GB", 160.0, 144.0);
-        fb.change_buffer_format::<u8>(mini_gl_fb::BufferFormat::R);
-        fb.use_grayscale_shader();
-        GlDisplay {
+impl WasmDisplay {
+    pub fn new() -> WasmDisplay {
+        WasmDisplay {
             buffer: vec![255u8; 256 * 256].into_boxed_slice(),
-            fb,
             output_buf: [255u8; 160 * 144],
+            dirty: false,
         }
     }
+    pub fn buffer(&self) -> [u8; 160 * 144] {
+        self.output_buf
+    }
+    pub fn is_dirty(&mut self) -> bool {
+        let ret = self.dirty;
+        self.dirty = false;
+        ret
+    }
 }
-impl Display for GlDisplay {
+impl Display for WasmDisplay {
     fn write_scanline(&mut self, y: u8, data: &[u8]) {
         for (i, pixel) in data.into_iter().enumerate() {
             // TODO: Palettes
@@ -37,15 +39,15 @@ impl Display for GlDisplay {
     }
     fn render_framebuffer(&mut self, scrollx: u8, scrolly: u8) {
         let mut i = 0;
-        for y in (0u8..144).rev() {
+        for y in 0u8..144 {
             for x in 0u8..160 {
                 let scrolledx = x.wrapping_add(scrollx);
                 let scrolledy = y.wrapping_add(scrolly);
-                self.output_buf[i] = self.buffer[scrolledy as usize * 256 + scrolledx as usize];
+                let val = self.buffer[scrolledy as usize * 256 + scrolledx as usize];
+                self.output_buf[i] = val;
                 i += 1;
             }
         }
-        self.fb.update_buffer(&self.output_buf);
-        //thread::sleep_ms(16);
+        self.dirty = true;
     }
 }

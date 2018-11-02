@@ -1,4 +1,5 @@
 use cartridge::{Cartridge, MBC1};
+use debug_log::log;
 use std::fs;
 use std::io;
 use std::io::Read;
@@ -79,9 +80,16 @@ impl Mmu {
     }
     pub fn load_cartridge<P: AsRef<Path>>(&mut self, path: P) -> io::Result<()> {
         let mut file = fs::File::open(path)?;
-        file.read(&mut self.memory)?;
+        self.load_cartridge_data(file);
+        Ok(())
+    }
+    pub fn load_cartridge_data<R: Read>(&mut self, mut data: R) {
+        let data_len = data.read(&mut self.memory).unwrap();
         const CARTRIDGE_TYPE_LOCATION: u16 = 0x147;
         match self.read_u8(CARTRIDGE_TYPE_LOCATION) {
+            0 => {
+                wasm_log!("Cartridge type 0");
+            }
             1 => {
                 self.cartridge = Some(Box::new(MBC1::new(&self.memory)));
             }
@@ -89,7 +97,6 @@ impl Mmu {
                 panic!("Cartridge type {} not supported yet", ct);
             }
         }
-        Ok(())
     }
     #[cfg(test)]
     pub fn set_bytes(&mut self, bytes: &[u8]) {
@@ -98,7 +105,7 @@ impl Mmu {
         }
     }
     pub fn write_u8(&mut self, addr: u16, value: u8) {
-        debug!("WRITE[0x{:2X}] = 0x{:02X}", addr, value);
+        trace!("WRITE[0x{:2X}] = 0x{:02X}", addr, value);
         if is_in_lower_echo_ram_area(addr) {
             self.memory[addr as usize + 0x2000] = value;
         } else if is_in_upper_echo_ram_area(addr) {
@@ -116,9 +123,6 @@ impl Mmu {
         self.memory[addr as usize] = value;
     }
     pub fn write_u16(&mut self, addr: u16, value: u16) {
-        if let Some(msg) = is_reserved(addr) {
-            panic!("Address {:2X} is reserved for {}", addr, msg);
-        }
         self.write_u8(addr, (value & 0xFF) as u8);
         self.write_u8(addr + 1, ((value >> 8) & 0xFF) as u8);
     }
@@ -126,12 +130,12 @@ impl Mmu {
         if let Some(ref cartridge) = self.cartridge {
             if is_in_cartridge_area(addr) {
                 let ret = cartridge.read_u8(addr);
-                trace!("READ[0x{:2X}], {:2X}", addr, ret);
+                //log!("READ[0x{:2X}], {:2X}", addr, ret);
                 return ret;
             }
         }
         let ret = self.memory[addr as usize];
-        debug!("READ[0x{:2X}], {:2X}", addr, ret);
+        //log!("READ[0x{:2X}], {:2X}", addr, ret);
         ret
     }
     pub fn read_u16(&self, addr: u16) -> u16 {

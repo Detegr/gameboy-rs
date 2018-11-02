@@ -113,21 +113,19 @@ impl Gpu {
         match lcdc.lcd_control_operation() {
             LCDCField::Operation => {}
             LCDCField::StopCompletely => {}
-            _ => unreachable!(),
+            _ => unreachable!("lcdc control operation"),
         }
 
         let window_tilemap_display_start = match lcdc.window_tilemap_display() {
             LCDCField::_9800_9BFF => 0x9800,
-            LCDCField::_9C00_9FFF => {
-                unimplemented!("Window tilemap display 0x9C00 - 0x9FFF");
-            }
-            _ => unreachable!(),
+            LCDCField::_9C00_9FFF => 0x9C00,
+            _ => unreachable!("tilemap display start"),
         };
 
         let tile_data_start = match lcdc.bg_and_window_tile_data_select() {
             LCDCField::_8000_8FFF => 0x8000,
             LCDCField::_8800_97FF => 0x8800,
-            _ => unreachable!(),
+            _ => unreachable!("tile data start"),
         };
 
         let bg_tilemap_display_start = match lcdc.bg_tile_map_display_select() {
@@ -135,7 +133,7 @@ impl Gpu {
             LCDCField::_9C00_9FFF => {
                 unimplemented!("Bg tile map display 0x9C00 - 0x9CFF");
             }
-            _ => unreachable!(),
+            _ => unreachable!("bg tilemap display start"),
         };
 
         if lcdc.window_display() {

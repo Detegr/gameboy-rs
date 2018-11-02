@@ -8,11 +8,14 @@ mod gl_display;
 
 mod cartridge;
 mod cpu;
+#[macro_use]
+mod debug_log;
 mod display;
 mod gpu;
 mod mmu;
 
 use cpu::Cpu;
+use debug_log::log;
 use gpu::Gpu;
 use mmu::Mmu;
 
@@ -29,8 +32,7 @@ fn get_display() -> gl_display::GlDisplay {
 fn main() {
     let mut args = std::env::args();
     let filename = args.nth(1);
-    /*
-    simplelog::TermLogger::init(
+    simplelog::SimpleLogger::init(
         simplelog::LevelFilter::Info,
         simplelog::Config {
             time: None,
@@ -40,7 +42,6 @@ fn main() {
         },
     )
     .unwrap();
-    */
 
     let mut cpu = Cpu::new();
     let mut gpu = Gpu::new();
@@ -55,8 +56,7 @@ fn main() {
     }
     cpu.reset();
     loop {
-        info!("{}", cpu);
-        debug!("{:?}", gpu);
+        //info!("{}", cpu);
         cpu.step(&mut mmu);
         gpu.step(&mut display, &mut mmu, cpu.cycles());
     }

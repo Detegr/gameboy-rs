@@ -60,6 +60,11 @@ pub fn test_half_carry_addition(a: u8, b: u8) -> bool {
 }
 
 #[inline(always)]
+pub fn test_half_carry_addition_u16(a: u16, b: u16) -> bool {
+    ((a & 0xF).wrapping_add(b & 0xF) & 0x10) == 0x10
+}
+
+#[inline(always)]
 pub fn test_half_carry_subtraction(a: u8, b: u8) -> bool {
     ((a & 0xF).wrapping_sub(b & 0xF) & 0x10) == 0x10
 }
