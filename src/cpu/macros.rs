@@ -50,15 +50,53 @@ macro_rules! make_add {
         }
     }
 }
+macro_rules! adc {
+    ($cpu:expr, $value:expr) => {{
+        let carry = if $cpu.f.c() { 1 } else { 0 };
+
+        let x = $cpu.a as u32;
+        let y = $value as u32;
+
+        let r = x.wrapping_add(y).wrapping_add(carry as u32);
+
+        println!(
+            "r: 0x{:X} + 0x{:X} + 0x{:X} = 0x{:X} (pc: 0x{:X}) ({})",
+            x, y, carry, r, $cpu.pc, $cpu.cycles
+        );
+
+        let rb = r as u8;
+
+        println!("rb: 0x{:X}", rb);
+
+        if rb == 0 {
+            $cpu.f.set_z();
+        } else {
+            $cpu.f.unset_z();
+        }
+        if (x ^ y ^ r) & 0x10 != 0 {
+            $cpu.f.set_h();
+        } else {
+            $cpu.f.unset_h();
+        }
+        if r & 0x100 != 0 {
+            $cpu.f.set_c();
+        } else {
+            $cpu.f.unset_c();
+        }
+
+        $cpu.f.unset_n();
+
+        $cpu.a = rb;
+
+        println!("z: {}, h: {}, c: {}", $cpu.f.z(), $cpu.f.h(), $cpu.f.c(),);
+    }};
+}
 macro_rules! make_adc {
     ($name:ident, $reg: ident) => {
         #[inline]
         fn $name(&mut self, _mmu: &mut Mmu) {
-            if self.f.c() {
-                add_a_n!(self, self.$reg.wrapping_add(1));
-            } else {
-                add_a_n!(self, self.$reg);
-            }
+            add_a_n_c!(self, self.$reg, if self.f.c() { 1 } else { 0 });
+            //adc!(self, self.$reg);
         }
     }
 }
@@ -92,10 +130,12 @@ macro_rules! make_add_rr_rr {
         }
     }
 }
-macro_rules! add_a_n {
-    ($cpu:expr, $value:expr) => {{
+macro_rules! add_a_n_c {
+    ($cpu:expr, $value:expr, $carry:expr) => {
         $cpu.f.unset_n();
-        let check = ($cpu.a as u16) + ($value as u16);
+        let carry = $carry;
+        let mut val = $value;
+        let check = ($cpu.a as u16) + (val as u16) + (carry as u16);
         if check > 0xFF {
             $cpu.f.set_h();
             $cpu.f.set_c();
@@ -103,19 +143,52 @@ macro_rules! add_a_n {
             $cpu.f.unset_h();
             $cpu.f.unset_c();
         }
-        if cpuflags::test_half_carry_addition($cpu.a, $value) {
+        if cpuflags::test_half_carry_addition($cpu.a, val) {
             $cpu.f.set_h();
         } else {
-            $cpu.f.unset_h();
+            if cpuflags::test_half_carry_addition(
+                $cpu.a.wrapping_add(val),
+                $cpu.a.wrapping_add(val).wrapping_add(carry),
+            ) {
+                $cpu.f.set_h();
+            } else {
+                $cpu.f.unset_h();
+            }
         }
-        $cpu.a = $cpu.a.wrapping_add($value);
+        $cpu.a = $cpu.a.wrapping_add(val).wrapping_add(carry);
         if $cpu.a == 0 {
             $cpu.f.set_z();
         } else {
             $cpu.f.unset_z();
         }
         $cpu.cycles += 4;
-    }};
+    };
+}
+macro_rules! add_a_n {
+    ($cpu:expr, $value:expr) => {
+        $cpu.f.unset_n();
+        let mut val = $value;
+        let check = ($cpu.a as u16) + (val as u16);
+        if check > 0xFF {
+            $cpu.f.set_h();
+            $cpu.f.set_c();
+        } else {
+            $cpu.f.unset_h();
+            $cpu.f.unset_c();
+        }
+        if cpuflags::test_half_carry_addition($cpu.a, val) {
+            $cpu.f.set_h();
+        } else {
+            $cpu.f.unset_h();
+        }
+        $cpu.a = $cpu.a.wrapping_add(val);
+        if $cpu.a == 0 {
+            $cpu.f.set_z();
+        } else {
+            $cpu.f.unset_z();
+        }
+        $cpu.cycles += 4;
+    };
 }
 macro_rules! make_sub {
     ($name:ident, $reg: ident) => {

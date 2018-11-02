@@ -49,7 +49,8 @@ pub struct Cpu {
     pub sp: u16,
     run_state: RunState,
     interrupts: InterruptState,
-    cycles: usize,
+    pub cycles: usize,
+    pub debug: bool,
 }
 
 impl fmt::Display for Cpu {
@@ -155,7 +156,9 @@ impl Cpu {
             state => state,
         };
 
-        info!("{}", opcodes::MNEMONICS[opcode]);
+        if self.debug {
+            info!("{}", opcodes::MNEMONICS[opcode]);
+        }
         opcodes::OPCODES[opcode](self, mmu);
 
         if self.interrupts == old_interrupts_state {
@@ -820,12 +823,9 @@ impl Cpu {
 
     #[inline]
     fn adc_a_n(&mut self, mmu: &mut Mmu) {
-        let n = if self.f.c() {
-            self.next_byte(mmu) + 1
-        } else {
-            self.next_byte(mmu)
-        };
-        add_a_n!(self, n);
+        let c = if self.f.c() { 1 } else { 0 };
+        let n = self.next_byte(mmu);
+        add_a_n!(self, n + c);
         self.cycles += 4;
     }
 

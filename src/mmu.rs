@@ -82,6 +82,7 @@ impl Mmu {
         file.read(&mut self.memory)?;
         const CARTRIDGE_TYPE_LOCATION: u16 = 0x147;
         match self.read_u8(CARTRIDGE_TYPE_LOCATION) {
+            0 => {}
             1 => {
                 self.cartridge = Some(Box::new(MBC1::new(&self.memory)));
             }
@@ -98,7 +99,7 @@ impl Mmu {
         }
     }
     pub fn write_u8(&mut self, addr: u16, value: u8) {
-        debug!("WRITE[0x{:2X}] = 0x{:02X}", addr, value);
+        trace!("WRITE[0x{:2X}] = 0x{:02X}", addr, value);
         if is_in_lower_echo_ram_area(addr) {
             self.memory[addr as usize + 0x2000] = value;
         } else if is_in_upper_echo_ram_area(addr) {
@@ -116,9 +117,6 @@ impl Mmu {
         self.memory[addr as usize] = value;
     }
     pub fn write_u16(&mut self, addr: u16, value: u16) {
-        if let Some(msg) = is_reserved(addr) {
-            panic!("Address {:2X} is reserved for {}", addr, msg);
-        }
         self.write_u8(addr, (value & 0xFF) as u8);
         self.write_u8(addr + 1, ((value >> 8) & 0xFF) as u8);
     }
@@ -131,7 +129,7 @@ impl Mmu {
             }
         }
         let ret = self.memory[addr as usize];
-        debug!("READ[0x{:2X}], {:2X}", addr, ret);
+        trace!("READ[0x{:2X}], {:2X}", addr, ret);
         ret
     }
     pub fn read_u16(&self, addr: u16) -> u16 {

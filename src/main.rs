@@ -29,8 +29,7 @@ fn get_display() -> gl_display::GlDisplay {
 fn main() {
     let mut args = std::env::args();
     let filename = args.nth(1);
-    /*
-    simplelog::TermLogger::init(
+    simplelog::SimpleLogger::init(
         simplelog::LevelFilter::Info,
         simplelog::Config {
             time: None,
@@ -40,7 +39,6 @@ fn main() {
         },
     )
     .unwrap();
-    */
 
     let mut cpu = Cpu::new();
     let mut gpu = Gpu::new();
@@ -55,8 +53,13 @@ fn main() {
     }
     cpu.reset();
     loop {
-        info!("{}", cpu);
-        debug!("{:?}", gpu);
+        if cpu.cycles > 8488916 && cpu.cycles < 8491540 {
+            //cpu.debug = true;
+            //info!("{}", cpu);
+        } else {
+            cpu.debug = false;
+        }
+        //debug!("{:?}", gpu);
         cpu.step(&mut mmu);
         gpu.step(&mut display, &mut mmu, cpu.cycles());
     }
