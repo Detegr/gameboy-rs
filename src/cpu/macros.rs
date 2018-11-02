@@ -50,53 +50,11 @@ macro_rules! make_add {
         }
     }
 }
-macro_rules! adc {
-    ($cpu:expr, $value:expr) => {{
-        let carry = if $cpu.f.c() { 1 } else { 0 };
-
-        let x = $cpu.a as u32;
-        let y = $value as u32;
-
-        let r = x.wrapping_add(y).wrapping_add(carry as u32);
-
-        println!(
-            "r: 0x{:X} + 0x{:X} + 0x{:X} = 0x{:X} (pc: 0x{:X}) ({})",
-            x, y, carry, r, $cpu.pc, $cpu.cycles
-        );
-
-        let rb = r as u8;
-
-        println!("rb: 0x{:X}", rb);
-
-        if rb == 0 {
-            $cpu.f.set_z();
-        } else {
-            $cpu.f.unset_z();
-        }
-        if (x ^ y ^ r) & 0x10 != 0 {
-            $cpu.f.set_h();
-        } else {
-            $cpu.f.unset_h();
-        }
-        if r & 0x100 != 0 {
-            $cpu.f.set_c();
-        } else {
-            $cpu.f.unset_c();
-        }
-
-        $cpu.f.unset_n();
-
-        $cpu.a = rb;
-
-        println!("z: {}, h: {}, c: {}", $cpu.f.z(), $cpu.f.h(), $cpu.f.c(),);
-    }};
-}
 macro_rules! make_adc {
     ($name:ident, $reg: ident) => {
         #[inline]
         fn $name(&mut self, _mmu: &mut Mmu) {
             add_a_n_c!(self, self.$reg, if self.f.c() { 1 } else { 0 });
-            //adc!(self, self.$reg);
         }
     }
 }
@@ -110,8 +68,8 @@ macro_rules! make_add_rr_rr {
             r2 = r2.wrapping_add(self.$r4);
             let r1_add = if r2 < self.$r2 { 1 } else { 0 };
             let mut r1 = self.$r1;
-            r1 = r1.wrapping_add(self.$r3 + r1_add);
-            if cpuflags::test_half_carry_addition(self.$r1, self.$r3 + r1_add) {
+            r1 = r1.wrapping_add(self.$r3).wrapping_add(r1_add);
+            if cpuflags::test_half_carry_addition(self.$r1, self.$r3.wrapping_add(r1_add)) {
                 self.f.set_h();
             } else {
                 self.f.unset_h();
@@ -133,8 +91,8 @@ macro_rules! make_add_rr_rr {
 macro_rules! add_a_n_c {
     ($cpu:expr, $value:expr, $carry:expr) => {
         $cpu.f.unset_n();
+        let val = $value;
         let carry = $carry;
-        let mut val = $value;
         let check = ($cpu.a as u16) + (val as u16) + (carry as u16);
         if check > 0xFF {
             $cpu.f.set_h();
@@ -143,17 +101,11 @@ macro_rules! add_a_n_c {
             $cpu.f.unset_h();
             $cpu.f.unset_c();
         }
-        if cpuflags::test_half_carry_addition($cpu.a, val) {
+        let check_without_carry_bit = ($cpu.a as u16) ^ (val as u16) ^ (carry as u16);
+        if ((check ^ check_without_carry_bit) & 0x10) != 0 {
             $cpu.f.set_h();
         } else {
-            if cpuflags::test_half_carry_addition(
-                $cpu.a.wrapping_add(val),
-                $cpu.a.wrapping_add(val).wrapping_add(carry),
-            ) {
-                $cpu.f.set_h();
-            } else {
-                $cpu.f.unset_h();
-            }
+            $cpu.f.unset_h();
         }
         $cpu.a = $cpu.a.wrapping_add(val).wrapping_add(carry);
         if $cpu.a == 0 {
@@ -203,12 +155,42 @@ macro_rules! make_sbc {
         #[inline]
         fn $name(&mut self, _mmu: &mut Mmu) {
             if self.f.c() {
-                sub_a_n!(self, self.$reg.wrapping_add(1));
+                sub_a_n_c!(self, self.$reg, 1);
             } else {
-                sub_a_n!(self, self.$reg);
+                sub_a_n_c!(self, self.$reg, 0);
             }
         }
     }
+}
+macro_rules! sub_a_n_c {
+    ($cpu:expr, $value:expr, $carry:expr) => {
+        let val = $value;
+        let carry = $carry;
+        let check = ($cpu.a as u16)
+            .wrapping_sub(val as u16)
+            .wrapping_sub(carry as u16);
+        if check & 0x100 != 0 {
+            $cpu.f.set_h();
+            $cpu.f.set_c();
+        } else {
+            $cpu.f.unset_h();
+            $cpu.f.unset_c();
+        }
+        let check_without_carry_bit = ($cpu.a as u16) ^ (val as u16) ^ (carry as u16);
+        if ((check ^ check_without_carry_bit) & 0x10) != 0 {
+            $cpu.f.set_h();
+        } else {
+            $cpu.f.unset_h();
+        }
+        $cpu.a = $cpu.a.wrapping_sub(val).wrapping_sub(carry);
+        if $cpu.a == 0 {
+            $cpu.f.set_z();
+        } else {
+            $cpu.f.unset_z();
+        }
+        $cpu.f.set_n();
+        $cpu.cycles += 4;
+    };
 }
 macro_rules! sub_a_n {
     ($cpu:expr, $value:expr) => {{

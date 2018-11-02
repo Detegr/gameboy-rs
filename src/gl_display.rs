@@ -46,6 +46,6 @@ impl Display for GlDisplay {
             }
         }
         self.fb.update_buffer(&self.output_buf);
-        thread::sleep_ms(16);
+        //thread::sleep_ms(16);
     }
 }

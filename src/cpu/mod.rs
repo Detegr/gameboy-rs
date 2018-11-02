@@ -156,9 +156,7 @@ impl Cpu {
             state => state,
         };
 
-        if self.debug {
-            info!("{}", opcodes::MNEMONICS[opcode]);
-        }
+        info!("{}", opcodes::MNEMONICS[opcode]);
         opcodes::OPCODES[opcode](self, mmu);
 
         if self.interrupts == old_interrupts_state {
@@ -427,8 +425,8 @@ impl Cpu {
         l = l.wrapping_add(p);
         let h_add = if l < self.l { 1 } else { 0 };
         let mut h = self.h;
-        h = h.wrapping_add(s + h_add);
-        if cpuflags::test_half_carry_addition(self.h, s + h_add) {
+        h = h.wrapping_add(s).wrapping_add(h_add);
+        if cpuflags::test_half_carry_addition(self.h, s.wrapping_add(h_add)) {
             self.f.set_h();
         } else {
             self.f.unset_h();
@@ -695,15 +693,9 @@ impl Cpu {
 
     #[inline]
     fn ret(&mut self, mmu: &mut Mmu) {
-        // TODO: Should popping from empty stack
-        // result in a zero or is it an error?
-        assert!(
-            self.sp.wrapping_add(2) > self.sp,
-            "less than 2 bytes of data in the stack"
-        );
-        self.sp += 1;
+        self.sp = self.sp.wrapping_add(1);
         let byte1 = mmu.read_u8(self.sp);
-        self.sp += 1;
+        self.sp = self.sp.wrapping_add(1);
         let byte2 = mmu.read_u8(self.sp);
 
         let addr = ((byte2 as u16) << 8) | byte1 as u16;
@@ -825,7 +817,7 @@ impl Cpu {
     fn adc_a_n(&mut self, mmu: &mut Mmu) {
         let c = if self.f.c() { 1 } else { 0 };
         let n = self.next_byte(mmu);
-        add_a_n!(self, n + c);
+        add_a_n_c!(self, n, c);
         self.cycles += 4;
     }
 
@@ -839,12 +831,9 @@ impl Cpu {
     #[inline]
     fn sbc_a_n(&mut self, mmu: &mut Mmu) {
         // TODO: Tests
-        let n = if self.f.c() {
-            self.next_byte(mmu) + 1
-        } else {
-            self.next_byte(mmu)
-        };
-        sub_a_n!(self, n);
+        let n = self.next_byte(mmu);
+        let c = if self.f.c() { 1 } else { 0 };
+        sub_a_n_c!(self, n, c);
         self.cycles += 4;
     }
 

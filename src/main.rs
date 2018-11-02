@@ -53,13 +53,7 @@ fn main() {
     }
     cpu.reset();
     loop {
-        if cpu.cycles > 8488916 && cpu.cycles < 8491540 {
-            //cpu.debug = true;
-            //info!("{}", cpu);
-        } else {
-            cpu.debug = false;
-        }
-        //debug!("{:?}", gpu);
+        info!("{}", cpu);
         cpu.step(&mut mmu);
         gpu.step(&mut display, &mut mmu, cpu.cycles());
     }

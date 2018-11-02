@@ -124,12 +124,12 @@ impl Mmu {
         if let Some(ref cartridge) = self.cartridge {
             if is_in_cartridge_area(addr) {
                 let ret = cartridge.read_u8(addr);
-                trace!("READ[0x{:2X}], {:2X}", addr, ret);
+                info!("READ[0x{:2X}], {:2X}", addr, ret);
                 return ret;
             }
         }
         let ret = self.memory[addr as usize];
-        trace!("READ[0x{:2X}], {:2X}", addr, ret);
+        info!("READ[0x{:2X}], {:2X}", addr, ret);
         ret
     }
     pub fn read_u16(&self, addr: u16) -> u16 {

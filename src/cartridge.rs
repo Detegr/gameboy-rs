@@ -11,7 +11,7 @@ impl MBC1 {
     pub fn new(ram: &[u8]) -> MBC1 {
         info!("Cartridge type is MBC1");
         let mut memory = vec![];
-        memory.extend_from_slice(&ram[0..0x3FFF]);
+        memory.extend_from_slice(&ram[0..0x4000]);
         MBC1 {
             memory: memory.into_boxed_slice(),
         }
