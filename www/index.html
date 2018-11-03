@@ -3,9 +3,25 @@
     <head>
         <meta charset="utf-8">
         <title>Hackfets gameboy</title>
+        <style>
+            #display {
+                image-rendering: pixelated;
+                width: auto;
+                height: 95vh;
+                border: 1px solid #ccc;
+                justify-self: center;
+            }
+
+            @media screen and (max-aspect-ratio: 10/9) {
+                #display {
+                    width: 95%;
+                    height: auto;
+                }
+            }
+        </style>
     </head>
     <body style="display: grid;">
-        <canvas id="display" width="160" height="144" style="width: 320px; height: 288px; border: 1px solid black; justify-self: center;"></canvas>
+        <canvas id="display" width="160" height="144"></canvas>
         <br/>
         <button id="stop">Stop</button>
         <script src="./bootstrap.js"></script>
