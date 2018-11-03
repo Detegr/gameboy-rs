@@ -119,7 +119,7 @@ macro_rules! add_a_n_c {
 macro_rules! add_a_n {
     ($cpu:expr, $value:expr) => {
         $cpu.f.unset_n();
-        let mut val = $value;
+        let val = $value;
         let check = ($cpu.a as u16) + (val as u16);
         if check > 0xFF {
             $cpu.f.set_h();

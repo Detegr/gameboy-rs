@@ -45,7 +45,7 @@ pub struct Cpu {
     h: u8,
     l: u8,
     f: cpuflags::CpuFlags,
-    pc: u16,
+    pub pc: u16,
     pub sp: u16,
     run_state: RunState,
     interrupts: InterruptState,
@@ -156,7 +156,7 @@ impl Cpu {
             state => state,
         };
 
-        info!("{}", opcodes::MNEMONICS[opcode]);
+        //info!("{}", opcodes::MNEMONICS[opcode]);
         opcodes::OPCODES[opcode](self, mmu);
 
         if self.interrupts == old_interrupts_state {

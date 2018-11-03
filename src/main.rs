@@ -8,11 +8,14 @@ mod gl_display;
 
 mod cartridge;
 mod cpu;
+#[macro_use]
+mod debug_log;
 mod display;
 mod gpu;
 mod mmu;
 
 use cpu::Cpu;
+use debug_log::log;
 use gpu::Gpu;
 use mmu::Mmu;
 
@@ -53,7 +56,7 @@ fn main() {
     }
     cpu.reset();
     loop {
-        info!("{}", cpu);
+        //info!("{}", cpu);
         cpu.step(&mut mmu);
         gpu.step(&mut display, &mut mmu, cpu.cycles());
     }
