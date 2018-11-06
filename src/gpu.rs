@@ -80,6 +80,9 @@ impl Gpu {
                 if cycles_since_mode_start > VBLANK_TIME_IN_CYCLES {
                     self.mode_start_cycles += VBLANK_TIME_IN_CYCLES;
                     self.state = GpuState::OAM;
+
+                    let intf = mmu.read_u8(0xFF0F);
+                    mmu.write_u8(0xFF0F, intf | 0x1);
                 }
             }
             GpuState::OAM => {

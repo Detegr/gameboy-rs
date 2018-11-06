@@ -141,28 +141,43 @@ impl Cpu {
         self.interrupts = InterruptState::Enabled; // TODO: This is just a guess
     }
     pub fn step(&mut self, mmu: &mut Mmu) {
-        let opcode = {
-            let opcode = self.next_byte(mmu) as usize;
-            if opcode == 0xCB {
-                self.next_byte(mmu) as usize + 0x100
-            } else {
-                opcode
+        if self.run_state == RunState::Running {
+            let opcode = {
+                let opcode = self.next_byte(mmu) as usize;
+                if opcode == 0xCB {
+                    self.next_byte(mmu) as usize + 0x100
+                } else {
+                    opcode
+                }
+            };
+            let old_interrupts_state = self.interrupts;
+            let new_interrupts_state = match self.interrupts {
+                InterruptState::WillEnable => InterruptState::Enabled,
+                InterruptState::WillDisable => InterruptState::Disabled,
+                state => state,
+            };
+
+            info!("{}", opcodes::MNEMONICS[opcode]);
+            opcodes::OPCODES[opcode](self, mmu);
+
+            if self.interrupts == old_interrupts_state {
+                // The instruction did not modify interrupts flag,
+                // enable/disable if we were in WillEnable/WillDisable state
+                self.interrupts = new_interrupts_state;
             }
-        };
-        let old_interrupts_state = self.interrupts;
-        let new_interrupts_state = match self.interrupts {
-            InterruptState::WillEnable => InterruptState::Enabled,
-            InterruptState::WillDisable => InterruptState::Disabled,
-            state => state,
-        };
-
-        //info!("{}", opcodes::MNEMONICS[opcode]);
-        opcodes::OPCODES[opcode](self, mmu);
-
-        if self.interrupts == old_interrupts_state {
-            // The instruction did not modify interrupts flag,
-            // enable/disable if we were in WillEnable/WillDisable state
-            self.interrupts = new_interrupts_state;
+        } else {
+            // FIXME: How many cycles should we proceed in time
+            // if the CPU is halted?
+            self.cycles += 4;
+            let intf = mmu.read_u8(0xFF0F);
+            if (intf & 0x1) != 0 {
+                // V-Blank
+                mmu.write_u8(0xFF0F, 0);
+                let pc = self.pc;
+                self.push_u16(mmu, pc);
+                self.pc = 0x0040;
+                self.run_state = RunState::Running;
+            }
         }
     }
 
