@@ -1,5 +1,4 @@
 use cartridge::{Cartridge, MBC1};
-use debug_log::log;
 use std::fs;
 use std::io;
 use std::io::Read;
@@ -88,7 +87,7 @@ impl Mmu {
         const CARTRIDGE_TYPE_LOCATION: u16 = 0x147;
         match self.read_u8(CARTRIDGE_TYPE_LOCATION) {
             0 => {
-                wasm_log!("Cartridge type 0");
+                info!("Cartridge type 0");
             }
             1 => {
                 self.cartridge = Some(Box::new(MBC1::new(&self.memory)));

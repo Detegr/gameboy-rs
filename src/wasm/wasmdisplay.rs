@@ -1,4 +1,3 @@
-use debug_log::log;
 use display::Display;
 
 pub struct WasmDisplay {

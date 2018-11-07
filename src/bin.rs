@@ -1,21 +1,12 @@
-extern crate byteorder;
-#[macro_use]
-extern crate log;
+extern crate gameboy;
 extern crate simplelog;
 
 #[cfg(feature = "glfb")]
 mod gl_display;
 
-mod cartridge;
-mod cpu;
-#[macro_use]
-mod debug_log;
-mod display;
-mod gpu;
-mod mmu;
+use gameboy::*;
 
 use cpu::Cpu;
-use debug_log::log;
 use gpu::Gpu;
 use mmu::Mmu;
 

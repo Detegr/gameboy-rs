@@ -1,8 +1,7 @@
 extern crate mini_gl_fb;
 
 use self::mini_gl_fb::MiniGlFb;
-use display::Display;
-use std::thread;
+use gameboy::display::Display;
 
 pub struct GlDisplay {
     buffer: Box<[u8]>,
@@ -46,6 +45,5 @@ impl Display for GlDisplay {
             }
         }
         self.fb.update_buffer(&self.output_buf);
-        //thread::sleep_ms(16);
     }
 }

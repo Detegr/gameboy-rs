@@ -1,6 +1,3 @@
-use debug_log;
-use debug_log::log;
-
 pub trait Cartridge {
     fn write_u8(&mut self, addr: u16, value: u8);
     fn read_u8(&self, addr: u16) -> u8;
@@ -12,8 +9,7 @@ pub struct MBC1 {
 }
 impl MBC1 {
     pub fn new(ram: &[u8]) -> MBC1 {
-        //info!("Cartridge type is MBC1");
-        //wasm_log!("Cartridge type is MBC1");
+        info!("Cartridge type is MBC1");
         let mut memory = vec![];
         memory.extend_from_slice(&ram[0..0x4000]);
         MBC1 {

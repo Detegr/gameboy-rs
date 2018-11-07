@@ -1,5 +1,5 @@
 [package]
-authors = ["guest"]
+authors = ["Antti Keränen <detegr@gmail.com>"]
 name = "gameboy"
 version = "0.1.0"
 
@@ -8,16 +8,23 @@ byteorder = "0.4.2"
 console_error_panic_hook = "0.1.5"
 log = "0.4.5"
 simplelog = "0.5.3"
-wasm-bindgen = "0.2.27"
 
-[dependencies.mini_gl_fb]
+[target.'cfg(not(target_os = "unknown"))'.dependencies.mini_gl_fb]
 optional = true
 version = "0.6.0"
 
 [features]
-default = []
+default = ["glfb"]
 glfb = ["mini_gl_fb"]
 
+[target.wasm32-unknown-unknown.dependencies]
+wasm-bindgen = "0.2.27"
+
+[[bin]]
+name = "gameboy"
+path = "src/bin.rs"
+
 [lib]
-crate-type = ["cdylib"]
+name = "gameboy"
+crate-type = ["cdylib", "rlib"]
 path = "src/lib.rs"
