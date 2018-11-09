@@ -1,4 +1,7 @@
 target
 *.swp
 *.swo
+*.gb
+**/*.gb
 pkg/
+wasm-pack.log
