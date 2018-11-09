@@ -57,6 +57,7 @@ fn get_display() -> wasmdisplay::WasmDisplay {
 
 #[wasm_bindgen]
 pub fn get_emulator(rom: &str) -> Emulator {
+    wasm_logger::init(wasm_logger::Config::new(log::Level::Info));
     info!("Starting {}", rom);
 
     let cpu = Cpu::new();

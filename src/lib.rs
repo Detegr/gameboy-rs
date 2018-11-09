@@ -11,4 +11,7 @@ pub mod mmu;
 extern crate wasm_bindgen;
 
 #[cfg(target_os = "unknown")]
+extern crate wasm_logger;
+
+#[cfg(target_os = "unknown")]
 mod wasm;
