@@ -78,12 +78,12 @@ impl Mmu {
         }
     }
     pub fn load_cartridge<P: AsRef<Path>>(&mut self, path: P) -> io::Result<()> {
-        let mut file = fs::File::open(path)?;
+        let file = fs::File::open(path)?;
         self.load_cartridge_data(file);
         Ok(())
     }
     pub fn load_cartridge_data<R: Read>(&mut self, mut data: R) {
-        let data_len = data.read(&mut self.memory).unwrap();
+        data.read(&mut self.memory).unwrap();
         const CARTRIDGE_TYPE_LOCATION: u16 = 0x147;
         match self.read_u8(CARTRIDGE_TYPE_LOCATION) {
             0 => {

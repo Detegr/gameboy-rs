@@ -5,7 +5,7 @@ pub trait Display {
 
 pub struct DebugDisplay;
 impl Display for DebugDisplay {
-    fn write_scanline(&mut self, y: u8, data: &[u8]) {
+    fn write_scanline(&mut self, y: u8, _data: &[u8]) {
         debug!("write_scanline, y: {}", y);
     }
     fn render_framebuffer(&mut self, scrollx: u8, scrolly: u8) {

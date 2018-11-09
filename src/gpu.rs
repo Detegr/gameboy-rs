@@ -119,7 +119,7 @@ impl Gpu {
             _ => unreachable!("lcdc control operation"),
         }
 
-        let window_tilemap_display_start = match lcdc.window_tilemap_display() {
+        let _window_tilemap_display_start = match lcdc.window_tilemap_display() {
             LCDCField::_9800_9BFF => 0x9800,
             LCDCField::_9C00_9FFF => 0x9C00,
             _ => unreachable!("tilemap display start"),
