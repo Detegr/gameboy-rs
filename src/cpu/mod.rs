@@ -77,11 +77,11 @@ impl fmt::Display for Cpu {
             write!(fmt, "z ")?;
         }
         write!(fmt, "] (0x{:X})\n", self.f.0)?;
-        write!(fmt, "pc: 0x{:X}\n", self.pc);
-        write!(fmt, "sp: 0x{:X}\n", self.sp);
-        write!(fmt, "{:?}, ", self.run_state);
-        write!(fmt, "interrupts {:?}\n", self.interrupts);
-        write!(fmt, "cycles: {}", self.cycles);
+        write!(fmt, "pc: 0x{:X}\n", self.pc)?;
+        write!(fmt, "sp: 0x{:X}\n", self.sp)?;
+        write!(fmt, "{:?}, ", self.run_state)?;
+        write!(fmt, "interrupts {:?}\n", self.interrupts)?;
+        write!(fmt, "cycles: {}", self.cycles)?;
         Ok(())
     }
 }

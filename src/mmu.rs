@@ -47,7 +47,7 @@ fn is_reserved(addr: u16) -> Option<&'static str> {
 
 pub struct Mmu {
     memory: Box<[u8]>,
-    cartridge: Option<Box<Cartridge>>,
+    cartridge: Option<Box<dyn Cartridge>>,
 }
 
 impl Mmu {
