@@ -532,6 +532,8 @@ impl Cpu {
         self.f.unset_h();
         if self.a == 0 {
             self.f.set_z();
+        } else {
+            self.f.unset_z();
         }
         self.cycles += 4;
     }
