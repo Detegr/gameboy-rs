@@ -1,3 +1,5 @@
+use std::fmt;
+
 #[derive(Default, Debug)]
 pub struct CpuFlags(pub u8);
 impl CpuFlags {
@@ -51,6 +53,19 @@ impl CpuFlags {
     #[inline(always)]
     pub fn unset_c(&mut self) {
         self.0 &= !0x10;
+    }
+}
+
+impl fmt::Display for CpuFlags {
+    fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
+        write!(
+            fmt,
+            "{} {} {} {}",
+            if self.z() { "Z" } else { "" },
+            if self.n() { "N" } else { "" },
+            if self.h() { "H" } else { "" },
+            if self.c() { "C" } else { "" }
+        )
     }
 }
 
