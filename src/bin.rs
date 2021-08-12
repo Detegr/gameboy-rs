@@ -23,6 +23,7 @@ fn get_display() -> gl_display::GlDisplay {
 fn main() {
     let mut args = std::env::args();
     let filename = args.nth(1);
+    let boot_rom = args.nth(0);
     simplelog::SimpleLogger::init(
         simplelog::LevelFilter::Info,
         simplelog::Config {
@@ -36,16 +37,19 @@ fn main() {
 
     let mut cpu = Cpu::new();
     let mut gpu = Gpu::new();
-    let mut mmu = Mmu::new();
+    let mut mmu = Mmu::new(&boot_rom);
     let mut display = get_display();
 
-    //mmu.load_cartridge("cpu_instrs/cpu_instrs.gb").unwrap();
     if let Some(filename) = filename {
         mmu.load_cartridge(&filename).unwrap();
     } else {
         mmu.load_cartridge("cpu_instrs/cpu_instrs.gb").unwrap();
     }
-    cpu.reset();
+
+    if boot_rom.is_none() {
+        cpu.reset();
+    }
+
     loop {
         //info!("{}", cpu);
         cpu.step(&mut mmu);

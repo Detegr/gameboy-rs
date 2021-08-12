@@ -47,41 +47,60 @@ fn is_reserved(addr: u16) -> Option<&'static str> {
 
 pub struct Mmu {
     memory: Box<[u8]>,
+    boot: [u8; 256],
     cartridge: Option<Box<dyn Cartridge>>,
 }
 
 impl Mmu {
-    pub fn new() -> Mmu {
+    pub fn new<P: AsRef<Path>>(boot_rom: &Option<P>) -> Mmu {
         let mut memory = vec![0; 65536].into_boxed_slice();
-        memory[0xFF10] = 0x80;
-        memory[0xFF11] = 0xBF;
-        memory[0xFF12] = 0xF3;
-        memory[0xFF14] = 0xBF;
-        memory[0xFF16] = 0x3F;
-        memory[0xFF19] = 0xBF;
-        memory[0xFF1A] = 0x7F;
-        memory[0xFF1B] = 0xFF;
-        memory[0xFF1C] = 0x9F;
-        memory[0xFF1E] = 0xBF;
-        memory[0xFF20] = 0xFF;
-        memory[0xFF23] = 0xBF;
-        memory[0xFF24] = 0x77;
-        memory[0xFF25] = 0xF3;
-        memory[0xFF26] = 0xF1;
-        memory[0xFF40] = 0x91;
-        memory[0xFF47] = 0xFC;
-        memory[0xFF48] = 0xFF;
-        memory[0xFF49] = 0xFF;
+        let mut boot = [0; 256];
+        if let Some(boot_rom) = boot_rom {
+            let mut file = fs::File::open(boot_rom).unwrap();
+            file.read_exact(&mut boot).unwrap();
+        } else {
+            memory[0xFF10] = 0x80;
+            memory[0xFF11] = 0xBF;
+            memory[0xFF12] = 0xF3;
+            memory[0xFF14] = 0xBF;
+            memory[0xFF16] = 0x3F;
+            memory[0xFF19] = 0xBF;
+            memory[0xFF1A] = 0x7F;
+            memory[0xFF1B] = 0xFF;
+            memory[0xFF1C] = 0x9F;
+            memory[0xFF1E] = 0xBF;
+            memory[0xFF20] = 0xFF;
+            memory[0xFF23] = 0xBF;
+            memory[0xFF24] = 0x77;
+            memory[0xFF25] = 0xF3;
+            memory[0xFF26] = 0xF1;
+            memory[0xFF40] = 0x91;
+            memory[0xFF47] = 0xFC;
+            memory[0xFF48] = 0xFF;
+            memory[0xFF49] = 0xFF;
+            memory[0xFF4A] = 0x00;
+            memory[0xFF4B] = 0x00;
+            memory[0xFF50] = 0x1;
+            memory[0xFFFF] = 0x00;
+        }
         Mmu {
             memory,
+            boot,
             cartridge: None,
         }
     }
+
+    #[inline]
+    pub fn boot_rom_finished(&self) -> bool {
+        self.memory[0xFF50] == 1
+    }
+
     pub fn load_cartridge<P: AsRef<Path>>(&mut self, path: P) -> io::Result<()> {
         let file = fs::File::open(path)?;
         self.load_cartridge_data(file);
         Ok(())
     }
+
     pub fn load_cartridge_data<R: Read>(&mut self, mut data: R) {
         data.read(&mut self.memory).unwrap();
         const CARTRIDGE_TYPE_LOCATION: u16 = 0x147;
@@ -132,6 +151,8 @@ impl Mmu {
                 //log!("READ[0x{:2X}], {:2X}", addr, ret);
                 return ret;
             }
+        } else if addr <= 0xFF && !self.boot_rom_finished() {
+            return self.boot[addr as usize];
         }
         let ret = self.memory[addr as usize];
         //log!("READ[0x{:2X}], {:2X}", addr, ret);

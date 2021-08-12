@@ -51,6 +51,7 @@ pub struct Cpu {
     interrupts: InterruptState,
     pub cycles: usize,
     pub debug: bool,
+    pub debug_counter: usize,
 }
 
 impl fmt::Display for Cpu {
@@ -157,7 +158,7 @@ impl Cpu {
                 state => state,
             };
 
-            info!("{}", opcodes::MNEMONICS[opcode]);
+            //info!("{}", opcodes::MNEMONICS[opcode]);
             opcodes::OPCODES[opcode](self, mmu);
 
             if self.interrupts == old_interrupts_state {
@@ -170,14 +171,34 @@ impl Cpu {
             // if the CPU is halted?
             self.cycles += 4;
             let intf = mmu.read_u8(0xFF0F);
-            if (intf & 0x1) != 0 {
-                // V-Blank
-                mmu.write_u8(0xFF0F, 0);
-                let pc = self.pc;
-                self.push_u16(mmu, pc);
-                self.pc = 0x0040;
-                self.run_state = RunState::Running;
+            if intf == 0 {
+                return;
             }
+
+            mmu.write_u8(0xFF0F, 0);
+            let pc = self.pc;
+            self.push_u16(mmu, pc);
+            self.run_state = RunState::Running;
+
+            self.pc = if (intf & 0x1) != 0 {
+                // V-Blank
+                0x40
+            } else if (intf & 0x2) != 0 {
+                // LCDC Status
+                // Modes 0, 1, 2
+                // LYC = LY coincide (selectable)
+                0x48
+            } else if (intf & 0x4) != 0 {
+                // Timer Overflow
+                0x50
+            } else if (intf & 0x8) != 0 {
+                // Serial transfer
+                0x58 // When transfer is complete
+            } else if (intf & 0x10) != 0 {
+                0x60
+            } else {
+                unreachable!("Unknown value for 0xFF0F");
+            };
         }
     }
 
